@@ -1,0 +1,296 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
+import classNames from 'classnames/bind';
+import styles from './page.module.scss';
+import { authLogin } from '@/services/authServices';
+import { loginSuccess, loginFailed } from '@/redux/authSlice';
+import { EyeIcon, EyeOffIcon } from '@/components/Icons';
+import { useToast } from '@/hooks/useToast';
+import { Button } from '@/components/Button';
+
+const cx = classNames.bind(styles);
+
+export default function LoginPage() {
+    const dispatch = useDispatch();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const { showSuccess, showError } = useToast();
+    const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [formData, setFormData] = useState({
+        usernameOrEmail: '',
+        password: '',
+    });
+    const [error, setError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
+    const [fieldErrors, setFieldErrors] = useState({
+        usernameOrEmail: '',
+        password: '',
+    });
+    const [touched, setTouched] = useState({
+        usernameOrEmail: false,
+        password: false,
+    });
+
+    useEffect(() => {
+        // Check if user just registered
+        if (searchParams.get('registered') === 'true') {
+            setSuccessMessage('Đăng ký thành công! Vui lòng đăng nhập.');
+            // Clear the query param after showing message
+            router.replace('/auth/login', { scroll: false });
+        }
+    }, [searchParams, router]);
+
+    const validateField = (name: string, value: string): string => {
+        switch (name) {
+            case 'usernameOrEmail':
+                if (!value.trim()) {
+                    return 'Vui lòng nhập địa chỉ email';
+                }
+                // Basic email validation
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(value.trim())) {
+                    return 'Vui lòng nhập địa chỉ email hợp lệ';
+                }
+                return '';
+            case 'password':
+                if (!value) {
+                    return 'Vui lòng nhập mật khẩu';
+                }
+                if (value.length < 6) {
+                    return 'Mật khẩu phải có ít nhất 6 ký tự';
+                }
+                return '';
+            default:
+                return '';
+        }
+    };
+
+    const handleBlur = (fieldName: keyof typeof formData) => {
+        setTouched((prev) => ({ ...prev, [fieldName]: true }));
+        const error = validateField(fieldName, formData[fieldName]);
+        setFieldErrors((prev) => ({ ...prev, [fieldName]: error }));
+    };
+
+    const handleChange = (fieldName: keyof typeof formData, value: string) => {
+        setFormData((prev) => ({ ...prev, [fieldName]: value }));
+        // Clear error when user starts typing
+        if (fieldErrors[fieldName]) {
+            setFieldErrors((prev) => ({ ...prev, [fieldName]: '' }));
+        }
+        // Clear general error when user starts typing
+        if (error) {
+            setError('');
+        }
+    };
+
+    const validateForm = (): boolean => {
+        const errors = {
+            usernameOrEmail: validateField('usernameOrEmail', formData.usernameOrEmail),
+            password: validateField('password', formData.password),
+        };
+        setFieldErrors(errors);
+        setTouched({
+            usernameOrEmail: true,
+            password: true,
+        });
+        return !errors.usernameOrEmail && !errors.password;
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+
+        // Validate form
+        if (!validateForm()) {
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const data = await authLogin(formData);
+            dispatch(loginSuccess(data));
+            showSuccess('Đăng nhập thành công!');
+            
+            // Check for redirect parameter
+            const redirectUrl = searchParams.get('redirect');
+            if (redirectUrl) {
+                // Decode and redirect to the original URL
+                router.push(decodeURIComponent(redirectUrl));
+            } else {
+                // Default redirect to home
+                router.push('/');
+            }
+        } catch (error: any) {
+            const errorMessage = error?.response?.data?.message || error?.message || 'Đăng nhập thất bại. Vui lòng thử lại!';
+            setError(errorMessage);
+            showError(errorMessage);
+            dispatch(loginFailed());
+            console.error('Login failed:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className={cx('auth-page')}>
+            {/* Left Side - Form */}
+            <div className={cx('auth-form-section')}>
+                <div className={cx('form-container')}>
+                    <div className={cx('auth-header')}>
+                        <h1 className={cx('auth-title')}>Chào mừng bạn đến với Tài Khoản Xịn</h1>
+                        <p className={cx('auth-subtitle')}>
+                            Đăng nhập để trải nghiệm kho tài khoản với hơn 10,000+ tài khoản
+                        </p>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className={cx('auth-form')} noValidate>
+                        {successMessage && (
+                            <div className={cx('success-message')}>
+                                <span className={cx('success-icon')}>✓</span>
+                                <span>{successMessage}</span>
+                            </div>
+                        )}
+                        {error && (
+                            <div className={cx('error-message')}>
+                                <span className={cx('error-icon')}>⚠️</span>
+                                <span>{error}</span>
+                            </div>
+                        )}
+
+                        <div className={cx('form-group')}>
+                            <label htmlFor="usernameOrEmail" className={cx('form-label')}>
+                                Địa chỉ email
+                            </label>
+                            <input
+                                id="usernameOrEmail"
+                                type="text"
+                                className={cx('form-input', {
+                                    'input-error': touched.usernameOrEmail && fieldErrors.usernameOrEmail,
+                                })}
+                                placeholder="Nhập địa chỉ email"
+                                value={formData.usernameOrEmail}
+                                onChange={(e) => handleChange('usernameOrEmail', e.target.value)}
+                                onBlur={() => handleBlur('usernameOrEmail')}
+                                disabled={loading}
+                            />
+                            {touched.usernameOrEmail && fieldErrors.usernameOrEmail && (
+                                <span className={cx('form-error-hint')}>{fieldErrors.usernameOrEmail}</span>
+                            )}
+                        </div>
+
+                        <div className={cx('form-group')}>
+                            <label htmlFor="password" className={cx('form-label')}>
+                                Mật khẩu
+                            </label>
+                            <div className={cx('password-wrapper')}>
+                                <input
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    className={cx('form-input', {
+                                        'input-error': touched.password && fieldErrors.password,
+                                    })}
+                                    placeholder="Nhập mật khẩu"
+                                    value={formData.password}
+                                    onChange={(e) => handleChange('password', e.target.value)}
+                                    onBlur={() => handleBlur('password')}
+                                    disabled={loading}
+                                />
+                                <button
+                                    type="button"
+                                    className={cx('password-toggle')}
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    tabIndex={-1}
+                                >
+                                    {showPassword ? <EyeIcon size={20} /> : <EyeOffIcon size={20} />}
+                                </button>
+                            </div>
+                            {touched.password && fieldErrors.password && (
+                                <span className={cx('form-error-hint')}>{fieldErrors.password}</span>
+                            )}
+                        </div>
+
+                        <div className={cx('form-options')}>
+                            <label className={cx('remember-me')}>
+                                <input type="checkbox" />
+                                <span>Ghi nhớ đăng nhập</span>
+                            </label>
+                            <Link href="/auth/forgot-password" className={cx('forgot-password')}>
+                                Quên mật khẩu?
+                            </Link>
+                        </div>
+
+                        <Button
+                            type="submit"
+                            variant="primary"
+                            size="large"
+                            fullWidth
+                            isLoading={loading}
+                            loadingText="Đang xử lý..."
+                            className={cx('submit-button')}
+                        >
+                            Đăng nhập
+                        </Button>
+                    </form>
+
+                    <div className={cx('auth-divider')}>
+                        <span>Hoặc</span>
+                    </div>
+
+                    {/* Social Login */}
+                    <div className={cx('social-login')}>
+                        <button type="button" className={cx('social-button', 'google-button')} disabled={loading}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <path
+                                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                    fill="#4285F4"
+                                />
+                                <path
+                                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                    fill="#34A853"
+                                />
+                                <path
+                                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                                    fill="#FBBC05"
+                                />
+                                <path
+                                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                                    fill="#EA4335"
+                                />
+                            </svg>
+                            Đăng nhập bằng Google
+                        </button>
+                    </div>
+
+                    <div className={cx('auth-footer')}>
+                        <span>Bạn chưa có tài khoản? </span>
+                        <Link href="/auth/register" className={cx('auth-link')}>
+                            Đăng ký ngay
+                        </Link>
+                    </div>
+                </div>
+            </div>
+
+            {/* Right Side - Banner */}
+            <div className={cx('auth-banner-section')}>
+                <div className={cx('banner-container')}>
+                    <Image
+                        src="/banners/login-banner.png"
+                        alt="Tài Khoản Xịn Banner"
+                        fill
+                        className={cx('banner-image')}
+                        priority
+                        quality={90}
+                    />
+                </div>
+            </div>
+        </div>
+    );
+}
+

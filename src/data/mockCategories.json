@@ -1,0 +1,108 @@
+{
+  "categories": [
+    {
+      "id": "work",
+      "name": "Làm việc",
+      "slug": "work",
+      "description": "Các công cụ hỗ trợ công việc hiệu quả",
+      "icon": "BriefcaseIcon",
+      "color": "#3b82f6",
+      "image": "/images/categories/work.jpg",
+      "productCount": 45,
+      "status": "active",
+      "order": 1,
+      "createdAt": "2024-01-15T10:00:00Z"
+    },
+    {
+      "id": "ai",
+      "name": "Sản phẩm AI",
+      "slug": "ai-account",
+      "description": "Công cụ AI hàng đầu cho công việc và sáng tạo",
+      "icon": "BrainIcon",
+      "color": "#8b5cf6",
+      "image": "/images/categories/ai.jpg",
+      "productCount": 32,
+      "status": "active",
+      "order": 2,
+      "createdAt": "2024-01-16T10:00:00Z"
+    },
+    {
+      "id": "entertainment",
+      "name": "Giải trí",
+      "slug": "entertainment",
+      "description": "Dịch vụ giải trí và streaming phổ biến",
+      "icon": "PlayIcon",
+      "color": "#ec4899",
+      "image": "/images/categories/entertainment.jpg",
+      "productCount": 28,
+      "status": "active",
+      "order": 3,
+      "createdAt": "2024-01-17T10:00:00Z"
+    },
+    {
+      "id": "windows",
+      "name": "Windows",
+      "slug": "windows",
+      "description": "Hệ điều hành Windows chính hãng",
+      "icon": "WindowsIcon",
+      "color": "#0ea5e9",
+      "image": "/images/categories/windows.jpg",
+      "productCount": 15,
+      "status": "active",
+      "order": 4,
+      "createdAt": "2024-01-18T10:00:00Z"
+    },
+    {
+      "id": "office",
+      "name": "Office",
+      "slug": "office",
+      "description": "Microsoft Office và công cụ văn phòng",
+      "icon": "OfficeIcon",
+      "color": "#f97316",
+      "image": "/images/categories/office.jpg",
+      "productCount": 22,
+      "status": "active",
+      "order": 5,
+      "createdAt": "2024-01-19T10:00:00Z"
+    },
+    {
+      "id": "education",
+      "name": "Giáo dục",
+      "slug": "education",
+      "description": "Công cụ học tập và giáo dục",
+      "icon": "GraduationIcon",
+      "color": "#10b981",
+      "image": "/images/categories/education.jpg",
+      "productCount": 18,
+      "status": "active",
+      "order": 6,
+      "createdAt": "2024-01-20T10:00:00Z"
+    },
+    {
+      "id": "design",
+      "name": "Thiết kế",
+      "slug": "design",
+      "description": "Phần mềm thiết kế đồ họa chuyên nghiệp",
+      "icon": "ImageIcon",
+      "color": "#f59e0b",
+      "image": "/images/categories/design.jpg",
+      "productCount": 25,
+      "status": "active",
+      "order": 7,
+      "createdAt": "2024-01-21T10:00:00Z"
+    },
+    {
+      "id": "cloud",
+      "name": "Cloud Storage",
+      "slug": "cloud-storage",
+      "description": "Dịch vụ lưu trữ đám mây",
+      "icon": "CloudIcon",
+      "color": "#06b6d4",
+      "image": "/images/categories/cloud.jpg",
+      "productCount": 12,
+      "status": "active",
+      "order": 8,
+      "createdAt": "2024-01-22T10:00:00Z"
+    }
+  ]
+}

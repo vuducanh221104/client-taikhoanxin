@@ -1,0 +1,32 @@
+// ============================================
+// CONTAINER MIXIN & VARIABLES
+// Chỉ chứa mixin và variables, không có global styles
+// File này có thể được import vào CSS Modules
+// ============================================
+
+@mixin container-base($max-width-pc, $max-width-large: null, $padding-pc: var(--container-padding-pc), $padding-large: null) {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    // Mobile & Tablet (max-width: 999px)
+    padding-left: var(--container-padding-mobile-tablet);
+    padding-right: var(--container-padding-mobile-tablet);
+
+    // PC (min-width: 1000px)
+    @media (min-width: 1000px) {
+        max-width: $max-width-pc;
+        padding-left: $padding-pc;
+        padding-right: $padding-pc;
+    }
+
+    // Large Desktop (1600px+)
+    @if $max-width-large {
+        @media (min-width: 1600px) {
+            max-width: $max-width-large;
+            @if $padding-large {
+                padding-left: $padding-large;
+                padding-right: $padding-large;
+            }
+        }
+    }
+}

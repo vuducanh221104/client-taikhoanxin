@@ -1,0 +1,85 @@
+{
+  "wishlist": [
+    {
+      "id": "w1",
+      "userId": "1",
+      "productId": "chatgpt-plus",
+      "productName": "ChatGPT Plus",
+      "price": 299000,
+      "oldPrice": 350000,
+      "discount": 15,
+      "rating": 5,
+      "reviewCount": 128,
+      "status": "in-stock",
+      "imageSrc": "/products/product-1.png",
+      "imageAlt": "ChatGPT Plus",
+      "href": "/products/chatgpt-plus",
+      "addedAt": "2024-12-10T14:20:00.000Z"
+    },
+    {
+      "id": "w2",
+      "userId": "1",
+      "productId": "adobe-creative-cloud",
+      "productName": "Adobe Creative Cloud",
+      "price": 599000,
+      "oldPrice": 750000,
+      "discount": 20,
+      "rating": 5,
+      "reviewCount": 89,
+      "status": "in-stock",
+      "imageSrc": "/products/product-2.png",
+      "imageAlt": "Adobe Creative Cloud",
+      "href": "/products/adobe-creative-cloud",
+      "addedAt": "2024-12-08T09:15:00.000Z"
+    },
+    {
+      "id": "w3",
+      "userId": "1",
+      "productId": "netflix-premium",
+      "productName": "Netflix Premium",
+      "price": 199000,
+      "oldPrice": null,
+      "discount": 0,
+      "rating": 5,
+      "reviewCount": 256,
+      "status": "in-stock",
+      "imageSrc": "/products/product-3.png",
+      "imageAlt": "Netflix Premium",
+      "href": "/products/netflix-premium",
+      "addedAt": "2024-12-05T16:30:00.000Z"
+    },
+    {
+      "id": "w4",
+      "userId": "1",
+      "productId": "spotify-premium",
+      "productName": "Spotify Premium",
+      "price": 149000,
+      "oldPrice": 180000,
+      "discount": 17,
+      "rating": 5,
+      "reviewCount": 312,
+      "status": "in-stock",
+      "imageSrc": "/products/product-1.png",
+      "imageAlt": "Spotify Premium",
+      "href": "/products/spotify-premium",
+      "addedAt": "2024-12-01T11:45:00.000Z"
+    },
+    {
+      "id": "w5",
+      "userId": "1",
+      "productId": "canva-pro",
+      "productName": "Canva Pro",
+      "price": 249000,
+      "oldPrice": 300000,
+      "discount": 17,
+      "rating": 5,
+      "reviewCount": 178,
+      "status": "out-of-stock",
+      "imageSrc": "/products/product-2.png",
+      "imageAlt": "Canva Pro",
+      "href": "/products/canva-pro",
+      "addedAt": "2024-11-28T10:20:00.000Z"
+    }
+  ]
+}
+

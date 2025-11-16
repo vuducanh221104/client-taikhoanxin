@@ -1,0 +1,66 @@
+.product-warranty {
+    margin-bottom: 60px;
+    padding: 32px;
+    background: var(--bg-color-secondary);
+    border-radius: 16px;
+    border: 1px solid var(--border-color-lighter);
+    box-shadow: 0 2px 8px var(--shadow-color-light);
+
+    @media (max-width: 999px) {
+        padding: 24px;
+        margin-bottom: 40px;
+        border-radius: 12px;
+    }
+
+    .warranty-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: 28px;
+        line-height: 1.3;
+        font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .warranty-section {
+        margin-bottom: 24px;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    .warranty-subtitle {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: 12px;
+        line-height: 1.3;
+    }
+
+    .warranty-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        li {
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--text-color-secondary);
+            padding-left: 24px;
+            position: relative;
+
+            &::before {
+                content: '•';
+                position: absolute;
+                left: 0;
+                color: var(--primary-color);
+                font-weight: 700;
+                font-size: 18px;
+            }
+        }
+    }
+}
+

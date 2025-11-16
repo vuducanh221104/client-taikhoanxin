@@ -1,0 +1,779 @@
+.wishlist-page {
+    min-height: calc(100vh - 200px);
+    padding: 40px 0;
+    background: var(--bg-color-secondary);
+}
+
+.wishlist-container {
+    width: 100%;
+    max-width: var(--container-max-width-pc);
+    margin: 0 auto;
+    padding-left: var(--container-padding-mobile-tablet);
+    padding-right: var(--container-padding-mobile-tablet);
+    box-sizing: border-box;
+    overflow-x: hidden;
+
+    @media (min-width: 1000px) {
+        padding-left: var(--container-padding-pc);
+        padding-right: var(--container-padding-pc);
+    }
+
+    @media (min-width: 1600px) {
+        max-width: var(--container-max-width-large);
+    }
+
+    @media (max-width: 480px) {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+}
+
+.wishlist-header {
+    margin-bottom: 32px;
+}
+
+.header-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.wishlist-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin: 0;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.title-icon {
+    color: var(--error-color);
+}
+
+.wishlist-subtitle {
+    font-size: 14px;
+    color: var(--text-color-secondary);
+    margin: 0;
+    line-height: 1.6;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+// Filter Section
+.filter-section {
+    margin-bottom: 24px;
+}
+
+.reset-filters-wrapper {
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.reset-filters-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary-color);
+    background: var(--bg-color);
+    border: 1px solid var(--primary-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    &:hover {
+        background: var(--primary-color-light);
+        color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(47, 120, 255, 0.2);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+
+    svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+.filter-form {
+    padding: 24px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 2px solid var(--border-color);
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.filter-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.basic-filters-row {
+    .basic-filters-group {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 16px;
+
+        @media (max-width: 640px) {
+            grid-template-columns: 1fr;
+        }
+    }
+}
+
+.filter-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-color);
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    svg {
+        color: var(--primary-color);
+    }
+}
+
+// Dropdown
+.dropdown-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.dropdown-button {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text-color);
+    background: var(--bg-color);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+
+    &:hover {
+        border-color: var(--primary-color);
+        background: var(--bg-color-secondary);
+    }
+
+    &:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px var(--primary-color-light);
+    }
+
+    span {
+        flex: 1;
+        text-align: left;
+    }
+}
+
+.dropdown-icon {
+    transition: transform 0.3s ease;
+    color: var(--text-color-tertiary);
+    flex-shrink: 0;
+    margin-left: 8px;
+
+    &.is-open {
+        transform: rotate(180deg);
+    }
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--bg-color);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    animation: fadeInDown 0.2s ease;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-item {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text-color);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: var(--bg-color-secondary);
+        color: var(--primary-color);
+    }
+
+    &.is-selected {
+        background: var(--primary-color-light);
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+}
+
+// Search Input
+.search-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 16px;
+    padding-right: 40px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text-color);
+    background: var(--bg-color);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    outline: none;
+    box-sizing: border-box;
+
+    &:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px var(--primary-color-light);
+    }
+
+    &::placeholder {
+        color: var(--text-color-tertiary);
+    }
+}
+
+.clear-search-button {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--text-color-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    z-index: 1;
+
+    &:hover {
+        background: var(--bg-color-secondary);
+        color: var(--text-color);
+    }
+
+    svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+// Price Row
+.price-row {
+    padding: 16px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color-light);
+    border-radius: 12px;
+}
+
+.price-inputs-group {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.price-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 200px;
+}
+
+.price-input {
+    width: 100%;
+    padding: 12px 16px;
+    padding-right: 80px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text-color);
+    background: var(--bg-color-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    outline: none;
+    box-sizing: border-box;
+
+    &:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px var(--primary-color-light);
+    }
+
+    &::placeholder {
+        color: var(--text-color-tertiary);
+    }
+
+    &.has-error {
+        border-color: var(--error-color);
+
+        &:focus {
+            border-color: var(--error-color);
+            box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.1);
+        }
+    }
+}
+
+.price-clear-button {
+    position: absolute;
+    right: 50px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--text-color-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    z-index: 1;
+
+    &:hover {
+        background: var(--bg-color);
+        color: var(--text-color);
+    }
+
+    svg {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+.price-suffix {
+    position: absolute;
+    right: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-color-secondary);
+    pointer-events: none;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.price-separator {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-color-secondary);
+    align-self: flex-end;
+    margin-bottom: 8px;
+    padding: 0 4px;
+}
+
+.price-error-wrapper {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.price-error {
+    display: block;
+    font-size: 12px;
+    color: var(--error-color);
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 500;
+}
+
+.quick-price-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.quick-price-button {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-color);
+    background: var(--bg-color-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    white-space: nowrap;
+
+    &:hover {
+        background: var(--primary-color-light);
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        transform: translateY(-1px);
+    }
+
+    &:active {
+        transform: translateY(0) scale(0.98);
+    }
+}
+
+// Date Row
+.date-row {
+    padding: 16px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color-light);
+    border-radius: 12px;
+}
+
+.date-inputs-group {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.date-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 200px;
+}
+
+.date-input {
+    width: 100%;
+    padding: 12px 16px;
+    padding-right: 40px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text-color);
+    background: var(--bg-color-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    outline: none;
+    box-sizing: border-box;
+
+    &:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px var(--primary-color-light);
+    }
+}
+
+.date-clear-button {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--text-color-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    z-index: 1;
+
+    &:hover {
+        background: var(--bg-color);
+        color: var(--text-color);
+    }
+
+    svg {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+.date-separator {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-color-secondary);
+    align-self: flex-end;
+    margin-bottom: 8px;
+    padding: 0 4px;
+}
+
+.quick-date-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.quick-date-button {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-color);
+    background: var(--bg-color-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    white-space: nowrap;
+
+    &:hover {
+        background: var(--primary-color-light);
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        transform: translateY(-1px);
+    }
+
+    &:active {
+        transform: translateY(0) scale(0.98);
+    }
+}
+
+// Wishlist Grid
+.wishlist-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr)); // Default: 2 columns for mobile/tablet
+    row-gap: 20px;
+    column-gap: 12px;
+    justify-items: stretch;
+    align-items: start;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+    
+    // Ensure cards fill grid cells properly
+    & > * {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0; // Cho phép shrink với grid
+    }
+
+    // PC Medium (min-width: 1000px and max-width: 1199px) - 3 cột
+    @media (min-width: 1000px) and (max-width: 1199px) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        row-gap: 16px;
+        column-gap: 10px;
+    }
+
+    // PC Large (min-width: 1200px) - 4 cột
+    @media (min-width: 1200px) {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        row-gap: 16px;
+        column-gap: 12px;
+    }
+
+    // PC Extra Large (min-width: 1600px) - 4 cột với gap lớn hơn
+    @media (min-width: 1600px) {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        row-gap: 20px;
+        column-gap: 12px;
+    }
+
+    // Tablet (max-width: 999px) - 2 cột
+    @media (max-width: 999px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        row-gap: 16px;
+        column-gap: 12px;
+    }
+
+    // Mobile (max-width: 768px)
+    @media (max-width: 768px) {
+        row-gap: 12px;
+        column-gap: 8px;
+    }
+
+    // Mobile Small (max-width: 640px)
+    @media (max-width: 640px) {
+        row-gap: 12px;
+        column-gap: 8px;
+    }
+
+    // Mobile Very Small (max-width: 360px) - 1 cột
+    @media (max-width: 360px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.wishlist-item-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.remove-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--error-color);
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    &:hover {
+        background: var(--error-color-light);
+        border-color: var(--error-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 71, 87, 0.2);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+
+    svg {
+        flex-shrink: 0;
+    }
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    text-align: center;
+    background: var(--bg-color);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px var(--shadow-color-light);
+}
+
+.empty-icon {
+    color: var(--text-color-tertiary);
+    margin-bottom: 24px;
+    opacity: 0.5;
+}
+
+.empty-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin: 0 0 12px 0;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.empty-text {
+    font-size: 14px;
+    color: var(--text-color-secondary);
+    margin: 0 0 32px 0;
+    line-height: 1.6;
+    max-width: 500px;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.browse-button {
+    padding: 12px 32px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-color-white);
+    background: var(--primary-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    &:hover {
+        background: var(--primary-color-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(47, 120, 255, 0.3);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+}
+
+// Responsive
+@media (max-width: 999px) {
+    .wishlist-page {
+        padding: 24px 0 40px;
+    }
+
+    .wishlist-title {
+        font-size: 24px;
+    }
+
+    .empty-state {
+        padding: 60px 20px;
+    }
+
+    .filter-form {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 640px) {
+    .price-inputs-group,
+    .date-inputs-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .price-input-wrapper,
+    .date-input-wrapper {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    .price-separator,
+    .date-separator {
+        display: none;
+    }
+
+    .quick-price-buttons,
+    .quick-date-buttons {
+        justify-content: center;
+    }
+}

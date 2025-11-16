@@ -1,0 +1,343 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    width: 100%;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+}
+
+body {
+    width: 100%;
+    overflow-x: hidden;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    position: relative;
+}
+
+code {
+    font-family: var(--font-harmony-os), source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+// Apply HarmonyOS font to all elements
+* {
+    font-family: var(--font-harmony-os);
+}
+
+// Global link style - remove underline by default
+a {
+    text-decoration: none;
+    color: inherit;
+
+    &:hover {
+        text-decoration: none;
+    }
+    &:focus-visible {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 2px;
+        text-decoration: none;
+    }
+}
+
+// ============================================
+// CONTAINER SYSTEM - Mobile & PC Configuration
+// ============================================
+
+:root {
+    // ============================================
+    // COLOR SYSTEM
+    // ============================================
+    
+    // Primary Colors
+    --primary-color: #2f78ff;
+    --primary-color-hover: #2567e6;
+    --primary-color-light: rgba(47, 120, 255, 0.08);
+    --primary-color-lighter: rgba(47, 120, 255, 0.05);
+    
+    // Text Colors
+    --text-color: #333333;
+    --text-color-secondary: #666666;
+    --text-color-tertiary: #999999;
+    --text-color-white: #ffffff;
+    --text-color-light: rgba(255, 255, 255, 0.7);
+    --text-color-dark: rgba(255, 255, 255, 0.8);
+    --text-color-dark-light: rgba(255, 255, 255, 0.75);
+    --text-color-dark-lighter: rgba(255, 255, 255, 0.9);
+    --text-color-dark-lightest: rgba(255, 255, 255, 0.6);
+    
+    // Background Colors
+    --bg-color: #ffffff;
+    --bg-color-secondary: #f8f9fa;
+    --bg-color-tertiary: #f0f0f0;
+    --bg-color-overlay: rgba(255, 255, 255, 0.95);
+    --bg-color-overlay-dark: rgba(0, 0, 0, 0.5);
+    --bg-color-dark: #1a1a1a;
+    --bg-color-dark-light: rgba(255, 255, 255, 0.1);
+    
+    // Border Colors
+    --border-color: #e0e0e0;
+    --border-color-light: #e8e8e8;
+    --border-color-lighter: #f0f0f0;
+    
+    // Status Colors
+    --success-color: #34d399;
+    --success-color-dark: #22c55e; // Dark variant for gradients and borders
+    --success-color-darker: #16a34a; // Darker variant for borders
+    --error-color: #ff4757;
+    --error-color-light: #ff6b7a; // Light variant for gradients
+    --error-color-dark: #ff3838; // Dark variant for hover states
+    --warning-color: #fb923c;
+    --warning-color-dark: #f97316; // Dark variant for gradients
+    --warning-color-darker: #ea580c; // Darker variant for borders
+    --info-color: #60a5fa;
+    --info-color-dark: #3b82f6; // Dark variant for gradients
+    --telegram-color: #0088cc;
+    --price-color: #008fd0; // Màu giá sản phẩm
+    --purple-color: #a78bfa;
+    --gray-color: #9ca3af;
+    
+    // Additional Colors
+    --old-price-color: #888888; // Màu giá cũ (gạch ngang)
+    --discount-badge-color: #e74c3c; // Màu badge giảm giá
+    --star-color: #ffd700; // Màu sao đánh giá
+    --form-text-color: #5c769b; // Màu text trong form (label, placeholder)
+    --price-color-hover: #007bb3; // Màu price khi hover
+    --bg-color-form: #f5f5f5; // Background cho form inputs
+    --bg-color-hover: #f1f1f1; // Background hover states
+    --bg-color-light-hover: #e9ecef; // Light background hover
+    --bg-color-disabled: #e0e0e0; // Background disabled states
+    
+    // Auth Page Colors
+    --auth-title-color: #0a0a0a; // Màu title đen (từ hình ảnh)
+    --auth-text-color: #5c769b; // Màu text (từ hình ảnh)
+    --auth-input-text-color: #5c769b; // Màu text trong input field
+    --auth-input-bg-color: #f8f9fa; // Background màu xám nhạt cho input field
+    --auth-placeholder-color: #9e9e9e; // Màu placeholder (sáng hơn để dễ nhìn)
+    --auth-divider-color: #5c769b; // Màu divider (cùng màu với text)
+    --auth-link-color: #008fd0; // Màu link blue (từ hình ảnh)
+    --auth-google-text-color: #0a0a0a; // Màu text cho Google button
+    --auth-error-bg: rgba(255, 71, 87, 0.1); // Background cho error message
+    --auth-error-shadow: rgba(255, 71, 87, 0.1); // Shadow cho input error
+    --auth-button-shadow: rgba(47, 120, 255, 0.3); // Shadow cho submit button
+    --auth-button-shadow-hover: rgba(47, 120, 255, 0.4); // Shadow cho submit button hover
+    --auth-spinner-border: rgba(255, 255, 255, 0.3); // Border cho loading spinner
+    
+    // Shadow Colors
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --shadow-color-light: rgba(0, 0, 0, 0.05);
+    --shadow-color-medium: rgba(0, 0, 0, 0.15);
+    --shadow-color-heavy: rgba(0, 0, 0, 0.2);
+    --error-shadow-color: rgba(255, 71, 87, 0.4); // Shadow cho error/status badges
+    
+    // Touch target
+    --touch-target-size: 44px;
+    
+    // ============================================
+    // BREAKPOINTS
+    // ============================================
+    --breakpoint-xs: 480px;
+    --breakpoint-sm: 768px;
+    --breakpoint-md: 992px;
+    --breakpoint-tablet-mobile-max: 999px; // Tablet & Mobile
+    --breakpoint-pc-min: 1000px; // PC
+    --breakpoint-xl: 1400px;
+    --breakpoint-2xl: 1600px;
+
+    // Container Max Widths
+    // Default Container (cho hầu hết sections)
+    // Mobile & Tablet (max-width: 999px)
+    --container-max-width-mobile-tablet: 100%;
+    // PC (min-width: 1000px)
+    --container-max-width-pc: 1400px;
+    --container-max-width-large: 1400px;
+
+    // Wide Container (cho Hero, Featured Products)
+    // Mobile & Tablet (max-width: 999px)
+    --container-wide-max-width-mobile-tablet: 100%;
+    // PC (min-width: 1000px)
+    --container-wide-max-width-pc: 1600px;
+    --container-wide-max-width-large: 1600px;
+
+    // Narrow Container (cho forms, content narrow)
+    // Mobile & Tablet (max-width: 999px)
+    --container-narrow-max-width-mobile-tablet: 100%;
+    // PC (min-width: 1000px)
+    --container-narrow-max-width-pc: 800px;
+    --container-narrow-max-width-large: 900px;
+
+    // Container Paddings
+    // Mobile & Tablet (max-width: 999px)
+    --container-padding-mobile-tablet: 16px;
+    // PC (min-width: 1000px)
+    --container-padding-pc: 24px;
+    --container-padding-large: 24px;
+
+    // Container Paddings - Smaller (cho một số sections đặc biệt)
+    // Mobile & Tablet (max-width: 999px)
+    --container-padding-sm-mobile-tablet: 12px;
+    // PC (min-width: 1000px)
+    --container-padding-sm-pc: 20px;
+    --container-padding-sm-large: 20px;
+    
+    // Touch target sizes
+    --touch-target-size: 44px; // Minimum recommended touch target size
+    --touch-target-size-small: 36px; // For small icons in toolbars
+}
+
+// ============================================
+// CONTAINER MIXIN
+// ============================================
+@mixin container-base($max-width-pc, $max-width-large: null, $padding-pc: var(--container-padding-pc), $padding-large: null) {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    // Mobile & Tablet (max-width: 999px)
+    padding-left: var(--container-padding-mobile-tablet);
+    padding-right: var(--container-padding-mobile-tablet);
+
+    // PC (min-width: 1000px)
+    @media (min-width: 1000px) {
+        max-width: $max-width-pc;
+        padding-left: $padding-pc;
+        padding-right: $padding-pc;
+    }
+
+    // Large Desktop (1600px+)
+    @if $max-width-large {
+        @media (min-width: 1600px) {
+            max-width: $max-width-large;
+            @if $padding-large {
+                padding-left: $padding-large;
+                padding-right: $padding-large;
+            }
+        }
+    }
+}
+
+// ============================================
+// CONTAINER UTILITY CLASSES
+// ============================================
+
+.container {
+    @include container-base(
+        var(--container-max-width-pc),
+        var(--container-max-width-large),
+        var(--container-padding-pc),
+        var(--container-padding-large)
+    );
+}
+
+.container-wide {
+    @include container-base(
+        var(--container-wide-max-width-pc),
+        var(--container-wide-max-width-large),
+        var(--container-padding-pc),
+        var(--container-padding-large)
+    );
+}
+
+.container-narrow {
+    @include container-base(
+        var(--container-narrow-max-width-pc),
+        var(--container-narrow-max-width-large),
+        var(--container-padding-pc),
+        var(--container-padding-large)
+    );
+}
+
+.container-full {
+    width: 100%;
+    // Mobile & Tablet (max-width: 999px)
+    padding-left: var(--container-padding-mobile-tablet);
+    padding-right: var(--container-padding-mobile-tablet);
+
+    // PC (min-width: 1000px)
+    @media (min-width: 1000px) {
+        padding-left: var(--container-padding-pc);
+        padding-right: var(--container-padding-pc);
+    }
+}
+
+.container-no-padding {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+// ============================================
+// ACCESSIBILITY ENHANCEMENTS
+// ============================================
+
+// Visible focus for keyboard users
+:where(a, button, input, textarea, select, [role="button"])::selection {
+    background: var(--primary-color);
+    color: var(--text-color-white);
+}
+
+:where(a, button, input, textarea, select, [role="button"]) {
+    outline: none;
+}
+
+:where(a, button, input, textarea, select, [role="button"]):focus {
+    outline: none;
+}
+
+:where(a, button, input, textarea, select, [role="button"]):focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+// Reduced motion preference
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+// ============================================
+// MOBILE TOUCH IMPROVEMENTS
+// ============================================
+
+// Remove tap highlight on mobile
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+// Prevent dragging hero/product images on mobile
+img, 
+.banner-image, 
+.slide-image {
+    -webkit-user-drag: none;
+    user-select: none;
+}
+
+// Improve scrolling behaviour (avoid overscroll chaining)
+html, body {
+    overscroll-behavior-y: contain;
+    max-width: 100vw;
+    overflow-x: hidden;
+}
+
+// Ensure main content wrapper takes full width
+#__next,
+[data-nextjs-scroll-focus-boundary] {
+    width: 100%;
+    overflow-x: hidden;
+    position: relative;
+}
+
+// Add padding to body when bottom nav is visible on mobile
+@media (max-width: 999px) {
+    body {
+        padding-bottom: 60px;
+    }
+}
+

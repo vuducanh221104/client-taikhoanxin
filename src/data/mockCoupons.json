@@ -1,0 +1,92 @@
+{
+  "coupons": [
+    {
+      "code": "SAVE10",
+      "discount": 10,
+      "type": "percentage",
+      "description": "Giảm 10% cho đơn hàng",
+      "minOrderValue": 0,
+      "maxDiscount": null,
+      "expiryDate": "2025-12-31",
+      "usageLimit": null,
+      "isActive": true
+    },
+    {
+      "code": "SAVE20",
+      "discount": 20,
+      "type": "percentage",
+      "description": "Giảm 20% cho đơn hàng",
+      "minOrderValue": 500000,
+      "maxDiscount": 200000,
+      "expiryDate": "2025-12-31",
+      "usageLimit": 100,
+      "isActive": true
+    },
+    {
+      "code": "SAVE50",
+      "discount": 50,
+      "type": "percentage",
+      "description": "Giảm 50% cho đơn hàng - Khuyến mãi đặc biệt",
+      "minOrderValue": 1000000,
+      "maxDiscount": 500000,
+      "expiryDate": "2025-06-30",
+      "usageLimit": 50,
+      "isActive": true
+    },
+    {
+      "code": "WELCOME",
+      "discount": 15,
+      "type": "percentage",
+      "description": "Giảm 15% cho khách hàng mới",
+      "minOrderValue": 0,
+      "maxDiscount": 150000,
+      "expiryDate": "2025-12-31",
+      "usageLimit": null,
+      "isActive": true
+    },
+    {
+      "code": "NEWYEAR2025",
+      "discount": 30,
+      "type": "percentage",
+      "description": "Giảm 30% chào mừng năm mới 2025",
+      "minOrderValue": 300000,
+      "maxDiscount": 300000,
+      "expiryDate": "2025-01-31",
+      "usageLimit": 200,
+      "isActive": true
+    },
+    {
+      "code": "FLASH100K",
+      "discount": 100000,
+      "type": "fixed",
+      "description": "Giảm 100.000đ cho đơn hàng",
+      "minOrderValue": 500000,
+      "maxDiscount": null,
+      "expiryDate": "2025-12-31",
+      "usageLimit": 50,
+      "isActive": true
+    },
+    {
+      "code": "MEGA50K",
+      "discount": 50000,
+      "type": "fixed",
+      "description": "Giảm 50.000đ cho đơn hàng",
+      "minOrderValue": 200000,
+      "maxDiscount": null,
+      "expiryDate": "2025-12-31",
+      "usageLimit": null,
+      "isActive": true
+    },
+    {
+      "code": "VIP200K",
+      "discount": 200000,
+      "type": "fixed",
+      "description": "Giảm 200.000đ cho khách hàng VIP",
+      "minOrderValue": 1000000,
+      "maxDiscount": null,
+      "expiryDate": "2025-12-31",
+      "usageLimit": 20,
+      "isActive": true
+    }
+  ]
+}

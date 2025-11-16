@@ -1,0 +1,781 @@
+// Bill Page - Giống mẫu trong hình + QR Code
+.bill-page {
+    padding: 40px 0 60px;
+    background: var(--bg-color-secondary);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+
+    @media (max-width: 999px) {
+        padding: 24px 0 40px;
+    }
+}
+
+.bill-container {
+    max-width: 600px;
+    width: 100%;
+    padding: 0 20px;
+
+    @media (max-width: 768px) {
+        padding: 0 16px;
+    }
+}
+
+.bill-card {
+    background: var(--bg-color);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px var(--shadow-color-light);
+    border: 1px solid var(--border-color);
+
+    @media (max-width: 768px) {
+        border-radius: 16px;
+    }
+}
+
+// Header
+.bill-header {
+    background: linear-gradient(135deg, #5b7cff 0%, #4a63d9 100%);
+    padding: 32px 24px;
+    text-align: center;
+    border-radius: 20px 20px 0 0;
+
+    @media (max-width: 768px) {
+        padding: 24px 20px;
+        border-radius: 16px 16px 0 0;
+    }
+}
+
+.bill-shop-name {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+
+    @media (max-width: 768px) {
+        font-size: 24px;
+    }
+}
+
+// Content
+.bill-content {
+    padding: 32px 28px;
+
+    @media (max-width: 768px) {
+        padding: 24px 20px;
+    }
+}
+
+.bill-thank-you {
+    margin: 0 0 16px 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-color);
+
+    @media (max-width: 768px) {
+        font-size: 20px;
+        margin-bottom: 12px;
+    }
+}
+
+.bill-greeting {
+    margin: 0 0 12px 0;
+    font-size: 15px;
+    color: var(--text-color);
+    font-weight: 500;
+
+    @media (max-width: 768px) {
+        font-size: 14px;
+    }
+}
+
+.bill-message {
+    margin: 0 0 24px 0;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-color-secondary);
+
+    @media (max-width: 768px) {
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+}
+
+// QR Code Section
+.bill-qr-section {
+    margin-bottom: 28px;
+    padding: 20px;
+    background: var(--bg-color-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color-light);
+    text-align: center;
+
+    @media (max-width: 768px) {
+        padding: 16px;
+        margin-bottom: 24px;
+    }
+}
+
+.bill-qr-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.bill-qr-code {
+    width: 250px;
+    height: 250px;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--bg-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 16px rgba(91, 124, 255, 0.2);
+        transform: scale(1.02);
+    }
+
+    &:active {
+        transform: scale(0.98);
+    }
+
+    @media (max-width: 768px) {
+        width: 200px;
+        height: 200px;
+        padding: 6px;
+    }
+}
+
+.bill-qr-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.bill-qr-hint {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-color-secondary);
+    font-style: italic;
+
+    @media (max-width: 768px) {
+        font-size: 11px;
+    }
+}
+
+// Bank Info Section
+.bill-bank-info {
+    margin-bottom: 28px;
+    padding: 20px;
+    background: var(--bg-color-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color-light);
+
+    @media (max-width: 768px) {
+        padding: 16px;
+        margin-bottom: 24px;
+    }
+}
+
+.bill-section-title {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+
+    @media (max-width: 768px) {
+        font-size: 15px;
+        margin-bottom: 14px;
+    }
+}
+
+.bill-bank-list {
+    margin: 0 0 16px 0;
+    padding: 0 0 0 20px;
+    list-style: none;
+
+    li {
+        margin-bottom: 10px;
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--text-color);
+        position: relative;
+        padding-left: 8px;
+
+        &:before {
+            content: '•';
+            position: absolute;
+            left: -12px;
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        strong {
+            font-weight: 600;
+            color: var(--text-color-secondary);
+        }
+
+        @media (max-width: 768px) {
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+    }
+}
+
+.bill-note {
+    margin: 16px 0 12px 0;
+    padding: 14px;
+    background: #fff8e1;
+    border-left: 4px solid #ffc107;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #856404;
+
+    strong {
+        font-weight: 700;
+        color: #856404;
+    }
+
+    @media (max-width: 768px) {
+        font-size: 12px;
+        padding: 12px;
+        margin: 14px 0 10px 0;
+    }
+}
+
+.bill-note-small {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-color-secondary);
+    font-style: italic;
+
+    @media (max-width: 768px) {
+        font-size: 11px;
+    }
+}
+
+// Order Summary
+.bill-order-summary {
+    margin-bottom: 28px;
+    padding: 20px;
+    background: var(--bg-color-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color-light);
+
+    @media (max-width: 768px) {
+        padding: 16px;
+        margin-bottom: 24px;
+    }
+}
+
+.bill-order-meta {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color-light);
+
+    p {
+        margin: 0;
+        font-size: 14px;
+        color: var(--text-color-secondary);
+
+        strong {
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        @media (max-width: 768px) {
+            font-size: 13px;
+        }
+    }
+}
+
+// Order Items
+.bill-items {
+    margin-bottom: 20px;
+}
+
+.bill-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-color-light);
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    @media (max-width: 768px) {
+        gap: 12px;
+        padding: 10px 0;
+    }
+}
+
+.bill-item-info {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.bill-item-number {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color-secondary);
+    flex-shrink: 0;
+
+    @media (max-width: 768px) {
+        font-size: 13px;
+    }
+}
+
+.bill-item-name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color);
+    line-height: 1.5;
+
+    @media (max-width: 768px) {
+        font-size: 13px;
+    }
+}
+
+.bill-item-qty {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color-secondary);
+    flex-shrink: 0;
+
+    @media (max-width: 768px) {
+        font-size: 13px;
+    }
+}
+
+.bill-item-price {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-color);
+    white-space: nowrap;
+    flex-shrink: 0;
+
+    @media (max-width: 768px) {
+        font-size: 14px;
+    }
+}
+
+// Totals
+.bill-totals {
+    padding-top: 16px;
+    border-top: 2px solid var(--border-color);
+}
+
+.bill-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 0;
+    font-size: 14px;
+    color: var(--text-color);
+
+    @media (max-width: 768px) {
+        font-size: 13px;
+        padding: 8px 0;
+    }
+
+    &.bill-total-final {
+        margin-top: 8px;
+        padding: 14px 0;
+        border-top: 1px solid var(--border-color-light);
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-color);
+
+        span:last-child {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--price-color);
+        }
+
+        @media (max-width: 768px) {
+            font-size: 15px;
+            padding: 12px 0;
+
+            span:last-child {
+                font-size: 16px;
+            }
+        }
+    }
+
+    &.bill-payment-method {
+        padding-top: 14px;
+        border-top: 1px solid var(--border-color-light);
+        margin-top: 8px;
+        font-weight: 600;
+
+        @media (max-width: 768px) {
+            padding-top: 12px;
+        }
+    }
+}
+
+// Customer Info
+.bill-customer-info {
+    margin-bottom: 28px;
+    padding: 20px;
+    background: var(--bg-color-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color-light);
+
+    @media (max-width: 768px) {
+        padding: 16px;
+        margin-bottom: 24px;
+    }
+}
+
+.bill-customer-details {
+    p {
+        margin: 0 0 8px 0;
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--text-color);
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 768px) {
+            font-size: 13px;
+        }
+    }
+}
+
+// Footer
+.bill-footer {
+    padding: 20px;
+    background: var(--bg-color-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color-light);
+    text-align: center;
+
+    p {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.7;
+        color: var(--text-color-secondary);
+
+        @media (max-width: 768px) {
+            font-size: 12px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        padding: 16px;
+    }
+}
+
+.bill-email-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+
+    &:hover {
+        color: var(--primary-color-hover);
+        text-decoration: underline;
+    }
+}
+
+// Actions
+.bill-actions {
+    padding: 24px 28px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--border-color-light);
+
+    @media (max-width: 768px) {
+        padding: 20px;
+        flex-direction: column;
+    }
+}
+
+.btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    border: 2px solid var(--border-color);
+    color: var(--text-color);
+    background: var(--bg-color);
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: inline-block;
+    text-align: center;
+    font-size: 14px;
+
+    &:hover {
+        background: var(--bg-color-secondary);
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    &.primary {
+        color: #ffffff;
+        border: none;
+        background: linear-gradient(135deg, #5b7cff 0%, #4a63d9 100%);
+
+        &:hover {
+            background: linear-gradient(135deg, #4a63d9 0%, #5b7cff 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(91, 124, 255, 0.3);
+        }
+    }
+
+    @media (max-width: 768px) {
+        width: 100%;
+    }
+}
+
+// Error State
+.error-state {
+    text-align: center;
+    padding: 40px 20px;
+
+    p {
+        margin: 0 0 24px 0;
+        font-size: 16px;
+        color: var(--text-color-secondary);
+    }
+}
+
+// QR Code Full Screen Modal
+.qr-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.3s ease;
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+}
+
+.qr-modal-content {
+    position: relative;
+    background: var(--bg-color);
+    border-radius: 20px;
+    padding: 32px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 768px) {
+        padding: 24px;
+        border-radius: 16px;
+        max-width: 100%;
+    }
+
+    @media (max-width: 480px) {
+        padding: 20px;
+    }
+}
+
+.qr-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: var(--bg-color-secondary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-color);
+    z-index: 10;
+
+    &:hover {
+        background: var(--bg-color-hover);
+        transform: rotate(90deg);
+    }
+
+    &:active {
+        transform: rotate(90deg) scale(0.95);
+    }
+
+    @media (max-width: 480px) {
+        width: 36px;
+        height: 36px;
+        top: 12px;
+        right: 12px;
+    }
+}
+
+.qr-modal-image-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 20px;
+    background: var(--bg-color-secondary);
+    border-radius: 16px;
+    border: 2px solid var(--border-color-light);
+
+    @media (max-width: 768px) {
+        padding: 16px;
+        margin-bottom: 20px;
+    }
+
+    @media (max-width: 480px) {
+        padding: 12px;
+        margin-bottom: 16px;
+    }
+}
+
+.qr-modal-image {
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+    object-fit: contain;
+    border-radius: 12px;
+
+    @media (max-width: 768px) {
+        max-width: 100%;
+    }
+}
+
+.qr-modal-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+
+    @media (max-width: 480px) {
+        gap: 10px;
+        padding-top: 16px;
+    }
+}
+
+.qr-modal-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 0;
+
+    @media (max-width: 480px) {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        padding: 10px 0;
+    }
+}
+
+.qr-modal-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-color-secondary);
+    min-width: 120px;
+    flex-shrink: 0;
+
+    @media (max-width: 480px) {
+        font-size: 14px;
+        min-width: auto;
+        font-weight: 700;
+        color: var(--text-color);
+    }
+}
+
+.qr-modal-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-color);
+    text-align: right;
+    word-break: break-word;
+    flex: 1;
+
+    @media (max-width: 480px) {
+        font-size: 15px;
+        text-align: left;
+        width: 100%;
+    }
+}
+
+// Coupon styles for bill page
+.bill-discount-row {
+    span {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+}
+
+.bill-coupon-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    background: rgba(76, 175, 80, 0.1);
+    color: #4caf50;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid rgba(76, 175, 80, 0.2);
+    line-height: 1;
+}
+
+.bill-discount-amount {
+    color: #4caf50 !important;
+    font-weight: 700;
+}

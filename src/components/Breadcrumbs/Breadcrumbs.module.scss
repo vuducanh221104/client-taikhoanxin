@@ -1,0 +1,107 @@
+.breadcrumbs {
+    width: 100%;
+    padding: 16px 0;
+    background: transparent;
+}
+
+.breadcrumbs-list {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.breadcrumb-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.breadcrumb-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-color-secondary);
+    text-decoration: none;
+    font-weight: 500;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    transition: all 0.2s ease;
+    padding: 6px 8px;
+    border-radius: 6px;
+
+    &:hover {
+        color: var(--primary-color);
+        background: var(--primary-color-light);
+    }
+
+    &.home {
+        svg {
+            flex-shrink: 0;
+        }
+    }
+}
+
+.breadcrumb-label {
+    white-space: nowrap;
+}
+
+.breadcrumb-separator {
+    color: var(--text-color-tertiary);
+    flex-shrink: 0;
+}
+
+.breadcrumb-current {
+    color: var(--text-color);
+    font-weight: 600;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    white-space: nowrap;
+    padding: 6px 8px;
+}
+
+// Responsive
+@media (max-width: 768px) {
+    .breadcrumbs {
+        padding: 12px 0;
+    }
+
+    .breadcrumbs-list {
+        gap: 6px;
+    }
+
+    .breadcrumb-item {
+        font-size: 13px;
+    }
+
+    .breadcrumb-link {
+        padding: 4px 6px;
+        gap: 4px;
+    }
+
+    .breadcrumb-current {
+        padding: 4px 6px;
+    }
+
+    // Hide labels on very small screens, keep only icons
+    @media (max-width: 480px) {
+        .breadcrumb-label {
+            display: none;
+        }
+
+        .breadcrumb-link.home {
+            .breadcrumb-label {
+                display: none;
+            }
+        }
+
+        .breadcrumb-current {
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+}

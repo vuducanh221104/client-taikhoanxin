@@ -1,0 +1,136 @@
+@import '@/styles/mixins';
+
+.bottom-navigation {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background: var(--bg-color);
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -2px 10px var(--shadow-color-light);
+    display: none;
+    
+    // Only show on mobile and tablet
+    @media (max-width: 999px) {
+        display: block;
+    }
+}
+
+.nav-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: 60px;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 8px;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    height: 100%;
+    color: var(--text-color-secondary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    position: relative;
+    min-width: var(--touch-target-size);
+    
+    &:hover {
+        color: var(--primary-color);
+        background: var(--primary-color-lighter);
+    }
+    
+    &:active {
+        transform: scale(0.95);
+    }
+    
+    &.active {
+        color: var(--primary-color);
+        
+        .nav-icon {
+            color: var(--primary-color);
+        }
+        
+        .nav-label {
+            font-weight: 600;
+        }
+    }
+    
+    // Focus visible for keyboard navigation
+    &:focus-visible {
+        outline: 2px solid var(--primary-color);
+        outline-offset: -2px;
+    }
+}
+
+.nav-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin-bottom: 4px;
+}
+
+.nav-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: color 0.2s ease;
+    
+    :global(svg) {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+.nav-badge {
+    position: absolute;
+    top: -4px;
+    right: -8px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    background: var(--error-color);
+    color: var(--text-color-white);
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    box-shadow: 0 2px 4px var(--error-shadow-color);
+    animation: badge-pop 0.3s ease;
+}
+
+.nav-label {
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.2;
+    text-align: center;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+@keyframes badge-pop {
+    0% {
+        transform: scale(0);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}

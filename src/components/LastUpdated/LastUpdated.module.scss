@@ -1,0 +1,31 @@
+.lastUpdated {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    margin: 24px 0;
+    background: var(--bg-color-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    font-size: 14px;
+    color: var(--text-secondary);
+    
+    svg {
+        flex-shrink: 0;
+        opacity: 0.7;
+    }
+
+    span {
+        line-height: 1.4;
+    }
+
+    @media (max-width: 768px) {
+        font-size: 13px;
+        padding: 6px 12px;
+        
+        svg {
+            width: 14px;
+            height: 14px;
+        }
+    }
+}

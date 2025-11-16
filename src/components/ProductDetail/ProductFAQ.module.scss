@@ -1,0 +1,169 @@
+.product-faq {
+    margin-bottom: 60px;
+    padding: 32px;
+    background: var(--bg-color-secondary);
+    border-radius: 16px;
+    border: 1px solid var(--border-color-lighter);
+    box-shadow: 0 2px 8px var(--shadow-color-light);
+
+    @media (max-width: 999px) {
+        padding: 24px;
+        margin-bottom: 40px;
+        border-radius: 12px;
+    }
+
+    .faq-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: 28px;
+        line-height: 1.3;
+        font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .faq-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .faq-item {
+        border-bottom: 1px solid var(--border-color-light);
+        padding-bottom: 20px;
+
+        &:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+    }
+
+    .faq-question {
+        width: 100%;
+        text-align: left;
+        background: none;
+        border: none;
+        padding: 0;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &:not(.static) {
+            cursor: pointer;
+
+            &:hover {
+                .faq-question-text {
+                    color: var(--primary-color);
+                }
+
+                .arrow-icon {
+                    color: var(--primary-color);
+                }
+            }
+        }
+
+        &.static {
+            margin-bottom: 12px;
+        }
+    }
+
+    .faq-number {
+        font-weight: 700;
+        color: var(--text-color);
+        flex-shrink: 0;
+        font-size: 16px;
+    }
+
+    .faq-question-text {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-color);
+        line-height: 1.5;
+        transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        flex: 1;
+    }
+
+    .arrow-icon {
+        flex-shrink: 0;
+        color: var(--text-color-tertiary);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 14px;
+
+        .faq-question.active & {
+            transform: rotate(180deg);
+        }
+    }
+
+    .faq-answer {
+        margin-top: 16px;
+        padding-left: 28px;
+        animation: fadeIn 0.2s ease;
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        &.expanded-variant {
+            animation: none;
+            margin-top: 8px;
+            padding-left: 28px;
+        }
+
+        p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--text-color-secondary);
+        }
+    }
+
+    // Expanded variant - hiển thị tất cả không cần click
+    .faq-list.expanded-variant {
+        .faq-item {
+            padding-bottom: 24px;
+        }
+    }
+
+    .faq-link {
+        color: var(--price-color);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s ease;
+
+        &:hover {
+            color: var(--price-color-hover);
+            text-decoration: underline;
+        }
+    }
+
+    .product-rating {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 32px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border-color-light);
+
+        .rating-label {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .rating-star {
+            color: var(--star-color);
+        }
+
+        .rating-count {
+            font-size: 14px;
+            color: var(--text-color-secondary);
+        }
+    }
+}
+

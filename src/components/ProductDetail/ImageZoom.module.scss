@@ -1,0 +1,87 @@
+.image-zoom-container {
+    position: relative;
+    width: 100%;
+    display: block;
+    overflow: hidden;
+    cursor: zoom-in;
+    border-radius: inherit;
+    background: transparent;
+    line-height: 0;
+    font-size: 0;
+
+    &.zoomed {
+        cursor: zoom-out;
+        overflow: hidden;
+    }
+
+    .image-wrapper {
+        width: 100%;
+        display: block;
+        overflow: visible;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        line-height: 0;
+        font-size: 0;
+    }
+
+    &.zoomed .image-wrapper {
+        overflow: hidden;
+    }
+
+    .zoom-image {
+        width: 100%;
+        height: auto;
+        display: block;
+        user-select: none;
+        -webkit-user-drag: none;
+        object-fit: cover;
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .zoom-indicator {
+        position: absolute;
+        bottom: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+        z-index: 10;
+        white-space: nowrap;
+
+        @media (max-width: 999px) {
+            display: none;
+        }
+    }
+
+    &:hover .zoom-indicator {
+        opacity: 1;
+    }
+
+    &.zoomed .zoom-indicator {
+        opacity: 0;
+    }
+}
+
+// Mobile: Touch zoom
+@media (max-width: 999px) {
+    .image-zoom-container {
+        cursor: pointer;
+
+        .zoom-image {
+            transition: transform 0.2s ease;
+        }
+
+        &:active .zoom-image {
+            transform: scale(1.1);
+        }
+    }
+}

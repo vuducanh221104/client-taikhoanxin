@@ -1,0 +1,15 @@
+node_modules
+.next
+out
+build
+coverage
+*.config.js
+*.config.ts
+public
+dist
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+

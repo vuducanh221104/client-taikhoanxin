@@ -1,0 +1,120 @@
+{
+  "comments": [
+    {
+      "id": "1",
+      "userId": "user1",
+      "username": "dinh dinh",
+      "avatar": "/avatar/user-icon.webp",
+      "timestamp": "2025-08-06 15:58:59",
+      "text": "con này tạo được bao nhiêu ảnh 1 ngày",
+      "isCustomerService": false,
+      "isVerified": false,
+      "hasPurchased": false,
+      "parentId": null,
+      "replies": [
+        {
+          "id": "1-1",
+          "userId": "cskh1",
+          "username": "CSKH - Bánh Bao",
+          "avatar": "/avatar/cskh-icon.png",
+          "timestamp": "2025-08-06 16:07:40",
+          "text": "@dinh dinh Dạ do là tài khoản share nên tài khoản sẽ bị hạn chế 1 số các tính năng về ảnh, và bên chat gpt cũng chưa có giới hạn tạo ảnh cụ thể cho 1 tài khoản ạ",
+          "isCustomerService": true,
+          "isVerified": true,
+          "hasPurchased": false,
+          "parentId": "1"
+        },
+        {
+          "id": "1-2",
+          "userId": "user1",
+          "username": "dinh dinh",
+          "avatar": "/avatar/user-icon.webp",
+          "timestamp": "2025-08-06 16:09:18",
+          "text": "@CSKH - Bánh Bao ý là mình mua chat gpt chủ yêu là cho nó đọc file pdf với tạo ảnh á, bạn có đề xuất nào phù hợp cho mình k",
+          "isCustomerService": false,
+          "isVerified": false,
+          "hasPurchased": false,
+          "parentId": "1"
+        },
+        {
+          "id": "1-3",
+          "userId": "cskh2",
+          "username": "CSKH - Mapu",
+          "avatar": "/avatar/cskh-icon.png",
+          "timestamp": "2025-08-06 16:10:43",
+          "text": "@dinh dinh https://taikhoanxin.com/nang-cap-chatgpt-openai-plus Dạ bạn tham khảo gói nâng cấp chính chủ nhé ạ",
+          "isCustomerService": true,
+          "isVerified": true,
+          "hasPurchased": false,
+          "parentId": "1"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "userId": "user2",
+      "username": "Trinh Nguyễn",
+      "avatar": "/avatar/user-icon.webp",
+      "timestamp": "2025-05-20 22:14:02",
+      "text": "Mình rất hài lòng và dùng gói Chat GPT này gần 1 năm ở Divine, cần gì thắc mắc là các bạn hỗ trợ ngay qua zalo. Mình đã trải nghiệm và mua thử trên nhiều Shop khác nhưng customer services của Divine là tốt nhất. Mình an tâm. Cảm ơn shop vì luôn support mình lúc cần không kể ngày đêm.",
+      "isCustomerService": false,
+      "isVerified": false,
+      "hasPurchased": true,
+      "parentId": null,
+      "replies": [
+        {
+          "id": "2-1",
+          "userId": "cskh2",
+          "username": "CSKH - Mapu",
+          "avatar": "/avatar/cskh-icon.png",
+          "timestamp": "2025-05-20 22:48:43",
+          "text": "@Nguyen Trinh Dạ shop cảm ơn những lời nhận xét cảu bạn ạ <3",
+          "isCustomerService": true,
+          "isVerified": true,
+          "hasPurchased": false,
+          "parentId": "2"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "userId": "user3",
+      "username": "Nguyễn Văn A",
+      "avatar": "/avatar/user-icon.webp",
+      "timestamp": "2025-07-15 10:30:00",
+      "text": "Sản phẩm rất tốt, giao hàng nhanh, hỗ trợ nhiệt tình. Mình sẽ quay lại mua tiếp!",
+      "isCustomerService": false,
+      "isVerified": false,
+      "hasPurchased": true,
+      "parentId": null,
+      "replies": []
+    },
+    {
+      "id": "4",
+      "userId": "user4",
+      "username": "Lê Thị B",
+      "avatar": "/avatar/user-icon.webp",
+      "timestamp": "2025-07-10 14:20:15",
+      "text": "Tài khoản hoạt động ổn định, giá cả hợp lý. Cảm ơn shop!",
+      "isCustomerService": false,
+      "isVerified": false,
+      "hasPurchased": true,
+      "parentId": null,
+      "replies": [
+        {
+          "id": "4-1",
+          "userId": "cskh1",
+          "username": "CSKH - Bánh Bao",
+          "avatar": "/avatar/cskh-icon.png",
+          "timestamp": "2025-07-10 14:35:20",
+          "text": "@Lê Thị B Cảm ơn bạn đã tin tưởng và sử dụng dịch vụ của shop. Chúc bạn sử dụng vui vẻ!",
+          "isCustomerService": true,
+          "isVerified": true,
+          "hasPurchased": false,
+          "parentId": "4"
+        }
+      ]
+    }
+  ]
+}
+

@@ -1,0 +1,149 @@
+.home-container {
+    min-height: calc(100vh - 300px);
+    width: 100%;
+    overflow-x: hidden;
+    position: relative;
+}
+
+// Sử dụng container từ globals.scss
+// Có thể override nếu cần custom
+
+// Hero Banners Section
+.hero-banners-section {
+    padding: 16px 0;
+    background: #f8f9fa;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) inset;
+    width: 100%;
+    overflow-x: hidden;
+    position: relative;
+
+    .hero-banners-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 20px;
+        align-items: start;
+        width: 100%;
+        max-width: 100%;
+
+        .banner-large {
+            aspect-ratio: 16 / 9;
+            width: 100%;
+            min-width: 0;
+        }
+
+        .banners-small-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            width: 100%;
+            min-width: 0;
+
+            .banner-small {
+                aspect-ratio: 16 / 9;
+                width: 100%;
+            }
+        }
+    }
+}
+
+// Features Section
+.features-section {
+    padding: 60px 0;
+    background: white;
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+
+        .feature-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+            &:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+            }
+
+            h3 {
+                font-size: 24px;
+                font-weight: 600;
+                margin-bottom: 15px;
+                color: #333;
+            }
+
+            p {
+                font-size: 16px;
+                color: #666;
+                line-height: 1.6;
+            }
+        }
+    }
+}
+
+// Responsive Design
+@media (max-width: 1200px) {
+    // desktop medium: keep ratio-driven heights, no explicit fix
+}
+
+@media (max-width: 999px) {
+    .hero-banners-section {
+        .hero-banners-grid {
+            grid-template-columns: 1fr;
+            height: auto;
+
+            // Hide small banners on tablet/mobile
+            .banners-small-wrapper {
+                display: none;
+            }
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-banners-section {
+        padding: 20px 0;
+
+        .hero-banners-grid {
+            .banner-large { aspect-ratio: 16 / 9; }
+        }
+    }
+
+    .features-section {
+        padding: 40px 0;
+
+        .features-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-banners-section {
+        .hero-banners-grid {
+            gap: 15px;
+            .banner-large { aspect-ratio: 16 / 9; }
+        }
+    }
+
+    .features-section {
+        .features-grid {
+            .feature-card {
+                padding: 20px;
+
+                h3 {
+                    font-size: 20px;
+                }
+
+                p {
+                    font-size: 14px;
+                }
+            }
+        }
+    }
+}
+

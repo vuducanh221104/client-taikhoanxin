@@ -1,0 +1,335 @@
+.helpSidebar {
+    width: 280px;
+    background: var(--bg-color);
+    border-right: 1px solid var(--border-color);
+    overflow-y: auto;
+    position: sticky;
+    top: 73px;
+    height: calc(100vh - 73px);
+    display: flex;
+    flex-direction: column;
+    
+    @media (max-width: 999px) {
+        position: fixed;
+        top: 0;
+        left: -280px;
+        width: 280px;
+        height: 100vh;
+        z-index: 1001;
+        box-shadow: 2px 0 16px var(--shadow-color-medium);
+        transition: left 0.3s ease;
+        padding-top: 0; // Remove padding, use mobile header instead
+        
+        &.open {
+            left: 0;
+        }
+    }
+}
+
+// Mobile Header (only visible on mobile)
+.mobileHeader {
+    display: none;
+    
+    @media (max-width: 999px) {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        background: linear-gradient(135deg, #31b3ff 0%, #3b82f6 100%);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+}
+
+.mobileLogo {
+    display: flex;
+    align-items: center;
+}
+
+.mobileLogoImage {
+    height: 36px;
+    width: auto;
+}
+
+.closeButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    font-size: 20px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    &:active {
+        transform: scale(0.95);
+    }
+}
+
+// Mobile overlay
+.mobileOverlay {
+    display: none;
+    
+    @media (max-width: 999px) {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        animation: fadeIn 0.3s ease;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.sidebarNav {
+    padding: 24px 0;
+    flex: 1;
+    overflow-y: auto;
+    
+    @media (max-width: 999px) {
+        padding: 16px 0;
+    }
+    
+    /* Custom scrollbar */
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 3px;
+
+        &:hover {
+            background: var(--text-color-tertiary);
+        }
+    }
+}
+
+.menuSection {
+    margin-bottom: 8px;
+}
+
+.sectionTitle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    background: transparent;
+    border: none;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-color-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+        background: var(--bg-color-secondary);
+        color: var(--text-color);
+    }
+    
+    svg {
+        font-size: 16px;
+    }
+}
+
+.menuList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menuItem {
+    margin: 0;
+}
+
+.menuLink {
+    display: block;
+    padding: 10px 24px 10px 40px;
+    font-size: 14px;
+    color: var(--text-color-secondary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    
+    &:hover {
+        background: var(--bg-color-secondary);
+        color: var(--text-color);
+        border-left-color: var(--primary-color-light);
+    }
+    
+    &.active {
+        background: var(--primary-color-lighter);
+        color: var(--primary-color);
+        font-weight: 600;
+        border-left-color: var(--primary-color);
+    }
+}
+
+// Custom scrollbar
+.helpSidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.helpSidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.helpSidebar::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+    
+    &:hover {
+        background: var(--text-color-tertiary);
+    }
+}
+
+.sectionLink {
+    display: block;
+    width: 100%;
+    padding: 12px 24px;
+    background: transparent;
+    border: none;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-color-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    
+    &:hover {
+        background: var(--bg-color-secondary);
+        color: var(--text-color);
+        border-left-color: var(--primary-color-light);
+    }
+    
+    &.active {
+        background: var(--primary-color-lighter);
+        color: var(--primary-color);
+        font-weight: 700;
+        border-left-color: var(--primary-color);
+    }
+}
+
+// Nested submenu styles
+.menuLink.hasChildren {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    
+    svg {
+        font-size: 14px;
+        margin-left: 8px;
+    }
+}
+
+.subMenuList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    background: var(--bg-color-secondary);
+}
+
+.subMenuItem {
+    margin: 0;
+}
+
+.subMenuLink {
+    display: block;
+    padding: 8px 24px 8px 56px;
+    font-size: 13px;
+    color: var(--text-color-secondary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    
+    &:hover {
+        background: var(--bg-color-tertiary);
+        color: var(--text-color);
+        border-left-color: var(--primary-color-light);
+    }
+    
+    &.active {
+        background: var(--primary-color-lighter);
+        color: var(--primary-color);
+        font-weight: 600;
+        border-left-color: var(--primary-color);
+    }
+}
+
+// Footer with Home Button
+.sidebarFooter {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-color);
+    margin-top: auto;
+    
+    @media (min-width: 1000px) {
+        display: none;
+    }
+}
+
+.homeButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #31b3ff 0%, #3b82f6 100%);
+    color: white;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(49, 179, 255, 0.3);
+
+    svg {
+        flex-shrink: 0;
+    }
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(49, 179, 255, 0.4);
+        background: linear-gradient(135deg, #3b82f6 0%, #31b3ff 100%);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+}

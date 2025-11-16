@@ -1,0 +1,144 @@
+{
+  "users": [
+    {
+      "id": "1",
+      "username": "user1",
+      "email": "user1@example.com",
+      "password": "password123",
+      "full_name": "Nguyễn Văn A",
+      "phone_number": "0901234567",
+      "avatar": "/avatar/user-icon.webp",
+      "role": 0,
+      "type": "WEBSITE",
+      "gender": "male",
+      "address": {
+        "street": "123 Đường ABC",
+        "ward": "Phường 1",
+        "district": "Quận 1",
+        "city": "Hồ Chí Minh",
+        "country": "Việt Nam"
+      },
+      "date_of_birth": "1990-01-15",
+      "is_verified": true,
+      "status": 1,
+      "created_at": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "2",
+      "username": "user2",
+      "email": "user2@example.com",
+      "password": "password123",
+      "full_name": "Trần Thị B",
+      "phone_number": "0907654321",
+      "avatar": "/avatar/user-icon.webp",
+      "role": 0,
+      "type": "WEBSITE",
+      "gender": "female",
+      "address": {
+        "street": "456 Đường XYZ",
+        "ward": "Phường 2",
+        "district": "Quận 2",
+        "city": "Hà Nội",
+        "country": "Việt Nam"
+      },
+      "date_of_birth": "1995-05-20",
+      "is_verified": true,
+      "status": 1,
+      "created_at": "2024-02-15T00:00:00.000Z"
+    },
+    {
+      "id": "3",
+      "username": "admin",
+      "email": "admin@taikhoanxin.com",
+      "password": "admin123",
+      "full_name": "Admin User",
+      "phone_number": "0912345678",
+      "avatar": "/avatar/user-icon.webp",
+      "role": 2,
+      "type": "WEBSITE",
+      "gender": "male",
+      "address": {
+        "street": "789 Đường Admin",
+        "ward": "Phường Admin",
+        "district": "Quận Admin",
+        "city": "Hồ Chí Minh",
+        "country": "Việt Nam"
+      },
+      "date_of_birth": "1985-10-10",
+      "is_verified": true,
+      "status": 1,
+      "created_at": "2023-12-01T00:00:00.000Z"
+    },
+    {
+      "id": "4",
+      "username": "manager1",
+      "email": "manager@taikhoanxin.com",
+      "password": "manager123",
+      "full_name": "Manager User",
+      "phone_number": "0923456789",
+      "avatar": "/avatar/user-icon.webp",
+      "role": 1,
+      "type": "WEBSITE",
+      "gender": "female",
+      "address": {
+        "street": "321 Đường Manager",
+        "ward": "Phường Manager",
+        "district": "Quận Manager",
+        "city": "Hà Nội",
+        "country": "Việt Nam"
+      },
+      "date_of_birth": "1992-03-25",
+      "is_verified": true,
+      "status": 1,
+      "created_at": "2023-11-15T00:00:00.000Z"
+    },
+    {
+      "id": "5",
+      "username": "google_user",
+      "email": "googleuser@gmail.com",
+      "password": "",
+      "full_name": "Google User",
+      "phone_number": "0934567890",
+      "avatar": "/avatar/user-icon.webp",
+      "role": 0,
+      "type": "GOOGLE",
+      "gender": "male",
+      "address": {
+        "street": "",
+        "ward": "",
+        "district": "",
+        "city": "",
+        "country": ""
+      },
+      "date_of_birth": "",
+      "is_verified": true,
+      "status": 1,
+      "created_at": "2024-03-10T00:00:00.000Z",
+      "id_auth_provider": "google_oauth_123456"
+    },
+    {
+      "id": "6",
+      "username": "testuser",
+      "email": "test@example.com",
+      "password": "test123",
+      "full_name": "Test User",
+      "phone_number": "",
+      "avatar": "/avatar/user-icon.webp",
+      "role": 0,
+      "type": "WEBSITE",
+      "gender": "",
+      "address": {
+        "street": "",
+        "ward": "",
+        "district": "",
+        "city": "",
+        "country": ""
+      },
+      "date_of_birth": "",
+      "is_verified": false,
+      "status": 1,
+      "created_at": "2024-04-20T00:00:00.000Z"
+    }
+  ]
+}
+

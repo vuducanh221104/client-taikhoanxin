@@ -1,0 +1,50 @@
+.product-features {
+    .features-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: 20px;
+        line-height: 1.3;
+        font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .features-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .feature-item {
+        font-size: 16px;
+        line-height: 1.6;
+        color: var(--text-color-secondary);
+        padding-left: 24px;
+        position: relative;
+
+        &::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: var(--primary-color);
+            font-weight: 700;
+            font-size: 20px;
+        }
+    }
+
+    .feature-title {
+        font-weight: 700;
+        color: var(--text-color);
+        font-size: 18px;
+        line-height: 1.3;
+    }
+
+    .feature-description {
+        color: var(--text-color-secondary);
+        font-size: 16px;
+        line-height: 1.6;
+    }
+}
+

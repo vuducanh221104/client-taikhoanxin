@@ -1,0 +1,279 @@
+@keyframes skeleton-loading {
+    0% {
+        background-position: -200px 0;
+    }
+    100% {
+        background-position: calc(200px + 100%) 0;
+    }
+}
+
+.skeleton-base {
+    background: linear-gradient(
+        90deg,
+        var(--bg-color-tertiary) 0px,
+        var(--bg-color-secondary) 40px,
+        var(--bg-color-tertiary) 80px
+    );
+    background-size: 200px 100%;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+    border-radius: 8px;
+}
+
+.skeleton-line {
+    @extend .skeleton-base;
+    height: 16px;
+    width: 100%;
+    margin-bottom: 8px;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+// Product Card Skeleton
+.skeleton-product-card {
+    position: relative;
+    background: var(--bg-color);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-color-light);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    &.dark-variant {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+}
+
+.skeleton-image {
+    @extend .skeleton-base;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    margin-bottom: 0;
+}
+
+.skeleton-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.skeleton-title {
+    height: 20px;
+    width: 80%;
+    margin-bottom: 4px;
+}
+
+.skeleton-rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.skeleton-stars {
+    display: flex;
+    gap: 2px;
+}
+
+.skeleton-star {
+    width: 12px;
+    height: 12px;
+    @extend .skeleton-base;
+    border-radius: 50%;
+}
+
+.skeleton-price {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-top: auto;
+}
+
+.skeleton-price-main {
+    height: 24px;
+    width: 100px;
+}
+
+.skeleton-price-old {
+    height: 16px;
+    width: 80px;
+    opacity: 0.6;
+}
+
+.skeleton-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
+.skeleton-button {
+    width: 36px;
+    height: 36px;
+    @extend .skeleton-base;
+    border-radius: 8px;
+}
+
+// Product List Skeleton
+.skeleton-product-list {
+    display: grid;
+    grid-template-columns: repeat(var(--columns, 4), 1fr);
+    gap: 20px;
+    width: 100%;
+
+    @media (max-width: 999px) {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    @media (max-width: 640px) {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+}
+
+// Filter Skeleton
+.skeleton-filter {
+    background: linear-gradient(135deg, var(--bg-color) 0%, var(--bg-color-secondary) 100%);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px var(--shadow-color-light);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.skeleton-filter-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+
+    @media (max-width: 640px) {
+        flex-direction: column;
+    }
+}
+
+.skeleton-filter-dropdown {
+    height: 40px;
+    width: 200px;
+    border-radius: 8px;
+
+    @media (max-width: 640px) {
+        width: 100%;
+    }
+}
+
+.skeleton-filter-input {
+    height: 40px;
+    flex: 1;
+    min-width: 150px;
+    border-radius: 8px;
+
+    @media (max-width: 640px) {
+        width: 100%;
+    }
+}
+
+.skeleton-filter-button {
+    height: 40px;
+    width: 120px;
+    border-radius: 8px;
+
+    @media (max-width: 640px) {
+        width: 100%;
+    }
+}
+
+// Table Skeleton
+.skeleton-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.skeleton-table-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 16px;
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+.skeleton-table-cell {
+    @extend .skeleton-line;
+    height: 20px;
+    margin-bottom: 0;
+}
+
+// Text Skeleton
+.skeleton-text {
+    @extend .skeleton-line;
+    height: 16px;
+    margin-bottom: 8px;
+
+    &.skeleton-text-large {
+        height: 24px;
+    }
+
+    &.skeleton-text-small {
+        height: 12px;
+    }
+}
+
+// Avatar Skeleton
+.skeleton-avatar {
+    width: 40px;
+    height: 40px;
+    @extend .skeleton-base;
+    border-radius: 50%;
+}
+
+// Card Skeleton
+.skeleton-card {
+    background: var(--bg-color);
+    border: 1px solid var(--border-color-light);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.skeleton-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.skeleton-card-title {
+    @extend .skeleton-line;
+    height: 24px;
+    width: 60%;
+}
+
+.skeleton-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.skeleton-card-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: auto;
+}
+
+.skeleton-card-button {
+    height: 40px;
+    width: 100px;
+    @extend .skeleton-base;
+    border-radius: 8px;
+}
+

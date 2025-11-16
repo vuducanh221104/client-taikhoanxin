@@ -1,0 +1,75 @@
+{
+  "userComments": [
+    {
+      "id": "1",
+      "userId": "1",
+      "productId": "chatgpt-plus",
+      "productName": "ChatGPT Plus",
+      "timestamp": "2024-12-15T10:30:00.000Z",
+      "content": "con này tạo được bao nhiêu ảnh 1 ngày",
+      "type": "comment",
+      "parentId": null
+    },
+    {
+      "id": "1-2",
+      "userId": "1",
+      "productId": "chatgpt-plus",
+      "productName": "ChatGPT Plus",
+      "timestamp": "2024-12-15T10:39:18.000Z",
+      "content": "@CSKH - Bánh Bao ý là mình mua chat gpt chủ yêu là cho nó đọc file pdf với tạo ảnh á, bạn có đề xuất nào phù hợp cho mình k",
+      "type": "reply",
+      "parentId": "1"
+    },
+    {
+      "id": "2",
+      "userId": "1",
+      "productId": "adobe-creative-cloud",
+      "productName": "Adobe Creative Cloud",
+      "timestamp": "2024-12-10T14:20:00.000Z",
+      "content": "Mình rất hài lòng và dùng gói Chat GPT này gần 1 năm ở Divine, cần gì thắc mắc là các bạn hỗ trợ ngay qua zalo. Mình đã trải nghiệm và mua thử trên nhiều Shop khác nhưng customer services của Divine là tốt nhất.",
+      "type": "comment",
+      "parentId": null
+    },
+    {
+      "id": "3",
+      "userId": "1",
+      "productId": "netflix-premium",
+      "productName": "Netflix Premium",
+      "timestamp": "2024-12-05T09:15:00.000Z",
+      "content": "Sản phẩm rất tốt, giao hàng nhanh, hỗ trợ nhiệt tình. Mình sẽ quay lại mua tiếp!",
+      "type": "comment",
+      "parentId": null
+    },
+    {
+      "id": "4",
+      "userId": "1",
+      "productId": "spotify-premium",
+      "productName": "Spotify Premium",
+      "timestamp": "2024-11-28T16:45:00.000Z",
+      "content": "Tài khoản hoạt động tốt, không có vấn đề gì. Cảm ơn shop!",
+      "type": "comment",
+      "parentId": null
+    },
+    {
+      "id": "5",
+      "userId": "1",
+      "productId": "canva-pro",
+      "productName": "Canva Pro",
+      "timestamp": "2024-11-20T11:30:00.000Z",
+      "content": "Rất hài lòng với dịch vụ, sẽ tiếp tục ủng hộ shop",
+      "type": "comment",
+      "parentId": null
+    },
+    {
+      "id": "6",
+      "userId": "1",
+      "productId": "windows-11-pro",
+      "productName": "Windows 11 Pro",
+      "timestamp": "2024-11-15T08:20:00.000Z",
+      "content": "Key hoạt động tốt, đã kích hoạt thành công. Shop hỗ trợ nhiệt tình",
+      "type": "comment",
+      "parentId": null
+    }
+  ]
+}
+

@@ -1,0 +1,24 @@
+.account-page {
+    min-height: calc(100vh - 200px);
+    padding: 40px 0;
+    background: var(--bg-color-secondary);
+}
+
+.account-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 var(--container-padding-pc);
+    display: flex;
+    gap: 24px;
+
+    @media (max-width: 999px) {
+        flex-direction: column;
+        padding: 0 var(--container-padding-mobile-tablet);
+        gap: 20px;
+    }
+}
+
+.account-content {
+    flex: 1;
+}
+

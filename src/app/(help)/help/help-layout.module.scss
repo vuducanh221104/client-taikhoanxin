@@ -1,0 +1,42 @@
+.helpWrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-color);
+}
+
+.helpContainer {
+    display: flex;
+    flex: 1;
+    max-width: 1600px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0;
+    gap: 24px;
+    
+    @media (max-width: 1200px) {
+        max-width: 1200px;
+    }
+    
+    @media (max-width: 999px) {
+        flex-direction: column;
+        gap: 0;
+    }
+}
+
+.helpMain {
+    flex: 1;
+    padding: 40px;
+    overflow-y: auto;
+    min-width: 0; // Prevent flex item from overflowing
+    
+    @media (max-width: 999px) {
+        padding: 24px 16px;
+    }
+}
+
+.helpContentWrapper {
+    // Wrapper for content + last updated
+    display: flex;
+    flex-direction: column;
+}

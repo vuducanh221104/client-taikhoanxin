@@ -1,0 +1,85 @@
+{
+  "transactions": [
+    {
+      "id": "TXN001",
+      "userId": "1",
+      "transactionDate": "2024-12-15T10:30:00.000Z",
+      "description": "Thanh toán đơn hàng ORD001",
+      "amount": -299000,
+      "balance": 701000,
+      "type": "payment",
+      "orderCode": "ORD001"
+    },
+    {
+      "id": "TXN002",
+      "userId": "1",
+      "transactionDate": "2024-12-15T09:00:00.000Z",
+      "description": "Nạp tiền vào tài khoản",
+      "amount": 1000000,
+      "balance": 1000000,
+      "type": "deposit",
+      "paymentMethod": "VNPay"
+    },
+    {
+      "id": "TXN003",
+      "userId": "1",
+      "transactionDate": "2024-12-10T14:20:00.000Z",
+      "description": "Thanh toán đơn hàng ORD002",
+      "amount": -897000,
+      "balance": 299000,
+      "type": "payment",
+      "orderCode": "ORD002"
+    },
+    {
+      "id": "TXN004",
+      "userId": "1",
+      "transactionDate": "2024-12-10T13:00:00.000Z",
+      "description": "Nạp tiền vào tài khoản",
+      "amount": 500000,
+      "balance": 1196000,
+      "type": "deposit",
+      "paymentMethod": "ATM"
+    },
+    {
+      "id": "TXN005",
+      "userId": "1",
+      "transactionDate": "2024-12-05T09:15:00.000Z",
+      "description": "Thanh toán đơn hàng ORD003",
+      "amount": -149000,
+      "balance": 696000,
+      "type": "payment",
+      "orderCode": "ORD003"
+    },
+    {
+      "id": "TXN006",
+      "userId": "1",
+      "transactionDate": "2024-12-01T16:45:00.000Z",
+      "description": "Hoàn tiền đơn hàng ORD004",
+      "amount": 399000,
+      "balance": 845000,
+      "type": "refund",
+      "orderCode": "ORD004"
+    },
+    {
+      "id": "TXN007",
+      "userId": "2",
+      "transactionDate": "2024-12-01T15:00:00.000Z",
+      "description": "Thanh toán đơn hàng ORD004",
+      "amount": -399000,
+      "balance": 601000,
+      "type": "payment",
+      "orderCode": "ORD004"
+    },
+    {
+      "id": "TXN008",
+      "userId": "2",
+      "transactionDate": "2024-12-01T14:00:00.000Z",
+      "description": "Nạp tiền vào tài khoản",
+      "amount": 1000000,
+      "balance": 1000000,
+      "type": "deposit",
+      "paymentMethod": "VNPay"
+    }
+  ]
+}
+

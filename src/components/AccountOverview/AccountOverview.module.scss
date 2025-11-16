@@ -1,0 +1,132 @@
+.account-overview {
+    background: var(--bg-color);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px var(--shadow-color-light);
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 24px;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.overview-content {
+    display: flex;
+    gap: 32px;
+
+    @media (max-width: 999px) {
+        flex-direction: column;
+        gap: 24px;
+    }
+}
+
+.avatar-section {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatar-wrapper {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid var(--border-color-light);
+    background: var(--bg-color-secondary);
+}
+
+.avatar-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-edit-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--primary-color);
+    color: var(--text-color-white);
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    &:hover {
+        background: var(--primary-color-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(47, 120, 255, 0.3);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+}
+
+.avatar-guidelines {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-color-secondary);
+    line-height: 1.6;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    p {
+        margin: 0;
+    }
+}
+
+.account-info-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+
+    @media (max-width: 999px) {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.info-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-color-secondary);
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.info-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-color);
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    &.no-username {
+        color: var(--error-color);
+    }
+
+    &.balance,
+    &.accumulated {
+        color: var(--price-color);
+        font-weight: 700;
+    }
+}
+
