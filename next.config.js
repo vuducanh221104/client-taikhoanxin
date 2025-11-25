@@ -11,6 +11,21 @@ module.exports = {
                 hostname: 'res.cloudinary.com',
                 pathname: '/**',
             },
+            {
+                protocol: 'https',
+                hostname: 'taikhoanxin.com',
+                pathname: '/**',
+            },
+            {
+                protocol: 'https',
+                hostname: 'cdn.taikhoanxin.com',
+                pathname: '/**',
+            },
+            {
+                protocol: 'https',
+                hostname: 'api.vietqr.io',
+                pathname: '/**',
+            },
         ],
         formats: ['image/webp', 'image/avif'],
         deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],

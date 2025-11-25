@@ -1,15 +1,24 @@
 // Auth Types
 export interface CurrentUser {
     _id: string;
-    user_name: string;
+    user_name?: string;
     email: string;
-    full_name: string;
-    phone_number: string;
+    full_name?: string;
+    phone_number?: string;
     role: number;
     type: 'WEBSITE' | 'GOOGLE';
     is_verified: boolean;
     accessToken?: string;
+    refreshToken?: string;
     avatar?: string;
+    gender?: string;
+    citizenIdentity?: string;
+    address?: {
+        district: { value: string; text: string };
+        province: { value: string; text: string };
+        ward: { value: string; text: string };
+        street?: string;
+    };
 }
 
 export interface AuthState {

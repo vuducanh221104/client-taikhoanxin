@@ -519,6 +519,231 @@
     &:hover { color: var(--primary-color-hover); }
 }
 
+// Contact Section
+.contact-section {
+    margin: 12px 0;
+    padding: 12px 0;
+    border-top: 1px dashed var(--border-color);
+    
+    @media (max-width: 999px) {
+        margin: 14px 0;
+        padding: 14px 0;
+    }
+}
+
+.contact-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 8px;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    
+    @media (max-width: 999px) {
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+}
+
+.contact-phones {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    
+    @media (max-width: 999px) {
+        gap: 8px;
+    }
+}
+
+.contact-phone-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--primary-color);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    transition: color 0.2s ease;
+    
+    &:hover {
+        color: var(--primary-color-hover);
+        text-decoration: underline;
+    }
+    
+    @media (max-width: 999px) {
+        font-size: 15px;
+    }
+}
+
+// Phone Input Section
+.phone-input-section {
+    margin: 12px 0;
+    padding: 12px 0;
+    border-top: 1px dashed var(--border-color);
+    
+    @media (max-width: 999px) {
+        margin: 14px 0;
+        padding: 14px 0;
+    }
+}
+
+.input-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 8px;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    
+    @media (max-width: 999px) {
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+}
+
+.phone-input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 2px solid var(--border-color);
+    background: var(--bg-color);
+    font-size: 14px;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text-color);
+    outline: none;
+    transition: border-color 0.2s ease;
+
+    &:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px var(--primary-color-light);
+    }
+
+    &::placeholder {
+        color: var(--text-color-tertiary);
+    }
+    
+    @media (max-width: 999px) {
+        padding: 14px 16px;
+        font-size: 15px;
+        border-radius: 12px;
+    }
+}
+
+// Referral Code Section
+.referral-section {
+    margin: 12px 0;
+    padding: 12px 0;
+    border-top: 1px dashed var(--border-color);
+    
+    @media (max-width: 999px) {
+        margin: 14px 0;
+        padding: 14px 0;
+    }
+}
+
+.referral-input-wrapper {
+    display: flex;
+    gap: 10px;
+    
+    @media (max-width: 999px) {
+        gap: 12px;
+    }
+}
+
+.referral-input {
+    flex: 1;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 2px solid var(--border-color);
+    background: var(--bg-color);
+    font-size: 14px;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text-color);
+    outline: none;
+    transition: border-color 0.2s ease;
+
+    &:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px var(--primary-color-light);
+    }
+
+    &::placeholder {
+        color: var(--text-color-tertiary);
+    }
+    
+    &.error {
+        border-color: var(--error-color);
+        
+        &:focus {
+            box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+        }
+    }
+    
+    @media (max-width: 999px) {
+        padding: 14px 16px;
+        font-size: 15px;
+        border-radius: 12px;
+    }
+}
+
+.referral-apply {
+    padding: 12px 20px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-hover) 100%);
+    color: var(--text-color-white);
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    white-space: nowrap;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    min-height: 44px;
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(47, 120, 255, 0.3);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+    
+    @media (max-width: 999px) {
+        padding: 14px 24px;
+        font-size: 15px;
+        font-weight: 800;
+        border-radius: 12px;
+        min-height: 48px;
+    }
+}
+
+.referral-message {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    
+    &.error {
+        background: rgba(244, 67, 54, 0.1);
+        color: var(--error-color);
+        border: 1px solid rgba(244, 67, 54, 0.2);
+    }
+    
+    &.success {
+        background: rgba(76, 175, 80, 0.1);
+        color: #4caf50;
+        border: 1px solid rgba(76, 175, 80, 0.2);
+    }
+    
+    @media (max-width: 999px) {
+        font-size: 14px;
+        padding: 10px 14px;
+    }
+}
+
 .coupon-section {
     margin: 12px 0;
     padding: 14px 0;
@@ -644,6 +869,11 @@
         padding: 14px;
         border-radius: 12px;
     }
+    
+    &.error {
+        background: rgba(244, 67, 54, 0.1);
+        border-color: rgba(244, 67, 54, 0.2);
+    }
 }
 
 .coupon-info {
@@ -661,6 +891,10 @@
     
     @media (max-width: 999px) {
         font-size: 15px;
+    }
+    
+    &.error {
+        color: #f44336; // Red color for error state
     }
 }
 

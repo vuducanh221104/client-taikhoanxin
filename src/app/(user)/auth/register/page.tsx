@@ -6,10 +6,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import classNames from 'classnames/bind';
 import styles from './page.module.scss';
-import { authRegister } from '@/services/authServices';
+import { authRegister } from '@/services/authService';
 import { EyeIcon, EyeOffIcon } from '@/components/Icons';
 import { useToast } from '@/hooks/useToast';
 import { Button } from '@/components/Button';
+import TurnstileWidget from '@/components/Turnstile/TurnstileWidget';
 
 const cx = classNames.bind(styles);
 
@@ -20,7 +21,6 @@ export default function RegisterPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [formData, setFormData] = useState({
-        username: '',
         email: '',
         password: '',
         confirmPassword: '',
@@ -28,17 +28,18 @@ export default function RegisterPage() {
     const [error, setError] = useState('');
     const [passwordStrength, setPasswordStrength] = useState(0);
     const [fieldErrors, setFieldErrors] = useState({
-        username: '',
         email: '',
         password: '',
         confirmPassword: '',
     });
     const [touched, setTouched] = useState({
-        username: false,
         email: false,
         password: false,
         confirmPassword: false,
     });
+    const [turnstileToken, setTurnstileToken] = useState('');
+    const [turnstileError, setTurnstileError] = useState('');
+    const [turnstileResetKey, setTurnstileResetKey] = useState(() => Date.now().toString());
 
     const calculatePasswordStrength = (password: string) => {
         let strength = 0;
@@ -51,14 +52,6 @@ export default function RegisterPage() {
 
     const validateField = (name: string, value: string): string => {
         switch (name) {
-            case 'username':
-                if (!value.trim()) {
-                    return 'Vui lòng nhập tên người dùng';
-                }
-                if (value.trim().length < 6) {
-                    return 'Tên người dùng phải có ít nhất 6 ký tự';
-                }
-                return '';
             case 'email':
                 if (!value.trim()) {
                     return 'Vui lòng nhập địa chỉ email';
@@ -136,27 +129,36 @@ export default function RegisterPage() {
 
     const validateForm = (): boolean => {
         const errors = {
-            username: validateField('username', formData.username),
             email: validateField('email', formData.email),
             password: validateField('password', formData.password),
             confirmPassword: validateField('confirmPassword', formData.confirmPassword),
         };
         setFieldErrors(errors);
         setTouched({
-            username: true,
             email: true,
             password: true,
             confirmPassword: true,
         });
-        return !errors.username && !errors.email && !errors.password && !errors.confirmPassword;
+        return !errors.email && !errors.password && !errors.confirmPassword;
+    };
+
+    const resetTurnstile = () => {
+        setTurnstileToken('');
+        setTurnstileResetKey(Date.now().toString());
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setTurnstileError('');
 
         // Validate form
         if (!validateForm()) {
+            return;
+        }
+
+        if (!turnstileToken) {
+            setTurnstileError('Vui lòng xác minh bạn không phải robot.');
             return;
         }
 
@@ -164,20 +166,22 @@ export default function RegisterPage() {
 
         try {
             const response = await authRegister({
-                username: formData.username,
                 email: formData.email,
                 password: formData.password,
+                turnstileToken,
             });
             showSuccess('Đăng ký thành công! Đang chuyển đến trang đăng nhập...');
             // Redirect to login with success message
             setTimeout(() => {
                 router.push('/auth/login?registered=true');
             }, 1000);
+            resetTurnstile();
         } catch (error: any) {
             const errorMessage = error?.response?.data?.message || error?.message || 'Đăng ký thất bại. Vui lòng thử lại!';
             setError(errorMessage);
             showError(errorMessage);
             console.error('Registration failed:', error);
+            resetTurnstile();
         } finally {
             setLoading(false);
         }
@@ -219,29 +223,6 @@ export default function RegisterPage() {
                                 {error}
                             </div>
                         )}
-
-                        <div className={cx('form-group')}>
-                            <label htmlFor="username" className={cx('form-label')}>
-                                Tên người dùng
-                            </label>
-                            <input
-                                id="username"
-                                type="text"
-                                className={cx('form-input', {
-                                    'input-error': touched.username && fieldErrors.username,
-                                })}
-                                placeholder="Nhập tên người dùng"
-                                value={formData.username}
-                                onChange={(e) => handleChange('username', e.target.value)}
-                                onBlur={() => handleBlur('username')}
-                                disabled={loading}
-                            />
-                            {touched.username && fieldErrors.username ? (
-                                <span className={cx('form-error-hint')}>{fieldErrors.username}</span>
-                            ) : (
-                                <span className={cx('form-hint')}>Tối thiểu 6 ký tự</span>
-                            )}
-                        </div>
 
                         <div className={cx('form-group')}>
                             <label htmlFor="email" className={cx('form-label')}>
@@ -341,6 +322,25 @@ export default function RegisterPage() {
                             )}
                         </div>
 
+                        <div className={cx('form-group')}>
+                            <TurnstileWidget
+                                resetKey={turnstileResetKey}
+                                onSuccess={(token) => {
+                                    setTurnstileToken(token);
+                                    setTurnstileError('');
+                                }}
+                                onExpire={() => {
+                                    setTurnstileToken('');
+                                    setTurnstileError('Phiên xác minh đã hết hạn. Vui lòng thử lại.');
+                                }}
+                                onError={(message) => {
+                                    setTurnstileToken('');
+                                    setTurnstileError(message || 'Không thể xác minh. Vui lòng thử lại.');
+                                }}
+                            />
+                            {turnstileError && <span className={cx('form-error-hint')}>{turnstileError}</span>}
+                        </div>
+
                         <Button
                             type="submit"
                             variant="primary"
@@ -349,6 +349,7 @@ export default function RegisterPage() {
                             isLoading={loading}
                             loadingText="Đang xử lý..."
                             className={cx('submit-button')}
+                            disabled={loading}
                         >
                             Đăng ký
                         </Button>

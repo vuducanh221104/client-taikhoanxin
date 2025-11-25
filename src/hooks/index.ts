@@ -9,4 +9,5 @@ export { useKeyboardNavigation } from './useKeyboardNavigation';
 export { useClickOutside } from './useClickOutside';
 export { useDebounce } from './useDebounce';
 export { useThrottle } from './useThrottle';
+export { useMediaQuery } from './useMediaQuery';
 

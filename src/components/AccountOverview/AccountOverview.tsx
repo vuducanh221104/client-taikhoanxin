@@ -29,14 +29,13 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ user }) => {
         if (!dateString) return 'N/A';
         try {
             const date = new Date(dateString);
-            return date.toLocaleString('vi-VN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-            });
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            const seconds = date.getSeconds().toString().padStart(2, '0');
+            return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
         } catch {
             return dateString;
         }
@@ -87,7 +86,7 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ user }) => {
                     <div className={cx('avatar-wrapper')}>
                         <Image
                             src={avatar}
-                            alt={user.user_name || user.email}
+                            alt={user.full_name || user.email}
                             width={120}
                             height={120}
                             className={cx('avatar-image')}
@@ -117,27 +116,22 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ user }) => {
                 {/* Account Info Grid */}
                 <div className={cx('account-info-grid')}>
                     <div className={cx('info-item')}>
-                        <span className={cx('info-label')}>Tên đăng nhập</span>
-                        <span className={cx('info-value', { 'no-username': !user.user_name })}>
-                            {user.user_name || 'Chưa có tên đăng nhập'}
-                        </span>
-                    </div>
-                    <div className={cx('info-item')}>
                         <span className={cx('info-label')}>Email</span>
                         <span className={cx('info-value')}>{user.email}</span>
                     </div>
                     <div className={cx('info-item')}>
                         <span className={cx('info-label')}>Họ và tên</span>
-                        <span className={cx('info-value')}>{user.full_name || user.user_name || 'N/A'}</span>
+                        <span className={cx('info-value')}>{user.full_name || 'N/A'}</span>
                     </div>
                     <div className={cx('info-item')}>
                         <span className={cx('info-label')}>Nhóm khách hàng</span>
                         <span className={cx('info-value')}>{getCustomerGroup(user.role)}</span>
                     </div>
-                    <div className={cx('info-item')}>
+                    {/* Temporarily hidden */}
+                    {/* <div className={cx('info-item')}>
                         <span className={cx('info-label')}>Số dư</span>
                         <span className={cx('info-value', 'balance')}>0đ</span>
-                    </div>
+                    </div> */}
                     <div className={cx('info-item')}>
                         <span className={cx('info-label')}>Đã tích lũy</span>
                         <span className={cx('info-value', 'accumulated')}>0đ</span>

@@ -7,10 +7,11 @@ import Link from 'next/link';
 import classNames from 'classnames/bind';
 import styles from './LoginDropdown.module.scss';
 import { EyeIcon, EyeOffIcon } from '@/components/Icons';
-import { authLogin } from '@/services/authServices';
+import { authLogin } from '@/services/authService';
 import { loginSuccess, loginFailed } from '@/redux/authSlice';
 import { useToast } from '@/hooks/useToast';
 import { Button } from '@/components/Button';
+import TurnstileWidget from '@/components/Turnstile/TurnstileWidget';
 
 const cx = classNames.bind(styles);
 
@@ -53,6 +54,9 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
         username: false,
         password: false,
     });
+    const [turnstileToken, setTurnstileToken] = useState('');
+    const [turnstileError, setTurnstileError] = useState('');
+    const [turnstileResetKey, setTurnstileResetKey] = useState(() => Date.now().toString());
     
     const dropdownRef = useRef<HTMLDivElement>(null);
     const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -158,33 +162,72 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
         return !errors.username && !errors.password;
     };
 
+    const resetTurnstile = () => {
+        setTurnstileToken('');
+        setTurnstileResetKey(Date.now().toString());
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setTurnstileError('');
 
         // Validate form
         if (!validateForm()) {
             return;
         }
 
+        if (!turnstileToken) {
+            setTurnstileError('Vui lòng xác minh bạn không phải robot.');
+            return;
+        }
+
         setLoading(true);
 
         try {
-            const data = await authLogin({
+            const response = await authLogin({
                 usernameOrEmail: formData.username,
                 password: formData.password,
+                turnstileToken,
             });
-            dispatch(loginSuccess(data));
-            showSuccess('Đăng nhập thành công!');
-            setIsOpen(false);
-            onOverlayChange?.(false);
-            router.push('/');
+            
+            // Check if login was successful
+            if (response.success && response.data) {
+                // Transform API response to CurrentUser format
+                const userData = response.data.user;
+                const currentUser = {
+                    _id: userData._id,
+                    email: userData.email,
+                    full_name: userData.fullName,
+                    user_name: userData.fullName || userData.email?.split('@')[0],
+                    phone_number: userData.phone,
+                    role: userData.role,
+                    type: userData.typeLogin === '0' ? 'WEBSITE' : (userData.typeLogin === '1' ? 'GOOGLE' : 'WEBSITE'),
+                    is_verified: userData.isVerified || false,
+                    accessToken: response.data.accessToken,
+                    refreshToken: response.data.refreshToken,
+                    avatar: userData.avatar,
+                    gender: userData.gender,
+                    citizenIdentity: userData.citizenIdentity,
+                    address: userData.address,
+                };
+                
+                dispatch(loginSuccess(currentUser));
+                showSuccess('Đăng nhập thành công!');
+                setIsOpen(false);
+                onOverlayChange?.(false);
+                router.push('/');
+                resetTurnstile();
+            } else {
+                throw new Error('Đăng nhập thất bại. Vui lòng thử lại!');
+            }
         } catch (error: any) {
             const errorMessage = error?.response?.data?.message || error?.message || 'Đăng nhập thất bại. Vui lòng thử lại!';
             setError(errorMessage);
             showError(errorMessage);
             dispatch(loginFailed());
             console.error('Login failed:', error);
+            resetTurnstile();
         } finally {
             setLoading(false);
         }
@@ -354,7 +397,26 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
                             </Link>
                         </div>
 
-                        {/* Login Button */}
+                        {/* Turnstile + Login Button */}
+                        <div className={cx('form-group')}>
+                            <TurnstileWidget
+                                resetKey={turnstileResetKey}
+                                onSuccess={(token) => {
+                                    setTurnstileToken(token);
+                                    setTurnstileError('');
+                                }}
+                                onExpire={() => {
+                                    setTurnstileToken('');
+                                    setTurnstileError('Phiên xác minh đã hết hạn. Vui lòng thử lại.');
+                                }}
+                                onError={(message) => {
+                                    setTurnstileToken('');
+                                    setTurnstileError(message || 'Không thể xác minh. Vui lòng thử lại.');
+                                }}
+                            />
+                            {turnstileError && <span className={cx('form-error-hint')}>{turnstileError}</span>}
+                        </div>
+
                         <Button
                             type="submit"
                             variant="primary"
@@ -363,6 +425,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
                             isLoading={loading}
                             loadingText="Đang xử lý..."
                             className={cx('submit-button')}
+                            disabled={loading}
                         >
                             Đăng nhập
                         </Button>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import classNames from 'classnames/bind';
 import styles from './ProductImageGallery.module.scss';
 import ImageGallery from './ImageGallery';
@@ -15,13 +15,38 @@ interface ProductImageGalleryProps {
         title: string;
         description: string;
     }>;
+    productKey?: string; // Key to identify product variant for resetting state
 }
 
-const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({ images, productName, features = [] }) => {
+const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({ images, productName, features = [], productKey }) => {
     const [selectedImage, setSelectedImage] = useState(0);
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+    
+    // Reset selectedImage when images change (e.g., variant change)
+    useEffect(() => {
+        setSelectedImage(0);
+    }, [productKey, images?.length]);
+    
+    // Preload images when they change
+    useEffect(() => {
+        if (images && images.length > 0) {
+            // Preload all images in the background
+            images.forEach((imageSrc) => {
+                if (imageSrc) {
+                    const img = new window.Image();
+                    img.src = imageSrc;
+                }
+            });
+        }
+    }, [images]);
 
-    const hasMultipleImages = images && images.length > 1;
+    const hasMultipleImages = useMemo(() => images && images.length > 1, [images?.length]);
+    
+    // Ensure selectedImage is valid
+    const validSelectedImage = useMemo(() => {
+        if (!images || images.length === 0) return 0;
+        return Math.min(selectedImage, images.length - 1);
+    }, [selectedImage, images?.length]);
 
     const handleViewMore = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -41,10 +66,11 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({ images, produ
                     className={cx('main-image-wrapper', { 'clickable': hasMultipleImages })}
                     onClick={handleImageClick}
                 >
-                    {images && images.length > 0 ? (
+                    {images && images.length > 0 && images[validSelectedImage] ? (
                         <ImageZoom
-                            src={images[selectedImage]}
-                            alt={`${productName} - Image ${selectedImage + 1}`}
+                            key={`${productKey}-${validSelectedImage}-${images[validSelectedImage]}`}
+                            src={images[validSelectedImage]}
+                            alt={`${productName} - Image ${validSelectedImage + 1}`}
                             enableZoom={true}
                             zoomLevel={2.5}
                             className={cx('zoom-wrapper')}
@@ -75,7 +101,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({ images, produ
                 features={features}
                 isOpen={isGalleryOpen}
                 onClose={() => setIsGalleryOpen(false)}
-                initialIndex={selectedImage}
+                initialIndex={validSelectedImage}
             />
         </>
     );

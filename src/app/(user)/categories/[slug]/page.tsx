@@ -6,9 +6,11 @@ import classNames from 'classnames/bind';
 import styles from './page.module.scss';
 import ProductCard from '@/components/ProductCard/ProductCard';
 import { SortIcon } from '@/components/Icons';
-import { getAllProducts } from '@/services/productService';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import Breadcrumbs from '@/components/Breadcrumbs/Breadcrumbs';
+import { useCategory } from '@/services/categoryService';
+import { useProducts, mapProductToFeaturedProduct } from '@/services/productService';
+import type { FeaturedProduct } from '@/components/FeaturedProducts';
 
 const cx = classNames.bind(styles);
 
@@ -16,6 +18,7 @@ const categoryNames: Record<string, string> = {
     'work': 'Làm việc',
     'ai-account': 'Sản phẩm AI',
     'entertainment': 'Giải trí',
+    'giai-tri': 'Giải trí',
     'windows': 'Windows',
     'office': 'Office',
     'education': 'Giáo dục',
@@ -23,69 +26,99 @@ const categoryNames: Record<string, string> = {
     'cloud-storage': 'Cloud Storage',
 };
 
+const DEFAULT_PRICE_RANGE: [number, number] = [0, 10_000_000];
+
 export default function CategoryDetailPage() {
     const params = useParams();
     const slug = params.slug as string;
-    const categoryName = categoryNames[slug] || 'Danh mục';
+    const categoryFallbackName = categoryNames[slug] || 'Danh mục';
 
-    const [products, setProducts] = useState<any[]>([]);
-    const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
     const [sortBy, setSortBy] = useState('default');
-    const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
+    const [priceRange, setPriceRange] = useState<[number, number]>(DEFAULT_PRICE_RANGE);
+    const [pendingPriceRange, setPendingPriceRange] = useState<[number, number]>(DEFAULT_PRICE_RANGE);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 12;
+    const itemsPerPage = 30;
+
+    const { data: categoryData } = useCategory(slug);
+
+    const sortConfig = React.useMemo(() => {
+        switch (sortBy) {
+            case 'price-asc':
+                return { sortField: 'price.priceOriginal', sortOrder: 'asc' };
+            case 'price-desc':
+                return { sortField: 'price.priceOriginal', sortOrder: 'desc' };
+            case 'name-asc':
+                return { sortField: 'name', sortOrder: 'asc' };
+            case 'name-desc':
+                return { sortField: 'name', sortOrder: 'desc' };
+            case 'newest':
+                return { sortField: 'createdAt', sortOrder: 'desc' };
+            default:
+                return { sortField: 'createdAt', sortOrder: 'desc' };
+        }
+    }, [sortBy]);
+
+    const { data: productsData, error: productsError, isLoading: isProductsLoading } = useProducts({
+        page: currentPage,
+        limit: itemsPerPage,
+        categorySlug: slug,
+        minPrice: priceRange[0],
+        maxPrice: priceRange[1],
+        sortBy: sortConfig.sortField,
+        sortOrder: sortConfig.sortOrder,
+    });
+
+    const products = React.useMemo<FeaturedProduct[]>(() => {
+        if (!productsData?.data) return [];
+        return productsData.data.map((product) => mapProductToFeaturedProduct(product));
+    }, [productsData?.data]);
 
     useEffect(() => {
-        const allProducts = getAllProducts();
-        // Filter by category - for now show all products as category field doesn't exist
-        // In real app, you would filter by actual category
-        setProducts(allProducts);
+        setCurrentPage(1);
     }, [slug]);
 
     useEffect(() => {
-        let results = products;
+        const maxPage = productsData?.pagination?.totalPages ?? 0;
 
-        // Price filter
-        results = results.filter(product =>
-            product.price >= priceRange[0] && product.price <= priceRange[1]
-        );
-
-        // Sort
-        switch (sortBy) {
-            case 'price-asc':
-                results.sort((a, b) => a.price - b.price);
-                break;
-            case 'price-desc':
-                results.sort((a, b) => b.price - a.price);
-                break;
-            case 'name-asc':
-                results.sort((a, b) => a.productName.localeCompare(b.productName));
-                break;
-            case 'name-desc':
-                results.sort((a, b) => b.productName.localeCompare(a.productName));
-                break;
-            case 'newest':
-                results.sort((a, b) => Number(b.id) - Number(a.id));
-                break;
-            default:
-                // default - keep original order
-                break;
+        if (maxPage > 0 && currentPage > maxPage) {
+            setCurrentPage(maxPage);
+        } else if (maxPage === 0 && currentPage !== 1) {
+            setCurrentPage(1);
         }
+    }, [currentPage, productsData?.pagination?.totalPages]);
 
-        setFilteredProducts(results);
+    const handleSortChange = (value: string) => {
+        setSortBy(value);
         setCurrentPage(1);
-    }, [products, priceRange, sortBy]);
-
-    const clearFilters = () => {
-        setPriceRange([0, 10000000]);
-        setSortBy('default');
     };
 
-    // Pagination
-    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const currentProducts = filteredProducts.slice(startIndex, endIndex);
+    const handleApplyFilters = () => {
+        setPriceRange(pendingPriceRange);
+        setCurrentPage(1);
+    };
+
+    const clearFilters = () => {
+        setPendingPriceRange(DEFAULT_PRICE_RANGE);
+        setPriceRange(DEFAULT_PRICE_RANGE);
+        handleSortChange('default');
+    };
+
+    const categoryName = categoryData?.data?.category?.name || categoryFallbackName;
+    const currentProducts = products;
+    const totalPages = productsData?.pagination?.totalPages ?? 0;
+    const productCount = productsData?.pagination?.total ?? currentProducts.length;
+    const hasActiveFilters =
+        sortBy !== 'default' ||
+        priceRange[0] !== DEFAULT_PRICE_RANGE[0] ||
+        priceRange[1] !== DEFAULT_PRICE_RANGE[1];
+    const hasPendingPriceChanges =
+        pendingPriceRange[0] !== priceRange[0] || pendingPriceRange[1] !== priceRange[1];
+
+    const productsErrorMessage =
+        (productsError as any)?.response?.data?.message || productsError?.message;
+    const emptyDescription = isProductsLoading
+        ? 'Đang tải sản phẩm...'
+        : productsErrorMessage || 'Không tìm thấy sản phẩm nào trong danh mục này.';
 
     const breadcrumbItems = [
         { label: 'Trang chủ', href: '/' },
@@ -102,7 +135,7 @@ export default function CategoryDetailPage() {
                     <div className={cx('category-info')}>
                         <h1 className={cx('category-title')}>{categoryName}</h1>
                         <p className={cx('product-count')}>
-                            {filteredProducts.length} sản phẩm
+                            {productCount} sản phẩm
                         </p>
                     </div>
 
@@ -111,7 +144,7 @@ export default function CategoryDetailPage() {
                             <SortIcon size={20} />
                             <select
                                 value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value)}
+                                onChange={(e) => handleSortChange(e.target.value)}
                                 className={cx('sort-select')}
                             >
                                 <option value="default">Mặc định</option>
@@ -130,12 +163,23 @@ export default function CategoryDetailPage() {
                     <aside className={cx('filters-sidebar')}>
                         <div className={cx('filters-header')}>
                             <h2 className={cx('filters-title')}>Bộ lọc</h2>
-                            <button
-                                className={cx('clear-filters-button')}
-                                onClick={clearFilters}
-                            >
-                                Xóa tất cả
-                            </button>
+                            <div className={cx('filters-header-actions')}>
+                                <button
+                                    className={cx('apply-filters-button')}
+                                    onClick={handleApplyFilters}
+                                    disabled={!hasPendingPriceChanges}
+                                >
+                                    Lọc
+                                </button>
+                                {hasActiveFilters && (
+                                    <button
+                                        className={cx('clear-filters-button')}
+                                        onClick={clearFilters}
+                                    >
+                                        Xóa tất cả
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         {/* Price Range Filter */}
@@ -144,12 +188,15 @@ export default function CategoryDetailPage() {
                             <input
                                 type="number"
                                 placeholder="Từ"
-                                value={priceRange[0]}
-                                onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
+                                value={pendingPriceRange[0]}
+                                onChange={(e) => {
+                                    const value = Number(e.target.value) || 0;
+                                    setPendingPriceRange([value, pendingPriceRange[1]]);
+                                }}
                                 className={cx('price-input')}
                             />
                             <div className={cx('price-range-display')}>
-                                {priceRange[0].toLocaleString('vi-VN')}₫ - {priceRange[1].toLocaleString('vi-VN')}₫
+                                {pendingPriceRange[0].toLocaleString('vi-VN')}₫ - {pendingPriceRange[1].toLocaleString('vi-VN')}₫
                             </div>
                         </div>
 
@@ -159,25 +206,25 @@ export default function CategoryDetailPage() {
                             <div className={cx('quick-price-filters')}>
                                 <button
                                     className={cx('quick-price-button')}
-                                    onClick={() => setPriceRange([0, 100000])}
+                                    onClick={() => setPendingPriceRange([0, 100000])}
                                 >
                                     Dưới 100k
                                 </button>
                                 <button
                                     className={cx('quick-price-button')}
-                                    onClick={() => setPriceRange([100000, 500000])}
+                                    onClick={() => setPendingPriceRange([100000, 500000])}
                                 >
                                     100k - 500k
                                 </button>
                                 <button
                                     className={cx('quick-price-button')}
-                                    onClick={() => setPriceRange([500000, 1000000])}
+                                    onClick={() => setPendingPriceRange([500000, 1000000])}
                                 >
                                     500k - 1tr
                                 </button>
                                 <button
                                     className={cx('quick-price-button')}
-                                    onClick={() => setPriceRange([1000000, 10000000])}
+                                    onClick={() => setPendingPriceRange([1000000, 10000000])}
                                 >
                                     Trên 1tr
                                 </button>
@@ -200,7 +247,7 @@ export default function CategoryDetailPage() {
                                     <div className={cx('pagination')}>
                                         <button
                                             className={cx('pagination-button')}
-                                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                                             disabled={currentPage === 1}
                                         >
                                             Trước
@@ -232,7 +279,7 @@ export default function CategoryDetailPage() {
 
                                         <button
                                             className={cx('pagination-button')}
-                                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                                             disabled={currentPage === totalPages}
                                         >
                                             Sau
@@ -244,7 +291,7 @@ export default function CategoryDetailPage() {
                             <EmptyState
                                 type="products"
                                 title="Không có sản phẩm"
-                                description="Không tìm thấy sản phẩm nào trong danh mục này."
+                                description={emptyDescription}
                                 actionLabel="Xem tất cả danh mục"
                                 actionHref="/categories"
                             />

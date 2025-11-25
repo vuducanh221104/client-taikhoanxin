@@ -6,8 +6,12 @@ interface AuthState {
         currentUser: CurrentUser | null;
         isFetching: boolean;
         error: boolean;
+        isRefreshing: boolean; // Track if currently refreshing token
     };
     logout: {};
+    // Temporary storage for discount and referral codes
+    discountCode: string | null;
+    referralCode: string | null;
 }
 
 const initialState: AuthState = {
@@ -15,8 +19,11 @@ const initialState: AuthState = {
         currentUser: null,
         isFetching: false,
         error: false,
+        isRefreshing: false,
     },
     logout: {},
+    discountCode: null,
+    referralCode: null,
 };
 
 const authSlice = createSlice({
@@ -55,6 +62,44 @@ const authSlice = createSlice({
                 state.login.currentUser.accessToken = action.payload;
             }
         },
+        // Update both accessToken and refreshToken
+        updateTokens: (state, action: PayloadAction<{ accessToken: string; refreshToken?: string }>) => {
+            if (state.login.currentUser) {
+                state.login.currentUser.accessToken = action.payload.accessToken;
+                if (action.payload.refreshToken) {
+                    state.login.currentUser.refreshToken = action.payload.refreshToken;
+                }
+            }
+        },
+        // Set refreshing state
+        setRefreshing: (state, action: PayloadAction<boolean>) => {
+            state.login.isRefreshing = action.payload;
+        },
+        // Clear all auth data
+        clearAuth: (state) => {
+            state.login.currentUser = null;
+            state.login.isFetching = false;
+            state.login.error = false;
+            state.login.isRefreshing = false;
+            state.discountCode = null;
+            state.referralCode = null;
+        },
+        // Set discount code
+        setDiscountCode: (state, action: PayloadAction<string | null>) => {
+            state.discountCode = action.payload;
+        },
+        // Set referral code
+        setReferralCode: (state, action: PayloadAction<string | null>) => {
+            state.referralCode = action.payload;
+        },
+        // Clear discount code
+        clearDiscountCode: (state) => {
+            state.discountCode = null;
+        },
+        // Clear referral code
+        clearReferralCode: (state) => {
+            state.referralCode = null;
+        },
     },
 });
 
@@ -67,6 +112,13 @@ export const {
     logOutSuccess,
     logOutFailed,
     updateAccessToken,
+    updateTokens,
+    setRefreshing,
+    clearAuth,
+    setDiscountCode,
+    setReferralCode,
+    clearDiscountCode,
+    clearReferralCode,
 } = authSlice.actions;
 
 export default authSlice.reducer;

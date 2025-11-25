@@ -10,6 +10,10 @@ import { CartIcon, XIcon, MinusIcon, PlusIcon } from '@/components/Icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '@/redux/store';
 import { removeFromCart, updateQuantity } from '@/redux/cartSlice';
+import { useCart, removeFromCart as removeFromCartAPI, updateCartItem as updateCartItemAPI } from '@/services/cartService';
+import { useSWRConfig } from 'swr';
+import { useToast } from '@/hooks/useToast';
+import { useDebounceCallback } from '@/hooks/useDebounceCallback';
 
 const cx = classNames.bind(styles);
 
@@ -30,7 +34,122 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
 }) => {
     const router = useRouter();
     const dispatch = useDispatch<AppDispatch>();
-    const cart = useSelector((state: RootState) => state.cart);
+    const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
+    const reduxCart = useSelector((state: RootState) => state.cart);
+    const { mutate: globalMutate } = useSWRConfig();
+    const { showError } = useToast();
+    
+    // Fetch cart from API if user is logged in
+    const { data: cartData } = useCart();
+    
+    // Track pending quantity updates - store oldCartData from first click and expected quantity
+    const pendingUpdatesRef = React.useRef<Map<string, { oldCartData: any; productId: string; quantity: number; expectedQuantity: number }>>(new Map());
+    
+    // API call function for quantity update
+    const updateQuantityAPI = React.useCallback(async (productId: string, quantity: number) => {
+        if (!currentUser) return;
+        
+        const pendingUpdate = pendingUpdatesRef.current.get(productId);
+        const oldCartData = pendingUpdate?.oldCartData;
+        const expectedQuantity = pendingUpdate?.expectedQuantity;
+        
+        try {
+            const response = await updateCartItemAPI(productId, quantity);
+            
+            // Only update cache if this response is for the latest expected quantity
+            // This prevents old API responses from overwriting newer optimistic updates
+            const currentPendingUpdate = pendingUpdatesRef.current.get(productId);
+            if (currentPendingUpdate && currentPendingUpdate.expectedQuantity === expectedQuantity) {
+                // This is the latest update, update cache
+                await globalMutate('/api/v1/cart', response, { revalidate: false });
+                // Remove from pending updates only if this is still the latest
+                if (currentPendingUpdate.expectedQuantity === expectedQuantity) {
+                    pendingUpdatesRef.current.delete(productId);
+                }
+            } else {
+                // There's a newer update, ignore this response
+                // Don't update cache, don't remove pending update
+            }
+        } catch (error: any) {
+            // Only revert if this is still the latest update
+            const currentPendingUpdate = pendingUpdatesRef.current.get(productId);
+            if (currentPendingUpdate && currentPendingUpdate.expectedQuantity === expectedQuantity) {
+                // Revert on error - restore old data
+                if (oldCartData) {
+                    await globalMutate('/api/v1/cart', oldCartData, { revalidate: false });
+                }
+                const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra. Vui lòng thử lại!';
+                showError(errorMessage);
+                
+                // Remove from pending updates only if this is still the latest
+                if (currentPendingUpdate.expectedQuantity === expectedQuantity) {
+                    pendingUpdatesRef.current.delete(productId);
+                }
+            }
+        }
+    }, [currentUser, globalMutate, showError]);
+    
+    // Debounced API call for quantity update (200ms delay)
+    const debouncedUpdateQuantity = useDebounceCallback(updateQuantityAPI, 600);
+    
+    // Use API cart if available, otherwise use Redux cart (for backward compatibility)
+    const cart = React.useMemo(() => {
+        if (currentUser && cartData?.data) {
+            // Map API cart to Redux cart format
+            const apiCart = cartData.data;
+            const items = apiCart.items || [];
+            const mappedProducts = items.map((item: any) => {
+                const product = item.productId || item.product_id;
+                const productId = product?._id || product?.id || '';
+                const productName = product?.name || '';
+                let price = 0;
+                if (product?.price) {
+                    if (Array.isArray(product.price)) {
+                        price = product.price[0]?.priceOriginal || product.price[0]?.original || 0;
+                    } else if (typeof product.price === 'object') {
+                        price = product.price.priceOriginal || product.price.original || 0;
+                    }
+                }
+                const image = product?.image || [];
+                const imageSrc = Array.isArray(image) && image.length > 0 ? image[0] : '';
+                const slug = product?.slug || '';
+                const min = product?.min || 1;
+                const max = product?.max || 100;
+                const stock = product?.stock || 0;
+                
+                // Always use slug for product link, never use id
+                const productHref = slug ? `/product/${slug}` : `#`;
+                
+                // Get options from cart item
+                const options = item.options || [];
+                
+                return {
+                    id: productId,
+                    productName,
+                    price,
+                    oldPrice: undefined,
+                    imageSrc,
+                    imageAlt: productName,
+                    href: productHref,
+                    quantity: item.quantity || 1,
+                    min,
+                    max,
+                    stock,
+                    options: Array.isArray(options) ? options : [], // Ensure options is an array
+                };
+            });
+            
+            return {
+                products: mappedProducts,
+                totalPrice: apiCart.totalDiscountBefore || 0,
+                totalQuantity: apiCart.quantity || 0,
+                couponCode: apiCart.discountCode || undefined,
+                couponDiscount: apiCart.totalDiscount || 0,
+            };
+        }
+        return reduxCart;
+    }, [cartData, currentUser, reduxCart]);
+    
     const [internalIsOpen, setInternalIsOpen] = useState(false);
     const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
     const setIsOpen = controlledSetIsOpen || setInternalIsOpen;
@@ -221,23 +340,192 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
         return () => document.removeEventListener('keydown', handleKey);
     }, [isOpen, onOverlayChange, mounted]);
 
-    const handleRemove = (e: React.MouseEvent, id: string) => {
+    const handleRemove = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
         e.preventDefault();
-        dispatch(removeFromCart(id));
+        
+        if (currentUser) {
+            // Optimistic update - remove item immediately from UI
+            const oldCartData = cartData;
+            const optimisticCart = {
+                ...cartData,
+                data: {
+                    ...cartData?.data,
+                    items: cartData?.data?.items?.filter((item: any) => {
+                        const productId = item.productId?._id || item.product_id?._id || '';
+                        return productId !== id;
+                    }) || [],
+                    quantity: (cartData?.data?.quantity || 0) - (cart.products.find(p => p.id === id)?.quantity || 0),
+                    totalDiscountBefore: (cartData?.data?.totalDiscountBefore || 0) - ((cart.products.find(p => p.id === id)?.price || 0) * (cart.products.find(p => p.id === id)?.quantity || 0)),
+                    totalPrice: ((cartData?.data?.totalDiscountBefore || 0) - ((cart.products.find(p => p.id === id)?.price || 0) * (cart.products.find(p => p.id === id)?.quantity || 0))) - (cartData?.data?.totalDiscount || 0),
+                }
+            };
+            
+            // Update cache optimistically (no revalidate, just update data)
+            globalMutate('/api/v1/cart', optimisticCart, { revalidate: false });
+            
+            try {
+                const response = await removeFromCartAPI(id);
+                // Update cache with actual response data (no revalidate)
+                await globalMutate('/api/v1/cart', response, { revalidate: false });
+            } catch (error: any) {
+                // Revert on error - restore old data
+                if (oldCartData) {
+                    await globalMutate('/api/v1/cart', oldCartData, { revalidate: false });
+                }
+                const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra. Vui lòng thử lại!';
+                showError(errorMessage);
+            }
+        } else {
+            dispatch(removeFromCart(id));
+        }
     };
 
     const handleIncrease = (e: React.MouseEvent, id: string, currentQuantity: number) => {
         e.stopPropagation();
         e.preventDefault();
-        dispatch(updateQuantity({ id, quantity: currentQuantity + 1 }));
+        
+        // Find product in cart to check max
+        const product = cart.products.find(p => p.id === id);
+        const max = (product as any)?.max || 100;
+        const stock = (product as any)?.stock || 0;
+        const newQuantity = currentQuantity + 1;
+        
+        // Client-side validation
+        if (newQuantity > max) {
+            showError(`Số lượng tối đa là ${max}`);
+            return;
+        }
+        
+        if (newQuantity > stock) {
+            showError(`Sản phẩm chỉ còn ${stock} sản phẩm trong kho`);
+            return;
+        }
+        
+        if (currentUser) {
+            // Get current cart data (may be from previous optimistic update)
+            const currentCartData = cartData;
+            const pendingUpdate = pendingUpdatesRef.current.get(id);
+            
+            // Get oldCartData only on first click (if not already saved)
+            const oldCartData = pendingUpdate?.oldCartData || cartData;
+            
+            // Get current quantity from pending update if exists, otherwise use currentQuantity from props
+            // This ensures we use the latest quantity from previous optimistic update
+            const actualCurrentQuantity = pendingUpdate?.quantity || currentQuantity;
+            
+            // Save oldCartData only on first click (if not already saved)
+            if (!pendingUpdate) {
+                pendingUpdatesRef.current.set(id, { oldCartData: cartData, productId: id, quantity: actualCurrentQuantity, expectedQuantity: newQuantity });
+            } else {
+                // Update with new expected quantity
+                pendingUpdatesRef.current.set(id, { ...pendingUpdate, expectedQuantity: newQuantity });
+            }
+            
+            // Calculate price difference based on actual current quantity
+            const priceDiff = ((product as any)?.price || 0) * (newQuantity - actualCurrentQuantity);
+            const quantityDiff = newQuantity - actualCurrentQuantity;
+            
+            // Optimistic update - update UI immediately using current cart data
+            const optimisticCart = {
+                ...currentCartData,
+                data: {
+                    ...currentCartData?.data,
+                    items: currentCartData?.data?.items?.map((item: any) => {
+                        const productId = item.productId?._id || item.product_id?._id || '';
+                        if (productId === id) {
+                            return { ...item, quantity: newQuantity };
+                        }
+                        return item;
+                    }) || [],
+                    quantity: (currentCartData?.data?.quantity || 0) + quantityDiff,
+                    totalDiscountBefore: (currentCartData?.data?.totalDiscountBefore || 0) + priceDiff,
+                    totalPrice: ((currentCartData?.data?.totalDiscountBefore || 0) + priceDiff) - (currentCartData?.data?.totalDiscount || 0),
+                }
+            };
+            
+            // Update cache optimistically (no revalidate, just update data)
+            globalMutate('/api/v1/cart', optimisticCart, { revalidate: false });
+            
+            // Update pending update with new quantity and expected quantity
+            pendingUpdatesRef.current.set(id, { oldCartData, productId: id, quantity: newQuantity, expectedQuantity: newQuantity });
+            
+            // Debounced API call (200ms delay)
+            debouncedUpdateQuantity(id, newQuantity);
+        } else {
+            dispatch(updateQuantity({ id, quantity: newQuantity }));
+        }
     };
 
     const handleDecrease = (e: React.MouseEvent, id: string, currentQuantity: number) => {
         e.stopPropagation();
         e.preventDefault();
-        if (currentQuantity > 1) {
-            dispatch(updateQuantity({ id, quantity: currentQuantity - 1 }));
+        
+        // Find product in cart to check min
+        const product = cart.products.find(p => p.id === id);
+        const min = (product as any)?.min || 1;
+        
+        if (currentQuantity <= min) {
+            showError(`Số lượng tối thiểu là ${min}`);
+            return;
+        }
+        
+        const newQuantity = currentQuantity - 1;
+        
+        if (currentUser) {
+            // Get current cart data (may be from previous optimistic update)
+            const currentCartData = cartData;
+            const pendingUpdate = pendingUpdatesRef.current.get(id);
+            
+            // Get oldCartData only on first click (if not already saved)
+            const oldCartData = pendingUpdate?.oldCartData || cartData;
+            
+            // Get current quantity from pending update if exists, otherwise use currentQuantity from props
+            // This ensures we use the latest quantity from previous optimistic update
+            const actualCurrentQuantity = pendingUpdate?.quantity || currentQuantity;
+            
+            // Save oldCartData only on first click (if not already saved)
+            if (!pendingUpdate) {
+                pendingUpdatesRef.current.set(id, { oldCartData: cartData, productId: id, quantity: actualCurrentQuantity, expectedQuantity: newQuantity });
+            } else {
+                // Update with new expected quantity
+                pendingUpdatesRef.current.set(id, { ...pendingUpdate, expectedQuantity: newQuantity });
+            }
+            
+            // Calculate price difference based on actual current quantity
+            const priceDiff = ((product as any)?.price || 0) * (newQuantity - actualCurrentQuantity);
+            const quantityDiff = newQuantity - actualCurrentQuantity;
+            
+            // Optimistic update - update UI immediately using current cart data
+            const optimisticCart = {
+                ...currentCartData,
+                data: {
+                    ...currentCartData?.data,
+                    items: currentCartData?.data?.items?.map((item: any) => {
+                        const productId = item.productId?._id || item.product_id?._id || '';
+                        if (productId === id) {
+                            return { ...item, quantity: newQuantity };
+                        }
+                        return item;
+                    }) || [],
+                    quantity: (currentCartData?.data?.quantity || 0) + quantityDiff,
+                    totalDiscountBefore: (currentCartData?.data?.totalDiscountBefore || 0) + priceDiff,
+                    totalPrice: ((currentCartData?.data?.totalDiscountBefore || 0) + priceDiff) - (currentCartData?.data?.totalDiscount || 0),
+                }
+            };
+            
+            // Update cache optimistically (no revalidate, just update data)
+            globalMutate('/api/v1/cart', optimisticCart, { revalidate: false });
+            
+            // Update pending update with new quantity and expected quantity
+            pendingUpdatesRef.current.set(id, { oldCartData, productId: id, quantity: newQuantity, expectedQuantity: newQuantity });
+            
+            // Debounced API call (200ms delay)
+            debouncedUpdateQuantity(id, newQuantity);
+        } else {
+            if (newQuantity > 0) {
+                dispatch(updateQuantity({ id, quantity: newQuantity }));
+            }
         }
     };
 
@@ -338,7 +626,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                             {/* Cart Items */}
                             <div className={cx('cart-items')}>
                                 {cart.products.map((product) => (
-                                    <div key={product.id} className={cx('cart-item')}>
+                                    <Link href={product.href || '#'} key={product.id} className={cx('cart-item')}>
                                         <div className={cx('cart-item-image')}>
                                             {product.imageSrc ? (
                                                 <Image
@@ -384,6 +672,19 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                                                 >
                                                     {product.productName}
                                                 </Link>
+                                                {/* Display options if available */}
+                                                {product.options && Array.isArray(product.options) && product.options.length > 0 && (
+                                                    <div className={cx('product-options')}>
+                                                        {product.options.map((opt: any, idx: number) => (
+                                                            <div key={idx} className={cx('option-item')}>
+                                                                <span className={cx('option-title')}>{opt.title}:</span>
+                                                                <span className={cx('option-value')}>{opt.value}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className={cx('cart-item-footer')}>
                                                 <button
                                                     className={cx('cart-item-remove')}
                                                     onClick={(e) => handleRemove(e, product.id)}
@@ -418,7 +719,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                                                 <span className={cx('cart-item-price-value')}>{formatPrice(product.price)} ₫</span>
                                             </div>
                                         </div>
-                                    </div>
+                                    </Link>
                                 ))}
                             </div>
 

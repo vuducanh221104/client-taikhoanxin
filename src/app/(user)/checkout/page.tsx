@@ -1,23 +1,22 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import classNames from 'classnames/bind';
 import styles from './page.module.scss';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { useDispatch } from 'react-redux';
-import { clearCart } from '@/redux/cartSlice';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { OnlineBankingQrIcon } from '@/components/Icons';
 import ProgressIndicator, { Step } from '@/components/ProgressIndicator';
+import { useCart, checkout } from '@/services/cartService';
+import { useToast } from '@/hooks/useToast';
 
 const cx = classNames.bind(styles);
 
 interface FormErrors {
-    firstName?: string;
-    lastName?: string;
+    fullName?: string;
     phone?: string;
     email?: string;
 }
@@ -39,38 +38,36 @@ const paymentMethods: PaymentMethod[] = [
         description: 'Quét mã QR chuyển khoản online. Phí 0%',
         fee: '0%',
     },
-    {
-        id: 'vnpay-qr',
-        iconImage: '/payment/vnpay.png',
-        title: 'Thanh toán VNPAY-QR',
-        description: 'Quét mã QR PAY trên ứng dụng Mobile Banking, phí giao dịch 2%',
-        fee: '2%',
-    },
-    {
-        id: 'bank-card',
-        iconImage: '/payment/atm.png',
-        title: 'Thanh toán bằng thẻ ngân hàng',
-        description: 'Phí 0.9% + 900₫',
-        fee: '0.9% + 900₫',
-    },
-    {
-        id: 'master-visa-jcb',
-        iconImage: '/payment/visa.png',
-        title: 'Thanh toán bằng thẻ Master/Visa/JCB',
-        description: 'Phí 2.36% + 2.660 ₫',
-        fee: '2.36% + 2.660₫',
-    },
+    // {
+    //     id: 'vnpay-qr',
+    //     iconImage: '/payment/vnpay.png',
+    //     title: 'Thanh toán VNPAY-QR',
+    //     description: 'Quét mã QR PAY trên ứng dụng Mobile Banking, phí giao dịch 2%',
+    //     fee: '2%',
+    // },
+    // {
+    //     id: 'bank-card',
+    //     iconImage: '/payment/atm.png',
+    //     title: 'Thanh toán bằng thẻ ngân hàng',
+    //     description: 'Phí 0.9% + 900₫',
+    //     fee: '0.9% + 900₫',
+    // },
+    // {
+    //     id: 'master-visa-jcb',
+    //     iconImage: '/payment/visa.png',
+    //     title: 'Thanh toán bằng thẻ Master/Visa/JCB',
+    //     description: 'Phí 2.36% + 2.660 ₫',
+    //     fee: '2.36% + 2.660₫',
+    // },
 ];
 
 const CheckoutPage: React.FC = () => {
-    const cart = useSelector((state: RootState) => state.cart);
     const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
-    const dispatch = useDispatch();
     const router = useRouter();
+    const { showSuccess, showError } = useToast();
     const [mounted, setMounted] = useState(false);
     const [form, setForm] = useState({
-        firstName: '',
-        lastName: '',
+        fullName: '',
         phone: '',
         email: '',
         note: '',
@@ -79,6 +76,9 @@ const CheckoutPage: React.FC = () => {
     const [touched, setTouched] = useState<Record<string, boolean>>({});
     const [submitting, setSubmitting] = useState(false);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('qr-bank-transfer');
+    
+    // Fetch cart from API
+    const { data: cartData, error: cartError, isLoading: cartLoading, mutate: mutateCart } = useCart();
 
     // Check authentication and redirect if not logged in
     useEffect(() => {
@@ -96,21 +96,60 @@ const CheckoutPage: React.FC = () => {
     // Auto-fill form with user data when logged in
     useEffect(() => {
         if (currentUser && mounted) {
-            // Split full_name into firstName and lastName
-            const nameParts = currentUser.full_name?.trim().split(' ') || [];
-            const firstName = nameParts.slice(0, -1).join(' ') || '';
-            const lastName = nameParts[nameParts.length - 1] || '';
-
             setForm((prev) => ({
                 ...prev,
-                firstName: firstName || prev.firstName,
-                lastName: lastName || prev.lastName,
-                phone: currentUser.phone_number || prev.phone,
+                fullName: (currentUser as any).full_name || (currentUser as any).fullName || prev.fullName,
+                phone: (currentUser as any).phone_number || (currentUser as any).phone || prev.phone,
                 email: currentUser.email || prev.email,
             }));
         }
     }, [currentUser, mounted]);
 
+    // Map API cart to component format
+    const cart = useMemo(() => {
+        if (currentUser && cartData?.data) {
+            const apiCart = cartData.data;
+            const items = apiCart.items || [];
+            const mappedProducts = items.map((item: any) => {
+                const product = item.productId || item.product_id;
+                const productId = product?._id || product?.id || '';
+                const productName = product?.name || '';
+                let price = 0;
+                if (product?.price) {
+                    if (Array.isArray(product.price)) {
+                        price = product.price[0]?.priceOriginal || product.price[0]?.original || item.unitPrice || 0;
+                    } else if (typeof product.price === 'object') {
+                        price = product.price.priceOriginal || product.price.original || item.unitPrice || 0;
+                    }
+                } else {
+                    price = item.unitPrice || 0;
+                }
+                
+                return {
+                    id: productId,
+                    productName,
+                    price,
+                    quantity: item.quantity || 1,
+                };
+            });
+            
+            return {
+                products: mappedProducts,
+                totalPrice: apiCart.totalDiscountBefore || 0,
+                totalQuantity: apiCart.quantity || 0,
+                couponCode: apiCart.discountCode || undefined,
+                couponDiscount: apiCart.discountAmount || apiCart.totalDiscount || 0,
+            };
+        }
+        return {
+            products: [],
+            totalPrice: 0,
+            totalQuantity: 0,
+            couponCode: undefined,
+            couponDiscount: 0,
+        };
+    }, [cartData, currentUser]);
+    
     const formatPrice = (value: number) => value.toLocaleString('vi-VN');
     const cartEmpty = cart.products.length === 0;
 
@@ -124,6 +163,34 @@ const CheckoutPage: React.FC = () => {
                         <p>Bạn cần đăng nhập để tiếp tục thanh toán.</p>
                         <Link href="/auth/login" className={cx('login-link')}>
                             Đăng nhập ngay
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    
+    // Show loading while fetching cart
+    if (cartLoading) {
+        return (
+            <div className={cx('checkout-page')}>
+                <div className="container">
+                    <div style={{ padding: '40px', textAlign: 'center' }}>Đang tải giỏ hàng...</div>
+                </div>
+            </div>
+        );
+    }
+    
+    // Show error if cart fetch failed
+    if (cartError) {
+        return (
+            <div className={cx('checkout-page')}>
+                <div className="container">
+                    <div className={cx('auth-required')}>
+                        <h2>Lỗi tải giỏ hàng</h2>
+                        <p>Có lỗi xảy ra khi tải giỏ hàng. Vui lòng thử lại.</p>
+                        <Link href="/cart" className={cx('login-link')}>
+                            Quay lại giỏ hàng
                         </Link>
                     </div>
                 </div>
@@ -147,12 +214,8 @@ const CheckoutPage: React.FC = () => {
     const validateForm = (): boolean => {
         const newErrors: FormErrors = {};
 
-        if (!form.firstName.trim()) {
-            newErrors.firstName = 'Vui lòng nhập tên';
-        }
-
-        if (!form.lastName.trim()) {
-            newErrors.lastName = 'Vui lòng nhập họ';
+        if (!form.fullName.trim()) {
+            newErrors.fullName = 'Vui lòng nhập họ và tên';
         }
 
         if (!form.phone.trim()) {
@@ -174,8 +237,7 @@ const CheckoutPage: React.FC = () => {
     // Check if form is valid
     const isFormValid = (): boolean => {
         return (
-            form.firstName.trim() !== '' &&
-            form.lastName.trim() !== '' &&
+            form.fullName.trim() !== '' &&
             form.phone.trim() !== '' &&
             validatePhone(form.phone) &&
             form.email.trim() !== '' &&
@@ -200,12 +262,8 @@ const CheckoutPage: React.FC = () => {
         // Validate individual field
         const newErrors: FormErrors = { ...errors };
 
-        if (name === 'firstName' && !form.firstName.trim()) {
-            newErrors.firstName = 'Vui lòng nhập tên';
-        }
-
-        if (name === 'lastName' && !form.lastName.trim()) {
-            newErrors.lastName = 'Vui lòng nhập họ';
+        if (name === 'fullName' && !form.fullName.trim()) {
+            newErrors.fullName = 'Vui lòng nhập họ và tên';
         }
 
         if (name === 'phone') {
@@ -235,8 +293,7 @@ const CheckoutPage: React.FC = () => {
         if (!validateForm()) {
             // Mark all fields as touched to show errors
             setTouched({
-                firstName: true,
-                lastName: true,
+                fullName: true,
                 phone: true,
                 email: true,
             });
@@ -244,49 +301,45 @@ const CheckoutPage: React.FC = () => {
         }
 
         setSubmitting(true);
-        // Mock submit: tạo đơn hàng và lưu localStorage để trang success hiển thị
-        const orderCode = `TX-${new Date()
-            .toISOString()
-            .slice(0, 10)
-            .replace(/-/g, '')}-${Math.floor(Math.random() * 9000 + 1000)}`;
-        const selectedMethod = paymentMethods.find((m) => m.id === selectedPaymentMethod);
-        const subtotal = cart.totalPrice;
-        const discount = cart.couponDiscount || 0;
-        const finalTotal = subtotal - discount;
         
-        const order = {
-            code: orderCode,
-            customer: {
-                firstName: form.firstName,
-                lastName: form.lastName,
-                phone: form.phone,
-                email: form.email,
-                note: form.note,
-            },
-            items: cart.products,
-            subtotal: subtotal,
-            coupon: cart.couponCode ? {
-                code: cart.couponCode,
-                discount: discount,
-            } : null,
-            total: finalTotal,
-            paymentMethod: {
-                id: selectedPaymentMethod,
-                title: selectedMethod?.title || 'Chuyển khoản ngân hàng',
-                description: selectedMethod?.description || '',
-                fee: selectedMethod?.fee || '0%',
-            },
-            createdAt: new Date().toISOString(),
-        };
         try {
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('lastOrder', JSON.stringify(order));
+            // Call checkout API
+            const response = await checkout({
+                phoneUserOrder: form.phone,
+                emailUserOrder: form.email,
+                userNote: form.note || '',
+                customerFullName: form.fullName,
+            });
+            
+            if (response.success) {
+                const orderData = response.data;
+                const orderCode = orderData?.orderId?.toString();
+                const checkoutToken = orderData?.checkoutToken;
+
+                if (!orderCode || !checkoutToken) {
+                    throw new Error('Không thể xác định thông tin đơn hàng. Vui lòng thử lại.');
+                }
+
+                // Revalidate cart (should be empty after checkout)
+                await mutateCart();
+                
+                // Show success message
+                showSuccess('Đặt hàng thành công!');
+                
+                // Redirect to success page with verification params
+                const params = new URLSearchParams({
+                    order: orderCode,
+                    token: checkoutToken,
+                });
+                router.push(`/checkout/success?${params.toString()}`);
+            } else {
+                throw new Error(response.message || 'Có lỗi xảy ra khi đặt hàng');
             }
-        } catch {}
-        // Clear cart sau khi đặt hàng
-        dispatch(clearCart());
-        // Điều hướng tới trang thành công
-        router.push('/checkout/success');
+        } catch (error: any) {
+            const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!';
+            showError(errorMessage);
+            setSubmitting(false);
+        }
     };
 
     const checkoutSteps: Step[] = [
@@ -307,32 +360,18 @@ const CheckoutPage: React.FC = () => {
                     <form className={cx('form')} onSubmit={handleSubmit} noValidate>
                         <h2 className={cx('section-title')}>Chi tiết thanh toán</h2>
                         <div className={cx('row')}>
-                            <div className={cx('field')}>
-                                <label>Tên *</label>
+                            <div className={cx('field', 'full')}>
+                                <label>Họ và tên *</label>
                                 <input
-                                    name="firstName"
-                                    value={form.firstName}
+                                    name="fullName"
+                                    value={form.fullName}
                                     onChange={handleChange}
                                     onBlur={handleBlur}
-                                    placeholder="Nhập tên"
-                                    className={cx({ 'has-error': touched.firstName && errors.firstName })}
+                                    placeholder="Nhập họ và tên"
+                                    className={cx({ 'has-error': touched.fullName && errors.fullName })}
                                 />
-                                {touched.firstName && errors.firstName && (
-                                    <span className={cx('error-message')}>{errors.firstName}</span>
-                                )}
-                            </div>
-                            <div className={cx('field')}>
-                                <label>Họ *</label>
-                                <input
-                                    name="lastName"
-                                    value={form.lastName}
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    placeholder="Nhập họ"
-                                    className={cx({ 'has-error': touched.lastName && errors.lastName })}
-                                />
-                                {touched.lastName && errors.lastName && (
-                                    <span className={cx('error-message')}>{errors.lastName}</span>
+                                {touched.fullName && errors.fullName && (
+                                    <span className={cx('error-message')}>{errors.fullName}</span>
                                 )}
                             </div>
                         </div>

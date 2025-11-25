@@ -49,7 +49,7 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(({
     reviewCount = 0,
     status = 'in-stock',
     stock,
-    href = '#',
+    href = '',
     imageSrc,
     imageAlt = 'Product image',
     variant = 'light',

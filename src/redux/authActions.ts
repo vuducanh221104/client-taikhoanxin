@@ -1,6 +1,6 @@
 import { Dispatch } from '@reduxjs/toolkit';
 import { logOutStart, logOutSuccess, logOutFailed } from './authSlice';
-import { authLogout } from '@/services/authServices';
+import { authLogout } from '@/services/authService';
 
 /**
  * Logout user action

@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import classNames from 'classnames/bind';
 import styles from './CategoryDropdown.module.scss';
 import {
@@ -17,13 +18,15 @@ import {
     PlayIcon,
     CloseIcon,
 } from '@/components/Icons';
+import { useCategories, Category } from '@/services/categoryService';
 
 const cx = classNames.bind(styles);
 
 interface CategoryItem {
     id: string;
     name: string;
-    icon: React.ReactNode;
+    icon?: React.ReactNode;
+    image?: string;
     href?: string;
     subcategories?: {
         title: string;
@@ -35,81 +38,45 @@ interface CategoryItem {
     }[];
 }
 
-const categories: CategoryItem[] = [
+// Mapping category slug với icon component
+const categoryIconMap: Record<string, React.ReactNode> = {
+    'windows': <WindowsIcon />,
+    'office': <OfficeIcon />,
+    'hoc-tap': <GraduationIcon />,
+    'tai-khoan-ai': <BrainIcon />,
+    'edit-anh-video': <ImageIcon />,
+    'luu-tru': <CloudIcon />,
+    'lam-viec': <BriefcaseIcon />,
+    'giai-tri': <PlayIcon />,
+};
+
+// Subcategories cho Windows (giữ nguyên)
+const windowsSubcategories = [
     {
-        id: 'windows',
-        name: 'Windows',
-        icon: <WindowsIcon />,
-        subcategories: [
-            {
-                title: 'WINDOWS 11',
-                badge: 'HOT',
-                items: [
-                    { name: 'Windows 11 Pro', href: '/products/windows-11-pro' },
-                    { name: 'Windows 11 Home', href: '/products/windows-11-home' },
-                ],
-            },
-            {
-                title: 'WINDOWS 10',
-                items: [
-                    { name: 'Windows 10 Pro', href: '/products/windows-10-pro' },
-                ],
-            },
-            {
-                title: 'WINDOWS 8',
-                items: [
-                    { name: 'Windows 8.1 Pro', href: '/products/windows-8-1-pro' },
-                ],
-            },
-            {
-                title: 'WINDOWS 7',
-                items: [
-                    { name: 'Windows 7 Pro SP1', href: '/products/windows-7-pro-sp1' },
-                ],
-            },
+        title: 'WINDOWS 11',
+        badge: 'HOT',
+        items: [
+            { name: 'Windows 11 Pro', href: '/products/windows-11-pro' },
+            { name: 'Windows 11 Home', href: '/products/windows-11-home' },
         ],
     },
     {
-        id: 'office',
-        name: 'Office',
-        icon: <OfficeIcon />,
-        href: '/categories/office',
+        title: 'WINDOWS 10',
+        items: [
+            { name: 'Windows 10 Pro', href: '/products/windows-10-pro' },
+        ],
     },
     {
-        id: 'learning',
-        name: 'Học tập',
-        icon: <GraduationIcon />,
-        href: '/categories/learning',
+        title: 'WINDOWS 8',
+        items: [
+            { name: 'Windows 8.1 Pro', href: '/products/windows-8-1-pro' },
+        ],
     },
     {
-        id: 'ai-account',
-        name: 'Tài khoản AI',
-        icon: <BrainIcon />,
-        href: '/categories/ai-account',
-    },
-    {
-        id: 'photo-video',
-        name: 'Ảnh & Video',
-        icon: <ImageIcon />,
-        href: '/categories/photo-video',
-    },
-    {
-        id: 'storage',
-        name: 'Lưu trữ',
-        icon: <CloudIcon />,
-        href: '/categories/storage',
-    },
-    {
-        id: 'work',
-        name: 'Làm việc',
-        icon: <BriefcaseIcon />,
-        href: '/categories/work',
-    },
-    {
-        id: 'entertainment',
-        name: 'Giải trí',
-        icon: <PlayIcon />,
-        href: '/categories/entertainment',
+        title: 'WINDOWS 7',
+        items: [
+            { name: 'Windows 7 Pro SP1', href: '/products/windows-7-pro-sp1' },
+        ],
     },
 ];
 
@@ -127,6 +94,39 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({ onOverlayChange }) 
     const hoverSwitchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const buttonRef = useRef<HTMLDivElement>(null);
     const sidebarRef = useRef<HTMLDivElement>(null);
+
+    // Fetch categories from API (only non-hidden categories)
+    const { data: categoriesData, error, isLoading } = useCategories({ isActive: true, includeHidden: false });
+
+    // Map API categories to CategoryItem format, sorted by sortOrder
+    const categories = useMemo(() => {
+        if (!categoriesData?.data || categoriesData.data.length === 0) {
+            return [];
+        }
+
+        return categoriesData.data
+            .filter((cat: Category) => cat.isActive) // Chỉ lấy categories active
+            .sort((a: Category, b: Category) => (a.sortOrder || 0) - (b.sortOrder || 0)) // Sort theo sortOrder
+            .map((cat: Category) => {
+                // Nếu có image từ API thì dùng image, không thì dùng icon từ categoryIconMap
+                const hasImage = cat.image && cat.image.trim() !== '';
+                const defaultIcon = categoryIconMap[cat.slug] || categoryIconMap[cat.name.toLowerCase()] || <BriefcaseIcon />;
+                
+                // Windows có subcategories đặc biệt
+                const subcategories = cat.slug === 'windows' || cat.name.toLowerCase() === 'windows' 
+                    ? windowsSubcategories 
+                    : undefined;
+
+                return {
+                    id: cat._id,
+                    name: cat.name,
+                    image: hasImage ? cat.image : undefined,
+                    icon: hasImage ? undefined : defaultIcon,
+                    href: `/categories/${cat.slug}`,
+                    subcategories: subcategories,
+                } as CategoryItem;
+            });
+    }, [categoriesData]);
 
     // Detect mobile
     useEffect(() => {
@@ -293,7 +293,7 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({ onOverlayChange }) 
             clearTimeout(timeout);
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [isOpen]);
+    }, [isOpen, isMobile]);
 
     // Ngăn scroll body khi menu mở (mobile)
     useEffect(() => {
@@ -340,6 +340,18 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({ onOverlayChange }) 
         document.addEventListener('keydown', handleKey);
         return () => document.removeEventListener('keydown', handleKey);
     }, [isOpen]);
+
+    // Loading state - phải đặt sau tất cả hooks
+    if (isLoading) {
+        return (
+            <div className={cx('category-dropdown-wrapper')}>
+                <div className={cx('categories-button')}>
+                    <MenuIcon className={cx('menu-icon')} />
+                    <span>Danh mục sản phẩm</span>
+                </div>
+            </div>
+        );
+    }
 
     const activeCategoryData = categories.find((cat) => cat.id === activeCategory);
 
@@ -408,7 +420,19 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({ onOverlayChange }) 
                                 onClick={(e) => handleCategoryClick(category, e)}
                                 data-category-id={category.id}
                             >
-                                <div className={cx('sidebar-item-icon')}>{category.icon}</div>
+                                <div className={cx('sidebar-item-icon')}>
+                                    {category.image ? (
+                                        <Image
+                                            src={category.image}
+                                            alt={category.name}
+                                            width={24}
+                                            height={24}
+                                            className={cx('category-image')}
+                                        />
+                                    ) : (
+                                        category.icon
+                                    )}
+                                </div>
                                 <span className={cx('sidebar-item-text')}>{category.name}</span>
                                 {category.subcategories && (
                                     <ChevronRightIcon className={cx('sidebar-item-arrow')} />

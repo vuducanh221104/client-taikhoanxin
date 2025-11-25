@@ -1,11 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
+import { mutate } from 'swr';
 import Link from 'next/link';
 import classNames from 'classnames/bind';
 import styles from './AccountAddress.module.scss';
 import { CurrentUser } from '@/types/client';
 import { MapPinIcon } from '@/components/Icons';
+import { getProvinces, getDistricts, getWards, getProvinceName, getDistrictName, getWardName } from '@/utils/vietnamAddress';
+import { updateProfile } from '@/services/userService';
+import { changeUser } from '@/redux/authSlice';
+import { useToast } from '@/hooks/useToast';
 
 const cx = classNames.bind(styles);
 
@@ -14,13 +20,28 @@ interface AccountAddressProps {
 }
 
 const AccountAddress: React.FC<AccountAddressProps> = ({ user }) => {
+    const dispatch = useDispatch();
+    const { showSuccess, showError } = useToast();
+    
+    // Initialize form data from user prop (from DB)
     const [formData, setFormData] = useState({
-        province: '',
-        district: '',
-        ward: '',
-        street: '',
+        province: user.address?.province?.value || '',
+        district: user.address?.district?.value || '',
+        ward: user.address?.ward?.value || '',
+        street: user.address?.street || '',
         allowDisplayName: true,
     });
+
+    // Update form data when user prop changes (when profile is fetched from DB)
+    React.useEffect(() => {
+        setFormData({
+            province: user.address?.province?.value || '',
+            district: user.address?.district?.value || '',
+            ward: user.address?.ward?.value || '',
+            street: user.address?.street || '',
+            allowDisplayName: true,
+        });
+    }, [user]);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -67,8 +88,11 @@ const AccountAddress: React.FC<AccountAddressProps> = ({ user }) => {
 
     const handleBlur = (fieldName: keyof typeof formData) => {
         setTouched((prev) => ({ ...prev, [fieldName]: true }));
-        const error = validateField(fieldName, formData[fieldName]);
-        setFieldErrors((prev) => ({ ...prev, [fieldName]: error }));
+        // Only validate string fields, skip boolean fields like allowDisplayName
+        if (typeof formData[fieldName] === 'string') {
+            const error = validateField(fieldName, formData[fieldName] as string);
+            setFieldErrors((prev) => ({ ...prev, [fieldName]: error }));
+        }
     };
 
     const handleChange = (fieldName: keyof typeof formData, value: string | boolean) => {
@@ -129,20 +153,60 @@ const AccountAddress: React.FC<AccountAddressProps> = ({ user }) => {
         setLoading(true);
 
         try {
-            // TODO: Call API to update address
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            setSuccess('Cập nhật địa chỉ thành công!');
+            // Prepare address data with value and text
+            const addressData = {
+                province: {
+                    value: formData.province,
+                    text: getProvinceName(formData.province),
+                },
+                district: {
+                    value: formData.district,
+                    text: getDistrictName(formData.province, formData.district),
+                },
+                ward: {
+                    value: formData.ward,
+                    text: getWardName(formData.district, formData.ward),
+                },
+                street: formData.street.trim(),
+            };
+
+            // Call API to update profile with address
+            const response = await updateProfile({ address: addressData });
+
+            if (response.success && response.data) {
+                // Update Redux state with new user data
+                const updatedUser: CurrentUser = {
+                    ...user,
+                    address: response.data.address ? {
+                        province: response.data.address.province || user.address?.province || { value: '', text: '' },
+                        district: response.data.address.district || user.address?.district || { value: '', text: '' },
+                        ward: response.data.address.ward || user.address?.ward || { value: '', text: '' },
+                        street: response.data.address.street || user.address?.street || '',
+                    } : user.address,
+                };
+                dispatch(changeUser(updatedUser));
+
+                // Revalidate SWR cache to get fresh data from DB
+                mutate('/api/v1/users/profile');
+
+                setSuccess('Cập nhật địa chỉ thành công!');
+                showSuccess('Cập nhật địa chỉ thành công!');
+            } else {
+                throw new Error('Cập nhật địa chỉ thất bại');
+            }
         } catch (err: any) {
-            setError(err?.message || 'Có lỗi xảy ra. Vui lòng thử lại!');
+            const errorMessage = err?.response?.data?.message || err?.message || 'Có lỗi xảy ra. Vui lòng thử lại!';
+            setError(errorMessage);
+            showError(errorMessage);
         } finally {
             setLoading(false);
         }
     };
 
-    // Mock data for dropdowns - In real app, fetch from API
-    const provinces = ['Hà Nội', 'Hồ Chí Minh', 'Đà Nẵng', 'Hải Phòng', 'Cần Thơ'];
-    const districts = ['Quận 1', 'Quận 2', 'Quận 3', 'Quận 4', 'Quận 5'];
-    const wards = ['Phường 1', 'Phường 2', 'Phường 3', 'Phường 4', 'Phường 5'];
+    // Get provinces, districts, wards from vietnam-provinces
+    const provinces = useMemo(() => getProvinces(), []);
+    const districts = useMemo(() => getDistricts(formData.province), [formData.province]);
+    const wards = useMemo(() => getWards(formData.district), [formData.district]);
 
     return (
         <div className={cx('account-address')}>
@@ -180,8 +244,8 @@ const AccountAddress: React.FC<AccountAddressProps> = ({ user }) => {
                         >
                             <option value="">-</option>
                             {provinces.map((province) => (
-                                <option key={province} value={province}>
-                                    {province}
+                                <option key={province.value} value={province.value}>
+                                    {province.text}
                                 </option>
                             ))}
                         </select>
@@ -206,8 +270,8 @@ const AccountAddress: React.FC<AccountAddressProps> = ({ user }) => {
                         >
                             <option value="">-</option>
                             {districts.map((district) => (
-                                <option key={district} value={district}>
-                                    {district}
+                                <option key={district.value} value={district.value}>
+                                    {district.text}
                                 </option>
                             ))}
                         </select>
@@ -232,8 +296,8 @@ const AccountAddress: React.FC<AccountAddressProps> = ({ user }) => {
                         >
                             <option value="">-</option>
                             {wards.map((ward) => (
-                                <option key={ward} value={ward}>
-                                    {ward}
+                                <option key={ward.value} value={ward.value}>
+                                    {ward.text}
                                 </option>
                             ))}
                         </select>

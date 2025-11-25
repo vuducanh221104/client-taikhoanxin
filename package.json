@@ -16,8 +16,8 @@
     "dependencies": {
         "@reduxjs/toolkit": "^2.5.0",
         "@types/node": "20.1.7",
-        "@types/react": "18.2.6",
-        "@types/react-dom": "18.2.4",
+        "@types/react": "^18.3.26",
+        "@types/react-dom": "^18.3.7",
         "antd": "^5.17.0",
         "axios": "1.6.8",
         "classnames": "^2.3.2",
@@ -32,11 +32,14 @@
         "react": "^18.3.1",
         "react-dom": "^18.2.0",
         "react-redux": "^9.2.0",
+        "react-turnstile": "^1.1.4",
         "recharts": "^3.4.1",
         "redux": "^5.0.1",
         "redux-persist": "^6.0.0",
         "swr": "^2.2.5",
-        "typescript": "5.0.4"
+        "typescript": "5.0.4",
+        "usehooks-ts": "^3.1.1",
+        "vietnam-provinces": "^0.0.4"
     },
     "devDependencies": {
         "@types/js-cookie": "^3.0.6",

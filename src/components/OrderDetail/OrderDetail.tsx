@@ -1,14 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import Image from 'next/image';
 import classNames from 'classnames/bind';
 import styles from './OrderDetail.module.scss';
-import { getOrderByCode, getStatusLabel, getStatusColor } from '@/services/orderService';
+import { useOrder, getStatusLabel, getStatusColor, Order, OrderItem } from '@/services/orderService';
 import EmptyState from '@/components/EmptyState';
-import { PackageIcon, CopyIcon, CheckIcon, ShoppingCartIcon, DownloadIcon } from '@/components/Icons';
+import { PackageIcon, CopyIcon, CheckIcon, ShoppingCartIcon, DownloadIcon, AlertCircleIcon } from '@/components/Icons';
 import { useToast } from '@/components/Toast';
 import { addToCart } from '@/redux/cartSlice';
 
@@ -19,13 +19,144 @@ interface OrderDetailProps {
     userId: string;
 }
 
-const OrderDetail: React.FC<OrderDetailProps> = ({ orderCode, userId }) => {
+interface OrderProductViewModel {
+    id: string;
+    productName: string;
+    quantity: number;
+    price: number;
+    image?: string;
+    imageSrc?: string;
+    accountEntries?: string[]; // Lấy trực tiếp từ keys.entries, không parse
+    accountDescription?: string; // Lấy từ keys.description
+    help?: {
+        text?: string;
+        href?: string;
+    };
+    note?: string;
+}
+
+interface OrderDetailViewModel {
+    orderCode: string;
+    orderDate: string;
+    status: Order['orderStatus'];
+    customerEmail: string;
+    totalAmount: number;
+    products: OrderProductViewModel[];
+}
+
+const PRODUCT_IMAGE_FALLBACK = '/images/placeholder.png';
+
+const normalizeProductRef = (product: OrderItem['productId'] | OrderItem['product_id']) => {
+    if (!product) {
+        return { id: '', name: '', image: '' };
+    }
+
+    if (typeof product === 'string') {
+        return { id: product, name: '', image: '' };
+    }
+
+    return {
+        id: product._id,
+        name: product.name,
+        image: product.image?.[0] || '',
+    };
+};
+
+const mapOrderToViewModel = (apiOrder?: Order): OrderDetailViewModel | null => {
+    if (!apiOrder) {
+        return null;
+    }
+
+    const customerEmail =
+        apiOrder.emailUserOrder ||
+        (typeof apiOrder.userId === 'object' ? apiOrder.userId.email : '') ||
+        apiOrder.emailGiftForFriend ||
+        '';
+
+    const products: OrderProductViewModel[] = apiOrder.items.map((item, index) => {
+        const productRef = typeof item.productId === 'object' ? item.productId : item.product_id;
+        const normalizedProduct = normalizeProductRef(productRef);
+        
+        // Lấy trực tiếp từ keys.entries (array of strings), không parse
+        const accountEntries = item.keys?.entries && Array.isArray(item.keys.entries) && item.keys.entries.length > 0
+            ? item.keys.entries.filter((entry: string) => entry && entry.trim())
+            : undefined;
+
+        // Lấy description từ keys.description
+        const accountDescription = item.keys?.description && item.keys.description.trim()
+            ? item.keys.description.trim()
+            : undefined;
+
+        // Lấy help từ item.help
+        const help = item.help && (item.help.text || item.help.href) ? {
+            text: item.help.text || 'Hướng dẫn đăng nhập',
+            href: item.help.href || '',
+        } : undefined;
+
+        // Lấy note từ item.note
+        const note = item.note && item.note.trim() ? item.note.trim() : undefined;
+
+        return {
+            id: normalizedProduct.id || `${apiOrder._id}-${index}`,
+            productName: normalizedProduct.name || item.fullName || 'Sản phẩm',
+            quantity: item.quantity,
+            price: item.price,
+            image: normalizedProduct.image,
+            imageSrc: normalizedProduct.image,
+            accountEntries,
+            accountDescription,
+            help,
+            note,
+        };
+    });
+
+    return {
+        orderCode: apiOrder.orderId?.toString() || '',
+        orderDate: apiOrder.createdAt,
+        status: apiOrder.orderStatus,
+        customerEmail,
+        totalAmount: apiOrder.totalPrice,
+        products,
+    };
+};
+
+const OrderDetail: React.FC<OrderDetailProps> = ({ orderCode, userId: _userId }) => {
     const router = useRouter();
     const dispatch = useDispatch();
     const { showToast } = useToast();
-    const order = getOrderByCode(orderCode, userId);
+    const { data: orderResponse, error, isLoading } = useOrder(orderCode);
+    const order = useMemo(
+        () => mapOrderToViewModel(orderResponse?.data?.order),
+        [orderResponse]
+    );
     const [copiedField, setCopiedField] = useState<string | null>(null);
     const [revealedFields, setRevealedFields] = useState<Set<string>>(new Set());
+
+    if (isLoading) {
+        return (
+            <div className={cx('empty-wrapper')}>
+                <EmptyState
+                    icon={<PackageIcon size={80} />}
+                    title="Đang tải đơn hàng"
+                    description="Vui lòng chờ trong giây lát..."
+                />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className={cx('empty-wrapper')}>
+                <EmptyState
+                    icon={<PackageIcon size={80} />}
+                    title="Không thể tải đơn hàng"
+                    description="Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau."
+                    actionLabel="Quay lại danh sách"
+                    onAction={() => router.push('/account/orders')}
+                />
+            </div>
+        );
+    }
 
     if (!order) {
         return (
@@ -91,9 +222,9 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ orderCode, userId }) => {
                     id: product.id,
                     productName: product.productName,
                     price: product.price,
-                    imageSrc: product.image || product.imageSrc,
+                    imageSrc: product.image || product.imageSrc || PRODUCT_IMAGE_FALLBACK,
                     imageAlt: product.productName,
-                    href: `/products/${product.id}`,
+                    href: `/product/${product.id}`,
                 }));
             }
         });
@@ -236,114 +367,65 @@ Email: support@taikhoanxin.com
                         </div>
 
                         {/* Account Info - Only show for completed orders */}
-                        {order.status === 'completed' && (product.accounts || product.accountInfo) && (
+                        {['completed', 'warranty_completed'].includes(order.status) && product.accountEntries && product.accountEntries.length > 0 && (
                                 <div className={cx('account-info')}>
-                                    <h4 className={cx('account-title')}>Thông tin tài khoản</h4>
+                                    <h4 className={cx('account-title')}>
+                                        {product.accountDescription || 'Thông tin tài khoản'}
+                                    </h4>
                                     
-                                    {product.accounts ? (
-                                        // Multiple accounts
-                                        product.accounts.map((account, index) => (
-                                            <div key={index} className={cx('account-item')}>
-                                                <div className={cx('account-field-single')}>
-                                                    <button
-                                                        className={cx('copy-icon-button')}
-                                                        onClick={() => {
-                                                            const allText = `Tài khoản: ${account.username} || Mật khẩu: ${account.password}`;
-                                                            handleCopy(allText, `all-${product.id}-${index}`);
-                                                        }}
-                                                        title="Click để copy tất cả"
+                                    {product.accountEntries.map((entry, index) => (
+                                        <div key={index} className={cx('account-item')}>
+                                            <div className={cx('account-field-single')}>
+                                                <button
+                                                    className={cx('copy-icon-button')}
+                                                    onClick={() => {
+                                                        handleCopy(entry, `entry-${product.id}-${index}`);
+                                                    }}
+                                                    title="Click để copy toàn bộ"
+                                                >
+                                                    <CopyIcon size={24} className={cx('copy-icon-main')} />
+                                                </button>
+                                                <div className={cx('account-credentials')}>
+                                                    <span 
+                                                        className={cx('credential-value', 'clickable', {
+                                                            'blurred': !revealedFields.has(`entry-${product.id}-${index}`)
+                                                        })}
+                                                        onClick={() => handleCopy(entry, `entry-${product.id}-${index}`)}
+                                                        title="Click để copy"
                                                     >
-                                                        <CopyIcon size={24} className={cx('copy-icon-main')} />
-                                                    </button>
-                                                    <div className={cx('account-credentials')}>
-                                                        <span className={cx('credential-text')}>
-                                                            Tài khoản:{' '}
-                                                            <span 
-                                                                className={cx('credential-value', 'clickable', {
-                                                                    'blurred': !revealedFields.has(`username-${product.id}-${index}`)
-                                                                })}
-                                                                onClick={() => handleCopy(account.username, `username-${product.id}-${index}`)}
-                                                                title="Click để copy"
-                                                            >
-                                                                {account.username}
-                                                            </span>
-                                                        </span>
-                                                        <span className={cx('credential-separator')}>||</span>
-                                                        <span className={cx('credential-text')}>
-                                                            Mật khẩu:{' '}
-                                                            <span 
-                                                                className={cx('credential-value', 'clickable', {
-                                                                    'blurred': !revealedFields.has(`password-${product.id}-${index}`)
-                                                                })}
-                                                                onClick={() => handleCopy(account.password, `password-${product.id}-${index}`)}
-                                                                title="Click để copy"
-                                                            >
-                                                                {account.password}
-                                                            </span>
-                                                        </span>
-                                                    </div>
+                                                        {entry}
+                                                    </span>
                                                 </div>
                                             </div>
-                                        ))
-                                    ) : (
-                                        // Single account
-                                        <div className={cx('account-field-single')}>
-                                            <button
-                                                className={cx('copy-icon-button')}
-                                                onClick={() => {
-                                                    const allText = `Tài khoản: ${product.accountInfo!.username} || Mật khẩu: ${product.accountInfo!.password}`;
-                                                    handleCopy(allText, `all-${product.id}`);
-                                                }}
-                                                title="Click để copy tất cả"
-                                            >
-                                                <CopyIcon size={24} className={cx('copy-icon-main')} />
-                                            </button>
-                                            <div className={cx('account-credentials')}>
-                                                <span className={cx('credential-text')}>
-                                                    Tài khoản:{' '}
-                                                    <span 
-                                                        className={cx('credential-value', 'clickable', {
-                                                            'blurred': !revealedFields.has(`username-${product.id}`)
-                                                        })}
-                                                        onClick={() => handleCopy(product.accountInfo!.username, `username-${product.id}`)}
-                                                        title="Click để copy"
-                                                    >
-                                                        {product.accountInfo!.username}
-                                                    </span>
-                                                </span>
-                                                <span className={cx('credential-separator')}>||</span>
-                                                <span className={cx('credential-text')}>
-                                                    Mật khẩu:{' '}
-                                                    <span 
-                                                        className={cx('credential-value', 'clickable', {
-                                                            'blurred': !revealedFields.has(`password-${product.id}`)
-                                                        })}
-                                                        onClick={() => handleCopy(product.accountInfo!.password, `password-${product.id}`)}
-                                                        title="Click để copy"
-                                                    >
-                                                        {product.accountInfo!.password}
-                                                    </span>
-                                                </span>
-                                            </div>
                                         </div>
-                                    )}
+                                    ))}
 
                                     <div className={cx('copy-hint')}>
                                         <span className={cx('hint-icon')}>ⓘ</span>
-                                        <span>Click vào text để copy từng phần.</span>
+                                        <span>Click vào text để copy.</span>
                                     </div>
 
-                                    {(product.accountInfo?.loginUrl || product.accounts?.[0]?.loginUrl) && (
-                                        <a
-                                            href={product.accountInfo?.loginUrl || product.accounts?.[0]?.loginUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className={cx('login-button')}
-                                        >
-                                            Đăng nhập {product.productName.split(' ')[0]}
-                                        </a>
+                                    {product.note && (
+                                        <div className={cx('product-note')}>
+                                            <AlertCircleIcon size={20} className={cx('note-icon')} />
+                                            <span className={cx('note-text')}>{product.note}</span>
+                                        </div>
                                     )}
                                 </div>
+                        )}
+
+                        {/* Help Button - Dynamic from DB */}
+                        {['completed', 'warranty_completed'].includes(order.status) && product.help && product.help.href && (
+                            <div className={cx('help-button-wrapper')}>
+                                <a
+                                    href={product.help.href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={cx('login-button')}
+                                >
+                                    {product.help.text || 'Hướng dẫn đăng nhập'}
+                                </a>
+                            </div>
                         )}
                     </div>
                 ))}

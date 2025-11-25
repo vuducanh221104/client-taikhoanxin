@@ -71,17 +71,8 @@ const BannerSlider: React.FC<BannerSliderProps> = ({
 
     if (banners.length === 0) return null;
 
-    // Build mobile image path automatically: /banners/x.png -> /banners/mobile/x-mb.png
-    const getMobileImage = (desktopSrc: string): string => {
-        try {
-            const match = desktopSrc.match(/^(.*)\/(.+)\.(\w+)$/); // path/name.ext
-            if (!match) return desktopSrc;
-            const [, dir, name, ext] = match;
-            return `${dir}/mobile/${name}-mb.${ext}`.replace('/banners/', '/banners/');
-        } catch {
-            return desktopSrc;
-        }
-    };
+    // Note: API already returns correct URLs for mobile (bannerSlideMoblie) and desktop (bannerSlide)
+    // No need to transform URLs anymore
 
     return (
         <div
@@ -151,26 +142,22 @@ const BannerSlider: React.FC<BannerSliderProps> = ({
                     style={{ transform: `translateX(-${currentIndex * 100}%)` }}
                 >
                     {banners.map((banner, index) => {
-                        const mobileSrc = getMobileImage(banner.image);
                         const isFirstSlide = index === 0;
                         
                         return (
                             <div key={banner.id} className={cx('slide')}>
                                 <a href={banner.href} className={cx('banner-link')}>
-                                    <picture>
-                                        <source media="(max-width: 999px)" srcSet={mobileSrc} />
-                                        <Image
-                                            src={banner.image}
-                                            alt={banner.title || `Banner ${index + 1}`}
-                                            width={1345}
-                                            height={915}
-                                            className={cx('slide-image')}
-                                            priority={isFirstSlide}
-                                            loading={isFirstSlide ? 'eager' : 'lazy'}
-                                            fetchPriority={isFirstSlide ? 'high' : 'low'}
-                                            sizes="(max-width: 999px) 100vw, 66vw"
-                                        />
-                                    </picture>
+                                    <Image
+                                        src={banner.image}
+                                        alt={banner.title || `Banner ${index + 1}`}
+                                        width={1345}
+                                        height={915}
+                                        className={cx('slide-image')}
+                                        priority={isFirstSlide}
+                                        loading={isFirstSlide ? 'eager' : 'lazy'}
+                                        fetchPriority={isFirstSlide ? 'high' : 'low'}
+                                        sizes="(max-width: 999px) 100vw, 66vw"
+                                    />
                                 </a>
                             </div>
                         );

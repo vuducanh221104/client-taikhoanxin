@@ -2,12 +2,14 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import classNames from 'classnames/bind';
 import styles from './OrderHistory.module.scss';
-import { getOrdersByUserId, filterOrders, getStatusLabel, getStatusColor, Order } from '@/services/orderService';
+import { useMyOrders, getStatusLabel, getStatusColor, Order, cancelOrder } from '@/services/orderService';
 import { FilterIcon, CalendarIcon, ChevronDownIcon, RotateCcwIcon, CloseIcon } from '@/components/Icons';
 import { EmptyState } from '@/components/EmptyState';
 import { PackageIcon } from '@/components/Icons';
+import { useToast } from '@/components/Toast';
 
 const cx = classNames.bind(styles);
 
@@ -17,9 +19,12 @@ interface OrderHistoryProps {
 
 const orderStatuses = [
     { value: 'all', label: 'Tất cả' },
-    { value: 'pending', label: 'Chờ xử lý' },
+    { value: 'pending_payment', label: 'Chờ thanh toán' },
+    { value: 'paid', label: 'Đã thanh toán' },
     { value: 'processing', label: 'Đang xử lý' },
-    { value: 'completed', label: 'Hoàn thành' },
+    { value: 'completed', label: 'Đã xử lý' },
+    { value: 'warranty_pending', label: 'Đang bảo hành' },
+    { value: 'warranty_completed', label: 'Đã bảo hành' },
     { value: 'cancelled', label: 'Đã hủy' },
 ];
 
@@ -32,10 +37,49 @@ const quickDateFilters = [
 ];
 
 const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
-    const allOrders = getOrdersByUserId(userId);
+    const router = useRouter();
+    const toast = useToast();
+    const { data: ordersData, error, isLoading, mutate } = useMyOrders();
+    
+    // Map API response to component format
+    const allOrders = useMemo(() => {
+        if (!ordersData?.data) return [];
+        return ordersData.data.map((order: Order) => ({
+            id: order._id,
+            orderCode: order.orderId.toString(),
+            orderDate: order.createdAt,
+            status: order.orderStatus,
+            totalAmount: order.totalPrice,
+            products: order.items.map((item) => {
+                // Get product ID - support both productId and product_id
+                const productId = item.productId?._id || 
+                                 (typeof item.product_id === 'object' ? item.product_id?._id : item.product_id) || 
+                                 '';
+                
+                // Get product name - prioritize fullName, then product_id, then productId
+                const productName = item.fullName || 
+                                   (typeof item.product_id === 'object' ? item.product_id?.name : null) ||
+                                   item.productId?.name || 
+                                   'Sản phẩm đã xóa';
+                
+                // Get product image - support both productId and product_id
+                const productImage = item.productId?.image?.[0] || 
+                                    (typeof item.product_id === 'object' ? item.product_id?.image?.[0] : null) ||
+                                    '';
+                
+                return {
+                    id: productId,
+                    productName: productName,
+                    quantity: item.quantity,
+                    price: item.price,
+                    image: productImage,
+                };
+            }),
+        }));
+    }, [ordersData]);
     
     const [filters, setFilters] = useState({
-        status: 'all' as Order['status'] | 'all',
+        status: 'all' as Order['orderStatus'] | 'all',
         orderCode: '',
         amountFrom: '',
         amountTo: '',
@@ -44,7 +88,7 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
     });
 
     const [appliedFilters, setAppliedFilters] = useState({
-        status: 'all' as Order['status'] | 'all',
+        status: 'all' as Order['orderStatus'] | 'all',
         orderCode: '',
         amountFrom: '',
         amountTo: '',
@@ -55,6 +99,7 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
     const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
     const statusDropdownRef = React.useRef<HTMLDivElement>(null);
     const [amountError, setAmountError] = useState('');
+    const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
 
     // Close dropdown when clicking outside
     React.useEffect(() => {
@@ -145,16 +190,52 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
     };
 
     const filteredOrders = useMemo(() => {
-        const filterParams = {
-            status: appliedFilters.status !== 'all' ? appliedFilters.status : undefined,
-            orderCode: appliedFilters.orderCode || undefined,
-            amountFrom: appliedFilters.amountFrom ? parsePriceInput(appliedFilters.amountFrom) : undefined,
-            amountTo: appliedFilters.amountTo ? parsePriceInput(appliedFilters.amountTo) : undefined,
-            dateFrom: appliedFilters.dateFrom || undefined,
-            dateTo: appliedFilters.dateTo || undefined,
-        };
+        return allOrders.filter((order: any) => {
+            // Filter by status
+            if (appliedFilters.status !== 'all' && order.status !== appliedFilters.status) {
+                return false;
+            }
 
-        return filterOrders(allOrders, filterParams);
+            // Filter by order code
+            if (appliedFilters.orderCode) {
+                const searchCode = appliedFilters.orderCode.toLowerCase();
+                const orderCode = order.orderCode?.toLowerCase() || '';
+                if (!orderCode.includes(searchCode)) {
+                    return false;
+                }
+            }
+
+            // Filter by amount range
+            const amountFrom = appliedFilters.amountFrom ? parsePriceInput(appliedFilters.amountFrom) : null;
+            const amountTo = appliedFilters.amountTo ? parsePriceInput(appliedFilters.amountTo) : null;
+            
+            if (amountFrom !== null && order.totalAmount < amountFrom) {
+                return false;
+            }
+            if (amountTo !== null && order.totalAmount > amountTo) {
+                return false;
+            }
+
+            // Filter by date range
+            if (appliedFilters.dateFrom) {
+                const orderDate = new Date(order.orderDate);
+                const fromDate = new Date(appliedFilters.dateFrom);
+                fromDate.setHours(0, 0, 0, 0);
+                if (orderDate < fromDate) {
+                    return false;
+                }
+            }
+            if (appliedFilters.dateTo) {
+                const orderDate = new Date(order.orderDate);
+                const toDate = new Date(appliedFilters.dateTo);
+                toDate.setHours(23, 59, 59, 999);
+                if (orderDate > toDate) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
     }, [allOrders, appliedFilters]);
 
     const handleFilter = (e: React.FormEvent) => {
@@ -168,7 +249,7 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
 
     const handleReset = () => {
         const resetFilters = {
-            status: 'all' as Order['status'] | 'all',
+            status: 'all' as Order['orderStatus'] | 'all',
             orderCode: '',
             amountFrom: '',
             amountTo: '',
@@ -191,6 +272,39 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
         );
     }, [appliedFilters]);
 
+    const canCancelOrder = (status: Order['orderStatus']) => {
+        return ['pending_payment', 'processing'].includes(status);
+    };
+
+    const handleViewDetails = (orderCode: string) => {
+        router.push(`/account/orders/${orderCode}`);
+    };
+
+    const handleCancelOrder = async (orderId: string, orderCode: string) => {
+        if (!orderId || typeof window === 'undefined') {
+            return;
+        }
+
+        const confirmMessage = `Bạn có chắc muốn huỷ đơn hàng #${orderCode}?`;
+        const isConfirmed = window.confirm(confirmMessage);
+
+        if (!isConfirmed) {
+            return;
+        }
+
+        try {
+            setCancellingOrderId(orderId);
+            await cancelOrder(orderId);
+            toast.success('Đã huỷ đơn hàng thành công.');
+            await mutate();
+        } catch (err: any) {
+            const message = err?.response?.data?.message || 'Không thể huỷ đơn hàng. Vui lòng thử lại.';
+            toast.error(message);
+        } finally {
+            setCancellingOrderId(null);
+        }
+    };
+
     const formatPrice = (amount: number): string => {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
@@ -209,6 +323,32 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
             minute: '2-digit',
         });
     };
+
+    if (isLoading) {
+        return (
+            <div className={cx('order-history')}>
+                <div className={cx('order-header')}>
+                    <h1 className={cx('order-title')}>Lịch sử đơn hàng</h1>
+                    <p className={cx('order-subtitle')}>
+                        Đang tải dữ liệu...
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className={cx('order-history')}>
+                <div className={cx('order-header')}>
+                    <h1 className={cx('order-title')}>Lịch sử đơn hàng</h1>
+                    <p className={cx('order-subtitle')}>
+                        Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau.
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={cx('order-history')}>
@@ -254,7 +394,7 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
                                                     type="button"
                                                     className={cx('dropdown-item', { 'is-active': filters.status === status.value })}
                                                     onClick={() => {
-                                                        setFilters({ ...filters, status: status.value as Order['status'] | 'all' });
+                                                        setFilters({ ...filters, status: status.value as Order['orderStatus'] | 'all' });
                                                         setIsStatusDropdownOpen(false);
                                                     }}
                                                 >
@@ -455,6 +595,15 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
 
                     {/* Row 4: Filter Button */}
                     <div className={cx('filter-actions-row')}>
+                        {hasActiveFilters && (
+                            <button
+                                type="button"
+                                className={cx('clear-filter-button')}
+                                onClick={handleReset}
+                            >
+                                Xoá bộ lọc
+                            </button>
+                        )}
                         <button type="submit" className={cx('filter-button')}>
                             <FilterIcon size={18} />
                             Áp dụng bộ lọc
@@ -489,46 +638,72 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
                                 <th>Sản phẩm</th>
                                 <th>Tổng tiền</th>
                                 <th>Trạng thái</th>
+                                <th>Hành động</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredOrders.map((order) => (
-                                <tr key={order.id}>
-                                    <td className={cx('order-time')}>
-                                        {formatDateTime(order.orderDate)}
-                                    </td>
-                                    <td className={cx('order-code')}>
-                                        <Link href={`/account/orders/${order.orderCode}`}>
-                                            {order.orderCode}
-                                        </Link>
-                                    </td>
-                                    <td className={cx('order-products')}>
-                                        <div className={cx('products-list')}>
-                                            {order.products.slice(0, 2).map((product) => (
-                                                <div key={product.id} className={cx('product-item')}>
-                                                    <span className={cx('product-name')}>
-                                                        {product.productName}
-                                                        {product.quantity > 1 && ` x${product.quantity}`}
+                            {filteredOrders.map((order) => {
+                                const showCancelButton = canCancelOrder(order.status as Order['orderStatus']);
+                                const isCancelling = cancellingOrderId === order.id;
+
+                                return (
+                                    <tr key={order.id}>
+                                        <td className={cx('order-time')}>
+                                            {formatDateTime(order.orderDate)}
+                                        </td>
+                                        <td className={cx('order-code')}>
+                                            <Link href={`/account/orders/${order.orderCode}`}>
+                                                {order.orderCode}
+                                            </Link>
+                                        </td>
+                                        <td className={cx('order-products')}>
+                                            <div className={cx('products-list')}>
+                                                {order.products.slice(0, 3).map((product) => (
+                                                    <div key={product.id} className={cx('product-item')}>
+                                                        <span className={cx('product-name')}>
+                                                            {product.productName} x{product.quantity}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                                {order.products.length > 3 && (
+                                                    <span className={cx('more-products')}>
+                                                        +{order.products.length - 3} sản phẩm khác
                                                     </span>
-                                                </div>
-                                            ))}
-                                            {order.products.length > 2 && (
-                                                <span className={cx('more-products')}>
-                                                    +{order.products.length - 2} sản phẩm khác
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className={cx('order-amount')}>
-                                        {formatPrice(order.totalAmount)}
-                                    </td>
-                                    <td className={cx('order-status')}>
-                                        <span className={cx('status-badge', getStatusColor(order.status))}>
-                                            {getStatusLabel(order.status)}
-                                        </span>
-                                    </td>
-                                </tr>
-                            ))}
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className={cx('order-amount')}>
+                                            {formatPrice(order.totalAmount)}
+                                        </td>
+                                        <td className={cx('order-status')}>
+                                            <span className={cx('status-badge', getStatusColor(order.status as string))}>
+                                                {getStatusLabel(order.status as string)}
+                                            </span>
+                                        </td>
+                                        <td className={cx('order-actions')}>
+                                            <div className={cx('action-buttons')}>
+                                                <button
+                                                    type="button"
+                                                    className={cx('action-button', 'detail-button')}
+                                                    onClick={() => handleViewDetails(order.orderCode)}
+                                                >
+                                                    Chi tiết
+                                                </button>
+                                                {showCancelButton && (
+                                                    <button
+                                                        type="button"
+                                                        className={cx('action-button', 'cancel-button')}
+                                                        onClick={() => handleCancelOrder(order.id, order.orderCode)}
+                                                        disabled={isCancelling}
+                                                    >
+                                                        {isCancelling ? 'Đang huỷ...' : 'Huỷ đơn'}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 )}

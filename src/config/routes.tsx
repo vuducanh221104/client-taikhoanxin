@@ -5,6 +5,7 @@ const routes = {
         login: '/auth/login',
         register: '/auth/register',
         forgotPassword: '/auth/forgot-password',
+        resetPassword: '/auth/reset-password',
         // Routes Main
         search: '/search',
         cart: '/cart',
@@ -14,17 +15,16 @@ const routes = {
         wishlist: '/wishlist',
         dashboard: '/dashboard',
         // Product Routes
-        products: '/products',
-        productDetail: '/products', //slug
-        productsSale: '/products/sale',
-        productsNew: '/products/new',
-        productsBestSelling: '/products/best-selling',
+        products: '/product',
+        productDetail: '/product', //slug
+        productsSale: '/product/sale',
+        productsNew: '/product/new',
+        productsBestSelling: '/product/best-selling',
         productsViewed: '/products/viewed',
         category: '/categories', //slug
         // Account Routes
         account: '/account/manage',
         accountOrders: '/account/orders',
-        accountTransactions: '/account/transactions',
         accountComments: '/account/comments',
         accountPassword: '/account/password',
         // Page Routes

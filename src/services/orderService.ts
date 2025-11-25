@@ -1,167 +1,303 @@
-import mockOrdersData from '@/data/mockOrders.json';
+'use client';
+import { useSWRUser } from './swrConfig';
+import { post, put } from '@/utils/httpRequest';
 
-export interface OrderProduct {
-    id: string;
-    productName: string;
-    image?: string;
-    imageSrc?: string;
+// ============================================
+// TYPES
+// ============================================
+export interface ApiResponse<T> {
+    success: boolean;
+    message: string;
+    data: T;
+    pagination?: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+    };
+}
+
+export interface PopulatedProduct {
+    _id: string;
+    name: string;
+    slug: string;
+    image: string[];
+    description?: string[];
+}
+
+export interface OrderItemOption {
+    title: string;
+    value: any;
+}
+
+export interface OrderItem {
+    productId?: PopulatedProduct;
+    product_id?: string | PopulatedProduct;
     quantity: number;
     price: number;
-    accountUsername?: string;
-    accountPassword?: string;
-    accountInfo?: {
-        username: string;
-        password: string;
-        loginUrl?: string;
+    fullName?: string;
+    options?: OrderItemOption[];
+    keys?: {
+        description?: string;
+        entries?: string[];
     };
-    accounts?: Array<{
-        username: string;
-        password: string;
-        loginUrl?: string;
-    }>;
+    help?: {
+        text?: string;
+        href?: string;
+    };
+    note?: string;
+    upgradeAccount?: string; // Deprecated, use options instead
+    upgradeEmail?: string; // Deprecated, use options instead
+}
+
+export interface OrderUserRef {
+    _id: string;
+    email?: string;
+    fullName?: string;
+    phone?: string;
 }
 
 export interface Order {
-    id: string;
-    userId: string;
-    orderCode: string;
-    orderDate: string;
-    customerEmail: string;
-    products: OrderProduct[];
-    totalAmount: number;
-    status: 'pending' | 'processing' | 'completed' | 'cancelled';
-    paymentMethod: string;
+    _id: string;
+    orderId: string;
+    userId: string | OrderUserRef;
+    items: OrderItem[];
+    totalPrice: number;
+    totalDiscountBefore: number;
+    totalDiscount: number;
+    discountCode?: string;
+    discountUsageApplied?: boolean;
+    orderStatus:
+        | 'pending_payment'
+        | 'paid'
+        | 'processing'
+        | 'completed'
+        | 'cancelled'
+        | 'warranty_pending'
+        | 'warranty_completed';
+    paymentStatus?: 'unpaid' | 'pending' | 'paid' | 'failed' | 'refunded';
+    phoneUserOrder: string;
+    emailUserOrder?: string;
+    emailGiftForFriend?: string;
+    userNote?: string;
+    adminNote?: string;
+    customerFullName?: string;
+    expiresAt?: string;
+    checkoutToken?: string;
+    checkoutTokenExpiresAt?: string;
+    vietQR?: {
+        image?: string;
+        bankCode?: string;
+        accountNumber?: string;
+        amount?: number;
+        description?: string;
+    };
+    createdAt: string;
+    updatedAt: string;
 }
 
-export interface OrderFilters {
-    orderCode?: string;
-    status?: Order['status'] | 'all';
-    amountFrom?: number;
-    amountTo?: number;
-    dateFrom?: string;
-    dateTo?: string;
+export type OrderListResponse = ApiResponse<Order[]>;
+export type OrderResponse = ApiResponse<Order>;
+export type OrderDetailResponse = ApiResponse<{
+    order: Order;
+    payment?: Payment | null;
+}>;
+export interface CheckoutOrderPayload {
+    order: Order;
+    expiresAt?: string;
+    remainingSeconds: number;
+    isExpired: boolean;
+    paymentWindowMinutes: number;
+}
+export type CheckoutOrderResponse = ApiResponse<CheckoutOrderPayload>;
+
+export interface Payment {
+    _id: string;
+    orderId: string;
+    amount: number;
+    status: string;
+    method?: string;
+    providerTransactionId?: string;
+    createdAt: string;
+    updatedAt: string;
 }
 
+export interface CreateOrderData {
+    items: Array<{
+        productId: string;
+        quantity: number;
+        upgradeAccount?: string;
+        upgradeEmail?: string;
+    }>;
+    discountCode?: string;
+    phoneNumber?: string;
+    emailGiftForFriend?: string;
+    userNote?: string;
+    customerFullName?: string;
+    phoneUserOrder?: string;
+    emailUserOrder?: string;
+}
+
+// ============================================
+// GET HOOKS (SWR)
+// ============================================
+
 /**
- * Get orders by user ID
- * @param userId - User ID
- * @returns Array of orders for the specified user
+ * Get current user orders
  */
-export const getOrdersByUserId = (userId: string): Order[] => {
-    const orders = mockOrdersData.orders as Order[];
-    return orders.filter(order => order.userId === userId);
+export const useMyOrders = (params?: { 
+    status?: string; 
+    page?: number; 
+    limit?: number;
+    orderId?: string;
+}) => {
+    const queryString = params
+        ? '?' + new URLSearchParams(params as any).toString()
+        : '';
+    const key = `/api/v1/orders/my-orders${queryString}`;
+    return useSWRUser<OrderListResponse>(key);
 };
 
 /**
- * Get order by order code
- * @param orderCode - Order code
- * @param userId - User ID (optional, for security check)
- * @returns Order or undefined if not found
+ * Get order by ID
  */
-export const getOrderByCode = (orderCode: string, userId?: string): Order | undefined => {
-    const orders = mockOrdersData.orders as Order[];
-    const order = orders.find(order => order.orderCode === orderCode);
-    
-    // If userId is provided, verify it matches
-    if (order && userId && order.userId !== userId) {
-        return undefined;
-    }
-    
-    return order;
+export const useOrder = (id: string) => {
+    const key = id ? `/api/v1/orders/${id}` : null;
+    return useSWRUser<OrderDetailResponse>(key);
 };
 
 /**
- * Filter orders by criteria
- * @param orders - Array of orders to filter
- * @param filters - Filter criteria
- * @returns Filtered array of orders
+ * Get checkout order info via token (public success page)
  */
-export const filterOrders = (orders: Order[], filters: OrderFilters): Order[] => {
-    let filtered = [...orders];
-
-    // Filter by status
-    if (filters.status && filters.status !== 'all') {
-        filtered = filtered.filter(order => order.status === filters.status);
+export const useCheckoutOrder = (orderId?: string | null, token?: string | null) => {
+    if (!orderId || !token) {
+        return useSWRUser<CheckoutOrderResponse>(null);
     }
-
-    // Filter by order code
-    if (filters.orderCode) {
-        const code = filters.orderCode.toLowerCase().trim();
-        filtered = filtered.filter(order => 
-            order.orderCode.toLowerCase().includes(code)
-        );
-    }
-
-    // Filter by amount range
-    if (filters.amountFrom !== undefined) {
-        filtered = filtered.filter(order => order.totalAmount >= filters.amountFrom!);
-    }
-
-    if (filters.amountTo !== undefined) {
-        filtered = filtered.filter(order => order.totalAmount <= filters.amountTo!);
-    }
-
-    // Filter by date range
-    if (filters.dateFrom) {
-        const fromDate = new Date(filters.dateFrom);
-        fromDate.setHours(0, 0, 0, 0);
-        filtered = filtered.filter(order => {
-            const orderDate = new Date(order.orderDate);
-            orderDate.setHours(0, 0, 0, 0);
-            return orderDate >= fromDate;
-        });
-    }
-
-    if (filters.dateTo) {
-        const toDate = new Date(filters.dateTo);
-        toDate.setHours(23, 59, 59, 999);
-        filtered = filtered.filter(order => {
-            const orderDate = new Date(order.orderDate);
-            orderDate.setHours(23, 59, 59, 999);
-            return orderDate <= toDate;
-        });
-    }
-
-    return filtered;
+    const query = `/api/v1/orders/checkout/${orderId}?token=${encodeURIComponent(token)}`;
+    return useSWRUser<CheckoutOrderResponse>(query);
 };
+
+// ============================================
+// MUTATIONS (AXIOS)
+// ============================================
+
+/**
+ * Create new order
+ */
+export const createOrder = async (data: CreateOrderData): Promise<OrderResponse> => {
+    const response = await post<OrderResponse>('/api/v1/orders', data);
+    return response.data;
+};
+
+/**
+ * Cancel order
+ */
+export const cancelOrder = async (id: string): Promise<OrderResponse> => {
+    const response = await put<OrderResponse>(`/api/v1/orders/${id}/cancel`, {});
+    return response.data;
+};
+
+/**
+ * Resend account info
+ */
+export const resendAccountInfo = async (id: string): Promise<{ success: boolean; message: string }> => {
+    const response = await post<{ success: boolean; message: string }>(`/api/v1/orders/${id}/resend-account`, {});
+    return response.data;
+};
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
 
 /**
  * Get status label in Vietnamese
- * @param status - Order status
- * @returns Vietnamese label
  */
-export const getStatusLabel = (status: Order['status']): string => {
-    switch (status) {
-        case 'pending':
-            return 'Chờ xử lý';
-        case 'processing':
-            return 'Đang xử lý';
-        case 'completed':
-            return 'Hoàn thành';
-        case 'cancelled':
-            return 'Đã hủy';
-        default:
-            return status;
-    }
+export const getStatusLabel = (status: string): string => {
+    const statusMap: Record<string, string> = {
+        pending_payment: 'Chờ thanh toán',
+        paid: 'Đã thanh toán',
+        processing: 'Đang xử lý',
+        completed: 'Đã xử lý',
+        cancelled: 'Đã hủy',
+        warranty_pending: 'Đang bảo hành',
+        warranty_completed: 'Đã bảo hành',
+        refunded: 'Đã hoàn tiền',
+    };
+    return statusMap[status] || status;
 };
 
 /**
  * Get status color class
- * @param status - Order status
- * @returns CSS class name for status color
  */
-export const getStatusColor = (status: Order['status']): string => {
-    switch (status) {
-        case 'pending':
-            return 'status-pending';
-        case 'processing':
-            return 'status-processing';
-        case 'completed':
-            return 'status-completed';
-        case 'cancelled':
-            return 'status-cancelled';
-        default:
-            return '';
-    }
+export const getStatusColor = (status: string): string => {
+    const colorMap: Record<string, string> = {
+        pending_payment: 'status-pending',
+        paid: 'status-processing',
+        processing: 'status-processing',
+        completed: 'status-completed',
+        warranty_pending: 'status-processing',
+        warranty_completed: 'status-completed',
+        cancelled: 'status-cancelled',
+        refunded: 'status-cancelled',
+    };
+    return colorMap[status] || 'status-default';
 };
 
+/**
+ * Filter orders based on criteria
+ */
+export const filterOrders = (
+    orders: Order[],
+    filters: {
+        status?: string;
+        orderCode?: string;
+        amountFrom?: number;
+        amountTo?: number;
+        dateFrom?: string;
+        dateTo?: string;
+    }
+): Order[] => {
+    return orders.filter((order) => {
+        // Filter by status
+        if (filters.status && order.orderStatus !== filters.status) {
+            return false;
+        }
+
+        // Filter by order code
+        if (filters.orderCode) {
+            const searchCode = filters.orderCode.toLowerCase();
+            const orderCode = order.orderId?.toString().toLowerCase() || '';
+            if (!orderCode.includes(searchCode)) {
+                return false;
+            }
+        }
+
+        // Filter by amount range
+        if (filters.amountFrom !== undefined && order.totalPrice < filters.amountFrom) {
+            return false;
+        }
+        if (filters.amountTo !== undefined && order.totalPrice > filters.amountTo) {
+            return false;
+        }
+
+        // Filter by date range
+        if (filters.dateFrom) {
+            const orderDate = new Date(order.createdAt);
+            const fromDate = new Date(filters.dateFrom);
+            fromDate.setHours(0, 0, 0, 0);
+            if (orderDate < fromDate) {
+                return false;
+            }
+        }
+        if (filters.dateTo) {
+            const orderDate = new Date(order.createdAt);
+            const toDate = new Date(filters.dateTo);
+            toDate.setHours(23, 59, 59, 999);
+            if (orderDate > toDate) {
+                return false;
+            }
+        }
+
+        return true;
+    });
+};

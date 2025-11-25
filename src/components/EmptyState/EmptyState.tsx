@@ -102,7 +102,7 @@ const defaultConfigs: Record<EmptyStateType, {
     },
 };
 
-const EmptyState: React.FC<EmptyStateProps> = ({
+export const EmptyState: React.FC<EmptyStateProps> = ({
     type = 'generic',
     title,
     description,

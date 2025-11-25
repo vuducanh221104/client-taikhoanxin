@@ -154,6 +154,8 @@ const UserDropdown: React.FC<UserDropdownProps> = ({
         return null;
     }
 
+    const displayName = currentUser?.fullName?.trim() || currentUser?.user_name || currentUser.email;
+
     return (
         <div
             className={cx('user-dropdown-wrapper')}
@@ -176,14 +178,14 @@ const UserDropdown: React.FC<UserDropdownProps> = ({
                         <div className={cx('user-avatar')}>
                             <Image
                                 src={currentUser.avatar || '/avatar/user-icon.webp'}
-                                alt={currentUser.user_name || currentUser.email}
+                                alt={displayName}
                                 width={40}
                                 height={40}
                                 className={cx('avatar-image')}
                             />
                         </div>
                         <div className={cx('user-email')}>
-                            {currentUser.email}
+                            {displayName}
                         </div>
                     </div>
 

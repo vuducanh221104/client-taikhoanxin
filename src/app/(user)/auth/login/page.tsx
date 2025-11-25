@@ -7,11 +7,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import classNames from 'classnames/bind';
 import styles from './page.module.scss';
-import { authLogin } from '@/services/authServices';
+import { authLogin } from '@/services/authService';
 import { loginSuccess, loginFailed } from '@/redux/authSlice';
 import { EyeIcon, EyeOffIcon } from '@/components/Icons';
 import { useToast } from '@/hooks/useToast';
 import { Button } from '@/components/Button';
+import TurnstileWidget from '@/components/Turnstile/TurnstileWidget';
 
 const cx = classNames.bind(styles);
 
@@ -36,6 +37,9 @@ export default function LoginPage() {
         usernameOrEmail: false,
         password: false,
     });
+    const [turnstileToken, setTurnstileToken] = useState('');
+    const [turnstileError, setTurnstileError] = useState('');
+    const [turnstileResetKey, setTurnstileResetKey] = useState(() => Date.now().toString());
 
     useEffect(() => {
         // Check if user just registered
@@ -102,30 +106,57 @@ export default function LoginPage() {
         return !errors.usernameOrEmail && !errors.password;
     };
 
+    const resetTurnstile = () => {
+        setTurnstileToken('');
+        setTurnstileResetKey(Date.now().toString());
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setTurnstileError('');
 
         // Validate form
         if (!validateForm()) {
             return;
         }
 
+        if (!turnstileToken) {
+            setTurnstileError('Vui lòng xác minh bạn không phải robot.');
+            return;
+        }
+
         setLoading(true);
 
         try {
-            const data = await authLogin(formData);
-            dispatch(loginSuccess(data));
-            showSuccess('Đăng nhập thành công!');
+            const response = await authLogin({
+                usernameOrEmail: formData.usernameOrEmail,
+                password: formData.password,
+                turnstileToken,
+            });
             
-            // Check for redirect parameter
-            const redirectUrl = searchParams.get('redirect');
-            if (redirectUrl) {
-                // Decode and redirect to the original URL
-                router.push(decodeURIComponent(redirectUrl));
+            // Check if login was successful
+            if (response.success && response.data) {
+                // Dispatch login success with both accessToken and refreshToken
+                dispatch(loginSuccess({
+                    ...response.data.user,
+                    accessToken: response.data.accessToken,
+                    refreshToken: response.data.refreshToken, // Lưu refreshToken
+                }));
+                
+                showSuccess('Đăng nhập thành công!');
+                
+                // Check for redirect parameter
+                const redirectUrl = searchParams.get('redirect');
+                if (redirectUrl) {
+                    // Decode and redirect to the original URL
+                    router.push(decodeURIComponent(redirectUrl));
+                } else {
+                    // Default redirect to home
+                    router.push('/');
+                }
             } else {
-                // Default redirect to home
-                router.push('/');
+                throw new Error(response.message || 'Đăng nhập thất bại');
             }
         } catch (error: any) {
             const errorMessage = error?.response?.data?.message || error?.message || 'Đăng nhập thất bại. Vui lòng thử lại!';
@@ -133,6 +164,7 @@ export default function LoginPage() {
             showError(errorMessage);
             dispatch(loginFailed());
             console.error('Login failed:', error);
+            resetTurnstile();
         } finally {
             setLoading(false);
         }
@@ -226,6 +258,25 @@ export default function LoginPage() {
                             </Link>
                         </div>
 
+                        <div className={cx('form-group')}>
+                            <TurnstileWidget
+                                resetKey={turnstileResetKey}
+                                onSuccess={(token) => {
+                                    setTurnstileToken(token);
+                                    setTurnstileError('');
+                                }}
+                                onExpire={() => {
+                                    setTurnstileToken('');
+                                    setTurnstileError('Phiên xác minh đã hết hạn. Vui lòng thử lại.');
+                                }}
+                                onError={(message) => {
+                                    setTurnstileToken('');
+                                    setTurnstileError(message || 'Không thể xác minh. Vui lòng thử lại.');
+                                }}
+                            />
+                            {turnstileError && <span className={cx('form-error-hint')}>{turnstileError}</span>}
+                        </div>
+
                         <Button
                             type="submit"
                             variant="primary"
@@ -234,6 +285,7 @@ export default function LoginPage() {
                             isLoading={loading}
                             loadingText="Đang xử lý..."
                             className={cx('submit-button')}
+                            disabled={loading}
                         >
                             Đăng nhập
                         </Button>

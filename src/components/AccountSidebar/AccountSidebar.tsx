@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import classNames from 'classnames/bind';
 import styles from './AccountSidebar.module.scss';
-import { UserIcon, ShoppingCartIcon, FileTextIcon, LockIcon, MessageCircleIcon } from '@/components/Icons';
+import { UserIcon, ShoppingCartIcon, LockIcon, MessageCircleIcon, HeartIcon } from '@/components/Icons';
 
 const cx = classNames.bind(styles);
 
@@ -30,12 +30,6 @@ const AccountSidebar: React.FC<AccountSidebarProps> = ({ activeItem = 'account' 
             href: '/account/orders',
         },
         {
-            id: 'transactions',
-            label: 'Lịch sử giao dịch',
-            icon: FileTextIcon,
-            href: '/account/transactions',
-        },
-        {
             id: 'password',
             label: 'Mật khẩu và bảo mật',
             icon: LockIcon,
@@ -46,6 +40,12 @@ const AccountSidebar: React.FC<AccountSidebarProps> = ({ activeItem = 'account' 
             label: 'Bình luận của tôi',
             icon: MessageCircleIcon,
             href: '/account/comments',
+        },
+        {
+            id: 'wishlist',
+            label: 'Sản phẩm yêu thích',
+            icon: HeartIcon,
+            href: '/wishlist',
         },
     ];
 

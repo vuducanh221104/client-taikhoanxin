@@ -455,6 +455,15 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = React.memo(({ user
 
                     {/* Row 4: Filter Button */}
                     <div className={cx('filter-actions-row')}>
+                        {hasActiveFilters && (
+                            <button
+                                type="button"
+                                className={cx('clear-filter-button')}
+                                onClick={handleReset}
+                            >
+                                Xoá bộ lọc
+                            </button>
+                        )}
                         <button type="submit" className={cx('filter-button')}>
                             <FilterIcon size={18} />
                             Áp dụng bộ lọc

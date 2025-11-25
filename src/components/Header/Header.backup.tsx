@@ -39,9 +39,8 @@ import LoginDropdown from '@/components/LoginDropdown/LoginDropdown';
 import UserDropdown from '@/components/UserDropdown/UserDropdown';
 import { searchProducts } from '@/services/productService';
 import { FeaturedProduct } from '@/components/FeaturedProducts';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState, AppDispatch } from '@/redux/store';
-import { initializeWishlist } from '@/redux/wishlistSlice';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
 import { useWishlist } from '@/hooks/useWishlist';
 
 const cx = classNames.bind(styles);
@@ -73,7 +72,6 @@ const Header: React.FC<HeaderProps> = () => {
         'Spotify Premium',
         'Netflix',
     ]);
-    const dispatch = useDispatch<AppDispatch>();
     const cart = useSelector((state: RootState) => state.cart);
     const cartQuantity = cart.totalQuantity;
     const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);

@@ -5,6 +5,8 @@ import classNames from 'classnames/bind';
 import styles from './PasswordSecurity.module.scss';
 import { CurrentUser } from '@/types/client';
 import { EyeIcon, EyeOffIcon } from '@/components/Icons';
+import { changePassword } from '@/services/authService';
+import { useToast } from '@/hooks/useToast';
 
 const cx = classNames.bind(styles);
 
@@ -13,26 +15,34 @@ interface PasswordSecurityProps {
 }
 
 const PasswordSecurity: React.FC<PasswordSecurityProps> = ({ user }) => {
+    const { showSuccess, showError } = useToast();
+    
     const [passwordData, setPasswordData] = useState({
+        currentPassword: '',
         newPassword: '',
         confirmPassword: '',
     });
     
-    const [securityData, setSecurityData] = useState({
-        paymentAuth: 'all-ip', // 'all-ip' | 'specific-ip'
-        loginAuth: 'no-otp', // 'no-otp' | 'otp-required'
-        authMethod: 'email', // 'email' | 'sms' | 'app'
-    });
+    // Temporarily hidden - Two-Factor Security
+    // const [securityData, setSecurityData] = useState({
+    //     paymentAuth: 'all-ip', // 'all-ip' | 'specific-ip'
+    //     loginAuth: 'no-otp', // 'no-otp' | 'otp-required'
+    //     authMethod: 'email', // 'email' | 'sms' | 'app'
+    // });
 
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [passwordError, setPasswordError] = useState('');
     const [passwordSuccess, setPasswordSuccess] = useState('');
-    const [securityError, setSecurityError] = useState('');
-    const [securitySuccess, setSecuritySuccess] = useState('');
+    // Temporarily hidden - Two-Factor Security
+    // const [securityError, setSecurityError] = useState('');
+    // const [securitySuccess, setSecuritySuccess] = useState('');
+    const [currentPasswordError, setCurrentPasswordError] = useState('');
     const [newPasswordError, setNewPasswordError] = useState('');
     const [confirmPasswordError, setConfirmPasswordError] = useState('');
+    const [touchedCurrentPassword, setTouchedCurrentPassword] = useState(false);
     const [touchedNewPassword, setTouchedNewPassword] = useState(false);
 
     const calculatePasswordStrength = (password: string) => {
@@ -77,7 +87,15 @@ const PasswordSecurity: React.FC<PasswordSecurityProps> = ({ user }) => {
         e.preventDefault();
         setPasswordError('');
         setPasswordSuccess('');
+        setTouchedCurrentPassword(true);
         setTouchedNewPassword(true);
+
+        // Validate current password
+        if (!passwordData.currentPassword || passwordData.currentPassword.trim() === '') {
+            setCurrentPasswordError('Vui lòng điền vào trường này');
+            return;
+        }
+        setCurrentPasswordError('');
 
         // Validate new password
         const newPasswordValidation = validateNewPassword(passwordData.newPassword);
@@ -102,37 +120,51 @@ const PasswordSecurity: React.FC<PasswordSecurityProps> = ({ user }) => {
         setLoading(true);
 
         try {
-            // TODO: Call API to change password
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            setPasswordSuccess('Đổi mật khẩu thành công!');
-            setPasswordData({ newPassword: '', confirmPassword: '' });
-            setNewPasswordError('');
-            setConfirmPasswordError('');
-            setTouchedNewPassword(false);
+            // Call API to change password
+            const response = await changePassword({
+                currentPassword: passwordData.currentPassword,
+                newPassword: passwordData.newPassword,
+            });
+
+            if (response.success) {
+                setPasswordSuccess('Đổi mật khẩu thành công!');
+                showSuccess('Đổi mật khẩu thành công!');
+                setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                setCurrentPasswordError('');
+                setNewPasswordError('');
+                setConfirmPasswordError('');
+                setTouchedCurrentPassword(false);
+                setTouchedNewPassword(false);
+            } else {
+                throw new Error(response.message || 'Đổi mật khẩu thất bại');
+            }
         } catch (err: any) {
-            setPasswordError(err?.message || 'Có lỗi xảy ra. Vui lòng thử lại!');
+            const errorMessage = err?.response?.data?.message || err?.message || 'Có lỗi xảy ra. Vui lòng thử lại!';
+            setPasswordError(errorMessage);
+            showError(errorMessage);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleSecuritySubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setSecurityError('');
-        setSecuritySuccess('');
+    // Temporarily hidden - Two-Factor Security
+    // const handleSecuritySubmit = async (e: React.FormEvent) => {
+    //     e.preventDefault();
+    //     setSecurityError('');
+    //     setSecuritySuccess('');
 
-        setLoading(true);
+    //     setLoading(true);
 
-        try {
-            // TODO: Call API to update security settings
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            setSecuritySuccess('Cập nhật bảo mật hai lớp thành công!');
-        } catch (err: any) {
-            setSecurityError(err?.message || 'Có lỗi xảy ra. Vui lòng thử lại!');
-        } finally {
-            setLoading(false);
-        }
-    };
+    //     try {
+    //         // TODO: Call API to update security settings
+    //         await new Promise(resolve => setTimeout(resolve, 1000));
+    //         setSecuritySuccess('Cập nhật bảo mật hai lớp thành công!');
+    //     } catch (err: any) {
+    //         setSecurityError(err?.message || 'Có lỗi xảy ra. Vui lòng thử lại!');
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
 
     return (
         <div className={cx('password-security')}>
@@ -140,7 +172,7 @@ const PasswordSecurity: React.FC<PasswordSecurityProps> = ({ user }) => {
             <div className={cx('security-header')}>
                 <h1 className={cx('security-title')}>Mật khẩu & Bảo mật</h1>
                 <p className={cx('security-subtitle')}>
-                    Vì sự an toàn, Tài Khoản Xịn khuyến khích khách hàng sử dụng mật khẩu mạnh và bảo mật hai lớp
+                    Vì sự an toàn, Tài Khoản Xịn khuyến khích khách hàng sử dụng mật khẩu mạnh
                 </p>
             </div>
 
@@ -165,8 +197,47 @@ const PasswordSecurity: React.FC<PasswordSecurityProps> = ({ user }) => {
                         )}
 
                         <div className={cx('form-group')}>
+                            <label htmlFor="currentPassword" className={cx('form-label')}>
+                                Mật khẩu hiện tại <span className={cx('required')}>*</span>
+                            </label>
+                            <div className={cx('password-wrapper')}>
+                                <input
+                                    id="currentPassword"
+                                    type={showCurrentPassword ? 'text' : 'password'}
+                                    className={cx('form-input', {
+                                        'input-error': touchedCurrentPassword && currentPasswordError,
+                                    })}
+                                    placeholder="Nhập mật khẩu hiện tại"
+                                    value={passwordData.currentPassword}
+                                    onChange={(e) => {
+                                        setPasswordData({ ...passwordData, currentPassword: e.target.value });
+                                        if (touchedCurrentPassword) {
+                                            setCurrentPasswordError(!e.target.value ? 'Vui lòng điền vào trường này' : '');
+                                        }
+                                    }}
+                                    onBlur={() => {
+                                        setTouchedCurrentPassword(true);
+                                        setCurrentPasswordError(!passwordData.currentPassword ? 'Vui lòng điền vào trường này' : '');
+                                    }}
+                                    disabled={loading}
+                                />
+                                <button
+                                    type="button"
+                                    className={cx('password-toggle')}
+                                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                    tabIndex={-1}
+                                >
+                                    {showCurrentPassword ? <EyeIcon size={20} /> : <EyeOffIcon size={20} />}
+                                </button>
+                            </div>
+                            {touchedCurrentPassword && currentPasswordError && (
+                                <span className={cx('form-error-hint')}>{currentPasswordError}</span>
+                            )}
+                        </div>
+
+                        <div className={cx('form-group')}>
                             <label htmlFor="newPassword" className={cx('form-label')}>
-                                Mật khẩu mới
+                                Mật khẩu mới <span className={cx('required')}>*</span>
                             </label>
                             <div className={cx('password-wrapper')}>
                                 <input
@@ -288,8 +359,8 @@ const PasswordSecurity: React.FC<PasswordSecurityProps> = ({ user }) => {
                 </div>
             </div>
 
-            {/* Two-Factor Security Section */}
-            <div className={cx('two-factor-section')}>
+            {/* Two-Factor Security Section - Temporarily hidden */}
+            {/* <div className={cx('two-factor-section')}>
                 <h2 className={cx('section-title')}>Bảo mật hai lớp</h2>
                 <p className={cx('section-description')}>
                     Sử dụng xác thực hai lớp giúp tài khoản của bạn an toàn hơn, tránh được các giao dịch được thực hiện trái phép
@@ -372,7 +443,7 @@ const PasswordSecurity: React.FC<PasswordSecurityProps> = ({ user }) => {
                         )}
                     </button>
                 </form>
-            </div>
+            </div> */}
         </div>
     );
 };

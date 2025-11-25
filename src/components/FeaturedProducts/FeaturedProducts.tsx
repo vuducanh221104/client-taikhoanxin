@@ -59,105 +59,13 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
 }) => {
     const router = useRouter();
     const { toggleWishlist, isProductInWishlist, isLoggedIn } = useWishlist();
-    const { showSuccess, showInfo } = useToast();
-
-    // Default products if none provided
-    const defaultProducts: FeaturedProduct[] = [
-        {
-            id: '1',
-            productName: 'ElevenLabs Creator',
-            price: 290000,
-            oldPrice: 1500000,
-            discount: 81,
-            status: 'in-stock',
-            href: '/products/elevenlabs-creator',
-            imageSrc: '/products/product-1.png',
-            imageAlt: 'ElevenLabs Creator',
-        },
-        {
-            id: '2',
-            productName: 'Duolingo Super',
-            price: 290000,
-            oldPrice: 1850000,
-            discount: 84,
-            status: 'in-stock',
-            href: '/products/duolingo-super',
-            imageSrc: '/products/product-2.png',
-            imageAlt: 'Duolingo Super',
-        },
-        {
-            id: '3',
-            productName: 'Kaspersky Premium',
-            price: 199000,
-            oldPrice: 636000,
-            discount: 69,
-            status: 'in-stock',
-            href: '/products/kaspersky-premium',
-            imageSrc: '/products/product-3.png',
-            imageAlt: 'Kaspersky Premium',
-        },
-        {
-            id: '4',
-            productName: 'Higgsfield Pro',
-            price: 399000,
-            oldPrice: 770000,
-            discount: 48,
-            status: 'out-of-stock',
-            href: '/products/higgsfield-pro',
-            imageSrc: '/products/product-1.png',
-            imageAlt: 'Higgsfield Pro',
-        },
-        {
-            id: '5',
-            productName: 'Google AI Ultra',
-            price: 199000,
-            oldPrice: 6500000,
-            discount: 97,
-            status: 'in-stock',
-            href: '/products/google-ai-ultra',
-            imageSrc: '/products/product-2.png',
-            imageAlt: 'Google AI Ultra',
-        },
-        {
-            id: '6',
-            productName: 'Wondershare Filmora 14',
-            price: 199000,
-            oldPrice: 900000,
-            discount: 78,
-            status: 'in-stock',
-            href: '/products/wondershare-filmora-14',
-            imageSrc: '/products/product-3.png',
-            imageAlt: 'Wondershare Filmora 14',
-        },
-        {
-            id: '7',
-            productName: 'Spotify Premium',
-            price: 399000,
-            oldPrice: 708000,
-            discount: 44,
-            status: 'in-stock',
-            href: '/products/spotify-premium',
-            imageSrc: '/products/product-1.png',
-            imageAlt: 'Spotify Premium',
-        },
-        {
-            id: '8',
-            productName: 'Canva Pro',
-            price: 295000,
-            oldPrice: 1500000,
-            discount: 80,
-            status: 'in-stock',
-            href: '/products/canva-pro',
-            imageSrc: '/products/product-2.png',
-            imageAlt: 'Canva Pro',
-        },
-    ];
+    const { showSuccess, showInfo, showError } = useToast();
 
     const displayProducts = useMemo(() => {
-        return products.length > 0 ? products : defaultProducts;
+        return products;
     }, [products]);
 
-    const handleToggleFavorite = useCallback((productId: string) => {
+    const handleToggleFavorite = useCallback(async (productId: string) => {
         const product = displayProducts.find(p => p.id === productId);
         if (!product) return;
 
@@ -167,27 +75,31 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
             return;
         }
 
-        const wasInWishlist = isProductInWishlist(product.id);
-        toggleWishlist({
-            productId: product.id,
-            productName: product.productName,
-            price: product.price,
-            oldPrice: product.oldPrice,
-            discount: product.discount,
-            rating: product.rating,
-            reviewCount: product.reviewCount,
-            status: product.status,
-            imageSrc: product.imageSrc,
-            imageAlt: product.imageAlt,
-            href: product.href,
-        });
+        try {
+            const added = await toggleWishlist({
+                productId: product.id,
+                productName: product.productName,
+                price: product.price,
+                oldPrice: product.oldPrice,
+                discount: product.discount,
+                rating: product.rating,
+                reviewCount: product.reviewCount,
+                status: product.status,
+                imageSrc: product.imageSrc,
+                imageAlt: product.imageAlt,
+                href: product.href,
+            });
 
-        if (wasInWishlist) {
-            showSuccess(`Đã xóa "${product.productName}" khỏi yêu thích`);
-        } else {
-            showSuccess(`Đã thêm "${product.productName}" vào yêu thích`);
+            if (added) {
+                showSuccess(`Đã thêm "${product.productName}" vào yêu thích`);
+            } else {
+                showSuccess(`Đã xóa "${product.productName}" khỏi yêu thích`);
+            }
+        } catch (error: any) {
+            const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra. Vui lòng thử lại!';
+            showError(errorMessage);
         }
-    }, [displayProducts, isLoggedIn, isProductInWishlist, toggleWishlist, showInfo, showSuccess, router]);
+    }, [displayProducts, isLoggedIn, toggleWishlist, showInfo, showSuccess, showError, router]);
 
     const sectionStyle = backgroundImage
         ? {
@@ -246,14 +158,12 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
                         ))
                     ) : (
                         <EmptyState
+                            type="products"
                             icon={<PackageIcon size={80} />}
                             title="Không tìm thấy sản phẩm"
                             description={emptyMessage}
-                            action={{
-                                label: discoverButtonText || 'Khám phá sản phẩm',
-                                href: discoverButtonHref || '/products',
-                            }}
-                            size="medium"
+                            actionLabel={discoverButtonText || 'Khám phá sản phẩm'}
+                            actionHref={discoverButtonHref || '/products'}
                         />
                     )}
                 </div>

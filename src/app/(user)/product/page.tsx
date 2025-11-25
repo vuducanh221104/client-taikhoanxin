@@ -75,7 +75,7 @@ export default function AllProductsPage() {
     const dispatch = useDispatch();
     const router = useRouter();
     const { toggleWishlist, isProductInWishlist, isLoggedIn } = useWishlist();
-    const { showSuccess, showInfo } = useToast();
+    const { showSuccess, showInfo, showError } = useToast();
 
     // Reset display limit when filters change
     useEffect(() => {
@@ -154,7 +154,7 @@ export default function AllProductsPage() {
         showSuccess(`Đã thêm "${product.productName}" vào giỏ hàng`);
     };
 
-    const handleToggleFavorite = (productId: string) => {
+    const handleToggleFavorite = async (productId: string) => {
         const product = filteredProducts.find(p => p.id === productId);
         if (!product) return;
 
@@ -164,25 +164,29 @@ export default function AllProductsPage() {
             return;
         }
 
-        const wasInWishlist = isProductInWishlist(product.id);
-        toggleWishlist({
-            productId: product.id,
-            productName: product.productName,
-            price: product.price,
-            oldPrice: product.oldPrice,
-            discount: product.discount,
-            rating: product.rating,
-            reviewCount: product.reviewCount,
-            status: product.status,
-            imageSrc: product.imageSrc,
-            imageAlt: product.imageAlt,
-            href: product.href,
-        });
+        try {
+            const added = await toggleWishlist({
+                productId: product.id,
+                productName: product.productName,
+                price: product.price,
+                oldPrice: product.oldPrice,
+                discount: product.discount,
+                rating: product.rating,
+                reviewCount: product.reviewCount,
+                status: product.status,
+                imageSrc: product.imageSrc,
+                imageAlt: product.imageAlt,
+                href: product.href,
+            });
 
-        if (wasInWishlist) {
-            showSuccess(`Đã xóa "${product.productName}" khỏi yêu thích`);
-        } else {
-            showSuccess(`Đã thêm "${product.productName}" vào yêu thích`);
+            if (added) {
+                showSuccess(`Đã thêm "${product.productName}" vào yêu thích`);
+            } else {
+                showSuccess(`Đã xóa "${product.productName}" khỏi yêu thích`);
+            }
+        } catch (error: any) {
+            const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra. Vui lòng thử lại!';
+            showError(errorMessage);
         }
     };
 

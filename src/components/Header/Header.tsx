@@ -9,6 +9,8 @@ import { useWishlist } from '@/hooks/useWishlist';
 import { HeaderTopBar, HeaderMiddleBar, MobileSearchDropdown } from './components';
 import MobileMenu from './components/MobileMenu';
 import { useHeaderScroll, useHeaderSearch, useHeaderMobile } from './hooks';
+import { useCart } from '@/services/cartService';
+import Cookies from 'js-cookie';
 
 const cx = classNames.bind(styles);
 
@@ -29,11 +31,87 @@ const Header: React.FC<HeaderProps> = () => {
     const cartDropdownCloseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Redux state
-    const cart = useSelector((state: RootState) => state.cart);
-    const cartQuantity = cart.totalQuantity;
+    const reduxCart = useSelector((state: RootState) => state.cart);
     const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
     const { wishlistCount } = useWishlist();
     const wishlistQuantity = wishlistCount;
+    
+    // Fetch cart from API if user is logged in
+    const { data: cartData } = useCart();
+    
+    // Use API cart if available, otherwise use Redux cart (for backward compatibility)
+    const cart = React.useMemo(() => {
+        if (currentUser && cartData?.data) {
+            // Map API cart to Redux cart format
+            const apiCart = cartData.data;
+            const items = apiCart.items || [];
+            const mappedProducts = items.map((item: any) => {
+                const product = item.productId || item.product_id;
+                const productId = product?._id || product?.id || '';
+                const productName = product?.name || '';
+                let price = 0;
+                if (product?.price) {
+                    if (Array.isArray(product.price)) {
+                        price = product.price[0]?.priceOriginal || product.price[0]?.original || 0;
+                    } else if (typeof product.price === 'object') {
+                        price = product.price.priceOriginal || product.price.original || 0;
+                    }
+                }
+                const image = product?.image || [];
+                const imageSrc = Array.isArray(image) && image.length > 0 ? image[0] : '';
+                const slug = product?.slug || '';
+                const min = product?.min || 1;
+                const max = product?.max || 100;
+                const stock = product?.stock || 0;
+                
+                return {
+                    id: productId,
+                    productName,
+                    price,
+                    oldPrice: undefined,
+                    imageSrc,
+                    imageAlt: productName,
+                    href: slug ? `/product/${slug}` : `#`,
+                    quantity: item.quantity || 1,
+                    min,
+                    max,
+                    stock,
+                };
+            });
+            
+            // Calculate totalQuantity from items if apiCart.quantity is not available or 0
+            const calculatedTotalQuantity = mappedProducts.reduce((sum, product) => sum + (product.quantity || 0), 0);
+            const totalQuantity = apiCart.quantity && apiCart.quantity > 0 ? apiCart.quantity : calculatedTotalQuantity;
+            
+            return {
+                products: mappedProducts,
+                totalPrice: apiCart.totalDiscountBefore || 0,
+                totalQuantity: totalQuantity,
+                couponCode: apiCart.discountCode || undefined,
+                couponDiscount: apiCart.totalDiscount || 0,
+            };
+        }
+        return reduxCart;
+    }, [cartData, currentUser, reduxCart]);
+    
+    const cartQuantity = cart.totalQuantity;
+
+    // Sync cart quantity with cookie for middleware guard
+    useEffect(() => {
+        if (!mounted) return;
+        const quantity = cartQuantity || 0;
+        const cookieOptions = {
+            path: '/',
+            sameSite: 'lax' as const,
+            secure: process.env.NODE_ENV === 'production',
+        };
+
+        if (quantity > 0) {
+            Cookies.set('cartQuantity', String(quantity), cookieOptions);
+        } else {
+            Cookies.remove('cartQuantity', { path: '/' });
+        }
+    }, [cartQuantity, mounted]);
 
     // Custom hooks
     const { scrollY, isScrolled, topBarBackgroundOpacity } = useHeaderScroll(mounted);

@@ -161,7 +161,7 @@ const UserActions: React.FC<UserActionsProps> = ({
                         <div className={cx('action-item', 'user-pill-button')}>
                             <UserIcon className={cx('user-icon')} />
                             <span className={cx('action-text')}>
-                                Hello, {currentUser.user_name || currentUser.email.split('@')[0]}
+                                Hello, {currentUser.user_name || currentUser.fullName || (currentUser.email ? currentUser.email.split('@')[0] : 'User')}
                             </span>
                         </div>
                         <UserDropdown 

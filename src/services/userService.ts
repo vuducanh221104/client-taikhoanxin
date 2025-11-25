@@ -1,297 +1,130 @@
-import mockUsersData from '@/data/mockUsers.json';
+'use client';
+import { useSWRUser } from './swrConfig';
+import { put, post, del } from '@/utils/httpRequest';
+import type { Product, ProductListResponse } from '@/services/productService';
 
-export interface UserAddress {
-    street: string;
-    ward: string;
-    district: string;
-    city: string;
-    country: string;
-}
-
-export interface User {
-    _id?: string; // MongoDB _id (for API compatibility)
-    id: string;
-    user_name?: string; // For API compatibility
-    username: string;
+// ============================================
+// TYPES
+// ============================================
+export interface UserProfile {
+    _id: string;
     email: string;
-    password?: string;
-    full_name?: string;
-    phone_number?: string;
+    fullName: string;
+    phone?: string;
+    gender?: string;
+    citizenIdentity?: string;
     avatar?: string;
-    role: number; // 0: User, 1: Manager, 2: Admin
-    type: 'WEBSITE' | 'GOOGLE';
-    gender?: 'male' | 'female' | 'other' | '';
-    address?: UserAddress;
-    date_of_birth?: string;
-    is_verified?: boolean;
-    status: number; // 0: inactive, 1: active
-    created_at: string;
-    id_auth_provider?: string;
-    accessToken?: string;
+    address?: {
+        district: { value: string; text: string };
+        province: { value: string; text: string };
+        ward: { value: string; text: string };
+        street?: string;
+    };
+    membershipTier: number;
+    role: number;
+    status: number;
+    isVerified: boolean;
+    createdAt: string;
+    updatedAt: string;
 }
 
+export interface UpdateProfileData {
+    fullName?: string;
+    phone?: string;
+    gender?: string;
+    citizenIdentity?: string;
+    address?: {
+        district: { value: string; text: string };
+        province: { value: string; text: string };
+        ward: { value: string; text: string };
+        street?: string;
+    };
+    avatar?: File | string;
+}
+
+export interface UserProfileResponse {
+    success: boolean;
+    data: UserProfile;
+}
+
+export type ViewedProductsResponse = ProductListResponse & {
+    data: Product[];
+};
+
+// ============================================
+// GET HOOKS (SWR)
+// ============================================
+
 /**
- * Get all users
- * @returns Array of all users
+ * Get current user profile
  */
-export const getAllUsers = (): User[] => {
-    return mockUsersData.users as User[];
+export const useProfile = () => {
+    const key = '/api/v1/users/profile';
+    return useSWRUser<UserProfileResponse>(key);
 };
 
 /**
- * Get user by ID
- * @param id - User ID
- * @returns User or undefined if not found
+ * Get viewed products
  */
-export const getUserById = (id: string): User | undefined => {
-    const users = getAllUsers();
-    return users.find(user => user.id === id);
+export const useViewedProducts = (params?: { limit?: number; page?: number }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+
+    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
+    const key = `/api/v1/users/viewed-products${queryString}`;
+    return useSWRUser<ViewedProductsResponse>(key);
 };
 
-/**
- * Get user by username
- * @param username - Username
- * @returns User or undefined if not found
- */
-export const getUserByUsername = (username: string): User | undefined => {
-    const users = getAllUsers();
-    return users.find(user => user.username === username);
-};
+// ============================================
+// MUTATIONS (AXIOS)
+// ============================================
 
 /**
- * Get user by email
- * @param email - Email address
- * @returns User or undefined if not found
+ * Update user profile
  */
-export const getUserByEmail = (email: string): User | undefined => {
-    const users = getAllUsers();
-    return users.find(user => user.email.toLowerCase() === email.toLowerCase());
-};
-
-/**
- * Get user by username or email
- * @param usernameOrEmail - Username or email address
- * @returns User or undefined if not found
- */
-export const getUserByUsernameOrEmail = (usernameOrEmail: string): User | undefined => {
-    const users = getAllUsers();
-    return users.find(
-        user =>
-            user.username.toLowerCase() === usernameOrEmail.toLowerCase() ||
-            user.email.toLowerCase() === usernameOrEmail.toLowerCase()
-    );
-};
-
-/**
- * Authenticate user (login)
- * @param usernameOrEmail - Username or email
- * @param password - Password
- * @returns User with accessToken or null if authentication fails
- */
-export const authenticateUser = (usernameOrEmail: string, password: string): (User & { accessToken: string }) | null => {
-    const user = getUserByUsernameOrEmail(usernameOrEmail);
+export const updateProfile = async (data: UpdateProfileData): Promise<UserProfileResponse> => {
+    const formData = new FormData();
     
-    if (!user) {
-        return null;
+    if (data.fullName !== undefined) formData.append('fullName', data.fullName);
+    if (data.phone !== undefined) formData.append('phone', data.phone);
+    if (data.gender !== undefined) formData.append('gender', data.gender);
+    if (data.citizenIdentity !== undefined) formData.append('citizenIdentity', data.citizenIdentity);
+    if (data.address) {
+        formData.append('address', JSON.stringify(data.address));
+    }
+    if (data.avatar && data.avatar instanceof File) {
+        formData.append('avatar', data.avatar);
     }
 
-    // For GOOGLE type users, no password check
-    if (user.type === 'GOOGLE') {
-        return null;
-    }
-
-    // Check password (in real app, this should compare hashed password)
-    if (user.password !== password) {
-        return null;
-    }
-
-    // Check if user is active
-    if (user.status !== 1) {
-        return null;
-    }
-
-    // Generate mock access token (in real app, this should be generated by backend)
-    const accessToken = `mock_access_token_${user.id}_${Date.now()}`;
-
-    // Return user without password, with API-compatible format
-    const { password: _, ...userWithoutPassword } = user;
-    return {
-        ...userWithoutPassword,
-        _id: user.id, // Add _id for API compatibility
-        user_name: user.username, // Add user_name for API compatibility
-        accessToken,
-    } as User & { accessToken: string };
-};
-
-/**
- * Register new user
- * @param userData - User data for registration
- * @returns Created user or null if registration fails
- */
-export const registerUser = (userData: {
-    username: string;
-    email: string;
-    password: string;
-    full_name?: string;
-    phone_number?: string;
-}): User | null => {
-    const users = getAllUsers();
-
-    // Check if username or email already exists
-    const existingUser = users.find(
-        user =>
-            user.username.toLowerCase() === userData.username.toLowerCase() ||
-            user.email.toLowerCase() === userData.email.toLowerCase()
-    );
-
-    if (existingUser) {
-        return null; // User already exists
-    }
-
-    // Create new user
-    const newUser: User = {
-        id: String(users.length + 1),
-        username: userData.username,
-        email: userData.email,
-        password: userData.password, // In real app, this should be hashed
-        full_name: userData.full_name || '',
-        phone_number: userData.phone_number || '',
-        avatar: '/avatar/user-icon.webp',
-        role: 0, // Default role: User
-        type: 'WEBSITE',
-        gender: '',
-        address: {
-            street: '',
-            ward: '',
-            district: '',
-            city: '',
-            country: '',
+    const response = await put<UserProfileResponse>('/api/v1/users/profile', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
         },
-        date_of_birth: '',
-        is_verified: false,
-        status: 1, // Active by default
-        created_at: new Date().toISOString(),
-    };
-
-    return newUser;
+    });
+    return response.data;
 };
 
 /**
- * Update user information
- * @param userId - User ID
- * @param updates - Fields to update
- * @returns Updated user or null if not found
+ * Add product to viewed products
  */
-export const updateUser = (
-    userId: string,
-    updates: Partial<Omit<User, 'id' | 'created_at' | 'password'>>
-): User | null => {
-    const user = getUserById(userId);
-    
-    if (!user) {
-        return null;
-    }
-
-    // Return updated user (in real app, this would update the database)
-    return {
-        ...user,
-        ...updates,
-    };
+export const addViewedProduct = async (productId: string): Promise<{ success: boolean; message: string }> => {
+    const response = await post<{ success: boolean; message: string }>('/api/v1/users/viewed-products', { productId });
+    return response.data;
 };
 
 /**
- * Get users by role
- * @param role - Role (0: User, 1: Manager, 2: Admin)
- * @returns Array of users with the specified role
+ * Remove product from viewed products
  */
-export const getUsersByRole = (role: number): User[] => {
-    const users = getAllUsers();
-    return users.filter(user => user.role === role);
+export const removeViewedProduct = async (productId: string): Promise<{ success: boolean; message: string }> => {
+    const response = await del<{ success: boolean; message: string }>(`/api/v1/users/viewed-products/${productId}`);
+    return response.data;
 };
 
 /**
- * Get active users only
- * @returns Array of active users
+ * Clear all viewed products
  */
-export const getActiveUsers = (): User[] => {
-    const users = getAllUsers();
-    return users.filter(user => user.status === 1);
+export const clearViewedProducts = async (): Promise<{ success: boolean; message: string }> => {
+    const response = await del<{ success: boolean; message: string }>('/api/v1/users/viewed-products');
+    return response.data;
 };
-
-/**
- * Get verified users only
- * @returns Array of verified users
- */
-export const getVerifiedUsers = (): User[] => {
-    const users = getAllUsers();
-    return users.filter(user => user.is_verified === true);
-};
-
-/**
- * Search users by query (username, email, or full name)
- * @param query - Search query string
- * @param limit - Maximum number of results (default: 10)
- * @returns Array of matching users
- */
-export const searchUsers = (query: string, limit: number = 10): User[] => {
-    if (!query || query.trim().length === 0) {
-        return [];
-    }
-
-    const users = getAllUsers();
-    const lowerQuery = query.toLowerCase().trim();
-
-    const results = users
-        .filter(
-            user =>
-                user.username.toLowerCase().includes(lowerQuery) ||
-                user.email.toLowerCase().includes(lowerQuery) ||
-                (user.full_name && user.full_name.toLowerCase().includes(lowerQuery))
-        )
-        .slice(0, limit);
-
-    return results;
-};
-
-/**
- * Validate user credentials
- * @param usernameOrEmail - Username or email
- * @param password - Password
- * @returns true if credentials are valid, false otherwise
- */
-export const validateUserCredentials = (usernameOrEmail: string, password: string): boolean => {
-    const user = getUserByUsernameOrEmail(usernameOrEmail);
-    
-    if (!user) {
-        return false;
-    }
-
-    // For GOOGLE type users, no password check
-    if (user.type === 'GOOGLE') {
-        return false;
-    }
-
-    // Check password (in real app, this should compare hashed password)
-    return user.password === password && user.status === 1;
-};
-
-/**
- * Check if username is available
- * @param username - Username to check
- * @returns true if available, false if already taken
- */
-export const isUsernameAvailable = (username: string): boolean => {
-    const user = getUserByUsername(username);
-    return !user;
-};
-
-/**
- * Check if email is available
- * @param email - Email to check
- * @returns true if available, false if already taken
- */
-export const isEmailAvailable = (email: string): boolean => {
-    const user = getUserByEmail(email);
-    return !user;
-};
-

@@ -269,6 +269,29 @@
     }
 }
 
+.bill-note-critical {
+    margin: 8px 0 12px 0;
+    padding: 14px;
+    background: #ffe5e9;
+    border-left: 4px solid #ff3b3f;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #a5000a;
+    font-weight: 500;
+
+    strong {
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    @media (max-width: 768px) {
+        font-size: 12px;
+        padding: 12px;
+        margin: 6px 0 10px 0;
+    }
+}
+
 // Order Summary
 .bill-order-summary {
     margin-bottom: 28px;
