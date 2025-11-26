@@ -43,6 +43,34 @@
     margin: 0;
 }
 
+.guest-warning {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    background: #fff7e6;
+    color: #b45309;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1.5rem;
+
+    svg {
+        flex-shrink: 0;
+    }
+
+    strong {
+        display: block;
+        margin-bottom: 0.25rem;
+        color: #92400e;
+    }
+
+    p {
+        margin: 0;
+        color: #b45309;
+        font-size: 0.9375rem;
+    }
+}
+
 .export-button {
     display: flex;
     align-items: center;

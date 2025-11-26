@@ -1,21 +1,30 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import classNames from 'classnames/bind';
 import styles from './AccountOverview.module.scss';
 import { CurrentUser } from '@/types/client';
 import { PencilIcon } from '@/components/Icons';
+import { useToast } from '@/hooks/useToast';
+import { updateProfile } from '@/services/userService';
 
 const cx = classNames.bind(styles);
 
 interface AccountOverviewProps {
     user: CurrentUser;
+    onProfileReload?: () => Promise<any> | void;
 }
 
-const AccountOverview: React.FC<AccountOverviewProps> = ({ user }) => {
+const AccountOverview: React.FC<AccountOverviewProps> = ({ user, onProfileReload }) => {
     const [avatar, setAvatar] = useState(user.avatar || '/avatar/user-icon.webp');
+    const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { showSuccess, showError } = useToast();
+
+    useEffect(() => {
+        setAvatar(user.avatar || '/avatar/user-icon.webp');
+    }, [user.avatar]);
 
     const formatBalance = (amount: number): string => {
         return new Intl.NumberFormat('vi-VN', {
@@ -45,12 +54,12 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ user }) => {
         fileInputRef.current?.click();
     };
 
-    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             // Validate file size (5MB)
             if (file.size > 5 * 1024 * 1024) {
-                alert('Vui lòng chọn ảnh nhỏ hơn 5MB');
+                showError('Vui lòng chọn ảnh nhỏ hơn 5MB');
                 return;
             }
 
@@ -61,7 +70,18 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ user }) => {
             };
             reader.readAsDataURL(file);
 
-            // TODO: Upload to server
+            setIsUploading(true);
+            try {
+                await updateProfile({ avatar: file });
+                showSuccess('Cập nhật ảnh đại diện thành công!');
+                await onProfileReload?.();
+            } catch (error: any) {
+                const errorMessage = error?.response?.data?.message || error?.message || 'Không thể cập nhật ảnh đại diện. Vui lòng thử lại!';
+                showError(errorMessage);
+                setAvatar(user.avatar || '/avatar/user-icon.webp');
+            } finally {
+                setIsUploading(false);
+            }
         }
     };
 
@@ -96,9 +116,11 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ user }) => {
                         type="button"
                         className={cx('avatar-edit-button')}
                         onClick={handleAvatarClick}
+                        disabled={isUploading}
+                        aria-busy={isUploading}
                     >
                         <PencilIcon size={16} />
-                        Sửa ảnh đại diện
+                        {isUploading ? 'Đang cập nhật...' : 'Sửa ảnh đại diện'}
                     </button>
                     <input
                         ref={fileInputRef}
@@ -106,6 +128,7 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ user }) => {
                         accept="image/*"
                         style={{ display: 'none' }}
                         onChange={handleAvatarChange}
+                        disabled={isUploading}
                     />
                     <div className={cx('avatar-guidelines')}>
                         <p>Vui lòng chọn ảnh nhỏ hơn 5MB</p>

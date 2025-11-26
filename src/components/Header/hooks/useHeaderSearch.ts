@@ -3,7 +3,15 @@ import { useRouter } from 'next/navigation';
 import { searchProducts } from '@/services/productService';
 import { FeaturedProduct } from '@/components/FeaturedProducts';
 
-export const useHeaderSearch = (mounted: boolean, isMobile: boolean) => {
+const DEFAULT_RECENT_SEARCHES = [
+    'Windows 11',
+    'Office 365',
+    'Tài khoản AI',
+    'Spotify Premium',
+    'Netflix',
+];
+
+export const useHeaderSearch = (mounted: boolean, isMobile: boolean, defaultTrendingSearches: string[] = []) => {
     const router = useRouter();
     const [searchValue, setSearchValue] = useState('');
     const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -18,29 +26,32 @@ export const useHeaderSearch = (mounted: boolean, isMobile: boolean) => {
     const isSearchOpeningRef = useRef(false);
     const justSearchClosedRef = useRef(false);
     const lastScrollYRef = useRef(0);
+    const hasInitializedRecentSearches = useRef(false);
 
     // Load recent searches from localStorage
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('recentSearches');
-            if (saved) {
-                try {
-                    setRecentSearches(JSON.parse(saved));
-                } catch (e) {
-                    console.error('Failed to parse recent searches:', e);
-                }
-            } else {
-                // Default recent searches
-                setRecentSearches([
-                    'Windows 11',
-                    'Office 365',
-                    'Tài khoản AI',
-                    'Spotify Premium',
-                    'Netflix',
-                ]);
+        if (typeof window === 'undefined' || hasInitializedRecentSearches.current) {
+            return;
+        }
+
+        const saved = localStorage.getItem('recentSearches');
+        if (saved) {
+            try {
+                setRecentSearches(JSON.parse(saved));
+                hasInitializedRecentSearches.current = true;
+                return;
+            } catch (e) {
+                console.error('Failed to parse recent searches:', e);
             }
         }
-    }, []);
+
+        const fallback = defaultTrendingSearches.length > 0
+            ? defaultTrendingSearches.slice(0, 5)
+            : DEFAULT_RECENT_SEARCHES;
+
+        setRecentSearches(fallback);
+        hasInitializedRecentSearches.current = true;
+    }, [defaultTrendingSearches]);
 
     // Update search results when search value changes
     useEffect(() => {

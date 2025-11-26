@@ -1,18 +1,22 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import classNames from 'classnames/bind';
 import styles from './page.module.scss';
-import { authLogin } from '@/services/authService';
+import { authLogin, type AuthResponse } from '@/services/authService';
 import { loginSuccess, loginFailed } from '@/redux/authSlice';
 import { EyeIcon, EyeOffIcon } from '@/components/Icons';
 import { useToast } from '@/hooks/useToast';
 import { Button } from '@/components/Button';
 import TurnstileWidget from '@/components/Turnstile/TurnstileWidget';
+import { RootState } from '@/redux/store';
+import { clearCart as clearGuestCart } from '@/redux/cartSlice';
+import { importGuestCart } from '@/services/cartService';
+import { useSWRConfig } from 'swr';
 
 const cx = classNames.bind(styles);
 
@@ -20,6 +24,8 @@ export default function LoginPage() {
     const dispatch = useDispatch();
     const router = useRouter();
     const searchParams = useSearchParams();
+    const guestCart = useSelector((state: RootState) => state.cart);
+    const { mutate: globalMutate } = useSWRConfig();
     const { showSuccess, showError } = useToast();
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -40,6 +46,7 @@ export default function LoginPage() {
     const [turnstileToken, setTurnstileToken] = useState('');
     const [turnstileError, setTurnstileError] = useState('');
     const [turnstileResetKey, setTurnstileResetKey] = useState(() => Date.now().toString());
+    const [googleAuthLink, setGoogleAuthLink] = useState<string | null>(null);
 
     useEffect(() => {
         // Check if user just registered
@@ -49,6 +56,21 @@ export default function LoginPage() {
             router.replace('/auth/login', { scroll: false });
         }
     }, [searchParams, router]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const redirectParam = searchParams.get('redirect');
+        const callbackUrl = new URL('/auth/google/callback', window.location.origin);
+        if (redirectParam) {
+            callbackUrl.searchParams.set('redirect', redirectParam);
+        }
+
+        const serverBase = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:4000';
+        const normalizedBase = serverBase.endsWith('/') ? serverBase.slice(0, -1) : serverBase;
+        const apiUrl = `${normalizedBase}/api/v1/auth/google/redirect?returnUrl=${encodeURIComponent(callbackUrl.toString())}`;
+        setGoogleAuthLink(apiUrl);
+    }, [searchParams]);
 
     const validateField = (name: string, value: string): string => {
         switch (name) {
@@ -75,6 +97,52 @@ export default function LoginPage() {
         }
     };
 
+    const handleAuthSuccess = useCallback(
+        async (response: AuthResponse) => {
+            if (!response.success || !response.data) {
+                throw new Error(response.message || 'Đăng nhập thất bại');
+            }
+
+            dispatch(
+                loginSuccess({
+                    ...response.data.user,
+                    accessToken: response.data.accessToken,
+                    refreshToken: response.data.refreshToken,
+                })
+            );
+
+            if (guestCart.products.length > 0) {
+                try {
+                    await importGuestCart(
+                        {
+                            items: guestCart.products.map((item) => ({
+                                productId: item.id,
+                                slug: item.slug || extractSlugFromHref(item.href),
+                                quantity: item.quantity,
+                                options: item.options && item.options.length > 0 ? item.options : undefined,
+                            })),
+                        },
+                        response.data.accessToken
+                    );
+                    dispatch(clearGuestCart());
+                    await globalMutate('/api/v1/cart');
+                } catch (cartError) {
+                    console.error('Failed to import guest cart:', cartError);
+                    showError('Không thể đồng bộ giỏ hàng của bạn. Vui lòng thử lại sau khi đăng nhập.');
+                }
+            }
+
+            showSuccess('Đăng nhập thành công!');
+            const redirectUrl = searchParams.get('redirect');
+            if (redirectUrl) {
+                router.push(decodeURIComponent(redirectUrl));
+            } else {
+                router.push('/');
+            }
+        },
+        [dispatch, guestCart.products, globalMutate, router, searchParams, showError, showSuccess]
+    );
+
     const handleBlur = (fieldName: keyof typeof formData) => {
         setTouched((prev) => ({ ...prev, [fieldName]: true }));
         const error = validateField(fieldName, formData[fieldName]);
@@ -90,6 +158,26 @@ export default function LoginPage() {
         // Clear general error when user starts typing
         if (error) {
             setError('');
+        }
+    };
+
+    const extractSlugFromHref = (href?: string | null): string | undefined => {
+        if (!href || typeof href !== 'string') return undefined;
+        const trimmed = href.trim();
+        if (!trimmed) return undefined;
+        try {
+            // Support absolute or relative URLs
+            const url = trimmed.startsWith('http') ? new URL(trimmed) : new URL(trimmed, 'http://dummy');
+            const segments = url.pathname.split('/').filter(Boolean);
+            if (segments.length === 0) return undefined;
+            const lastSegment = segments[segments.length - 1];
+            return lastSegment || undefined;
+        } catch {
+            const match = trimmed.match(/\/product\/([^/?#]+)/i);
+            if (match && match[1]) {
+                return match[1];
+            }
+            return undefined;
         }
     };
 
@@ -134,30 +222,7 @@ export default function LoginPage() {
                 password: formData.password,
                 turnstileToken,
             });
-            
-            // Check if login was successful
-            if (response.success && response.data) {
-                // Dispatch login success with both accessToken and refreshToken
-                dispatch(loginSuccess({
-                    ...response.data.user,
-                    accessToken: response.data.accessToken,
-                    refreshToken: response.data.refreshToken, // Lưu refreshToken
-                }));
-                
-                showSuccess('Đăng nhập thành công!');
-                
-                // Check for redirect parameter
-                const redirectUrl = searchParams.get('redirect');
-                if (redirectUrl) {
-                    // Decode and redirect to the original URL
-                    router.push(decodeURIComponent(redirectUrl));
-                } else {
-                    // Default redirect to home
-                    router.push('/');
-                }
-            } else {
-                throw new Error(response.message || 'Đăng nhập thất bại');
-            }
+            await handleAuthSuccess(response);
         } catch (error: any) {
             const errorMessage = error?.response?.data?.message || error?.message || 'Đăng nhập thất bại. Vui lòng thử lại!';
             setError(errorMessage);
@@ -297,7 +362,16 @@ export default function LoginPage() {
 
                     {/* Social Login */}
                     <div className={cx('social-login')}>
-                        <button type="button" className={cx('social-button', 'google-button')} disabled={loading}>
+                        <a
+                            href={googleAuthLink || '#'}
+                            className={cx('social-button', 'google-button')}
+                            onClick={(e) => {
+                                if (!googleAuthLink) {
+                                    e.preventDefault();
+                                    showError('Chức năng đăng nhập Google chưa khả dụng.');
+                                }
+                            }}
+                        >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                                 <path
                                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -316,8 +390,8 @@ export default function LoginPage() {
                                     fill="#EA4335"
                                 />
                             </svg>
-                            Đăng nhập bằng Google
-                        </button>
+                            <span>Tiếp tục sử dụng dịch vụ bằng Google</span>
+                        </a>
                     </div>
 
                     <div className={cx('auth-footer')}>

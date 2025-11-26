@@ -9,7 +9,7 @@ interface TurnstileWidgetProps {
     onExpire?: () => void;
     resetKey?: string | number;
     className?: string;
-    size?: 'normal' | 'compact';
+    size?: 'normal' | 'compact' | 'invisible';
     theme?: 'light' | 'dark' | 'auto';
 }
 
@@ -21,7 +21,7 @@ const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
     onExpire,
     resetKey,
     className,
-    size = 'normal',
+    size = 'invisible',
     theme = 'auto',
 }) => {
     if (!siteKey) {
@@ -36,10 +36,8 @@ const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
             <Turnstile
                 key={resetKey}
                 sitekey={siteKey}
-                options={{
-                    theme,
-                    size,
-                }}
+                theme={theme}
+                size={size}
                 onVerify={(token: string) => {
                     onSuccess(token);
                 }}

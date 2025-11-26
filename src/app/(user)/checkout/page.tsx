@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import classNames from 'classnames/bind';
 import styles from './page.module.scss';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/redux/store';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from '@/redux/store';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -12,6 +12,8 @@ import { OnlineBankingQrIcon } from '@/components/Icons';
 import ProgressIndicator, { Step } from '@/components/ProgressIndicator';
 import { useCart, checkout } from '@/services/cartService';
 import { useToast } from '@/hooks/useToast';
+import { clearCart } from '@/redux/cartSlice';
+import { createGuestOrder } from '@/services/orderService';
 
 const cx = classNames.bind(styles);
 
@@ -62,7 +64,9 @@ const paymentMethods: PaymentMethod[] = [
 ];
 
 const CheckoutPage: React.FC = () => {
+    const dispatch = useDispatch<AppDispatch>();
     const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
+    const reduxCart = useSelector((state: RootState) => state.cart);
     const router = useRouter();
     const { showSuccess, showError } = useToast();
     const [mounted, setMounted] = useState(false);
@@ -79,19 +83,11 @@ const CheckoutPage: React.FC = () => {
     
     // Fetch cart from API
     const { data: cartData, error: cartError, isLoading: cartLoading, mutate: mutateCart } = useCart();
+    const isLoggedIn = Boolean(currentUser?.accessToken);
 
-    // Check authentication and redirect if not logged in
     useEffect(() => {
         setMounted(true);
     }, []);
-
-    useEffect(() => {
-        if (mounted && !currentUser) {
-            // Save current URL to redirect back after login
-            const redirectUrl = encodeURIComponent('/checkout');
-            router.push(`/auth/login?redirect=${redirectUrl}`);
-        }
-    }, [mounted, currentUser, router]);
 
     // Auto-fill form with user data when logged in
     useEffect(() => {
@@ -107,7 +103,7 @@ const CheckoutPage: React.FC = () => {
 
     // Map API cart to component format
     const cart = useMemo(() => {
-        if (currentUser && cartData?.data) {
+        if (isLoggedIn && cartData?.data) {
             const apiCart = cartData.data;
             const items = apiCart.items || [];
             const mappedProducts = items.map((item: any) => {
@@ -125,11 +121,14 @@ const CheckoutPage: React.FC = () => {
                     price = item.unitPrice || 0;
                 }
                 
+                const itemOptions = Array.isArray(item.options) ? item.options : [];
+
                 return {
                     id: productId,
                     productName,
                     price,
                     quantity: item.quantity || 1,
+                    options: itemOptions,
                 };
             });
             
@@ -142,36 +141,26 @@ const CheckoutPage: React.FC = () => {
             };
         }
         return {
-            products: [],
-            totalPrice: 0,
-            totalQuantity: 0,
-            couponCode: undefined,
-            couponDiscount: 0,
+            products: reduxCart.products.map((product) => ({
+                ...product,
+                options: product.options || [],
+            })),
+            totalPrice: reduxCart.totalPrice,
+            totalQuantity: reduxCart.totalQuantity,
+            couponCode: reduxCart.couponCode,
+            couponDiscount: reduxCart.couponDiscount || 0,
         };
-    }, [cartData, currentUser]);
+    }, [cartData, isLoggedIn, reduxCart]);
     
     const formatPrice = (value: number) => value.toLocaleString('vi-VN');
     const cartEmpty = cart.products.length === 0;
 
-    // Show loading or redirect if not authenticated
-    if (!mounted || !currentUser) {
-        return (
-            <div className={cx('checkout-page')}>
-                <div className="container">
-                    <div className={cx('auth-required')}>
-                        <h2>Vui lòng đăng nhập</h2>
-                        <p>Bạn cần đăng nhập để tiếp tục thanh toán.</p>
-                        <Link href="/auth/login" className={cx('login-link')}>
-                            Đăng nhập ngay
-                        </Link>
-                    </div>
-                </div>
-            </div>
-        );
+    if (!mounted) {
+        return null;
     }
     
     // Show loading while fetching cart
-    if (cartLoading) {
+    if (isLoggedIn && cartLoading) {
         return (
             <div className={cx('checkout-page')}>
                 <div className="container">
@@ -182,7 +171,7 @@ const CheckoutPage: React.FC = () => {
     }
     
     // Show error if cart fetch failed
-    if (cartError) {
+    if (isLoggedIn && cartError) {
         return (
             <div className={cx('checkout-page')}>
                 <div className="container">
@@ -285,6 +274,29 @@ const CheckoutPage: React.FC = () => {
         setErrors(newErrors);
     };
 
+    const storeGuestCheckoutAccess = (orderCode: string, email: string) => {
+        if (typeof window === 'undefined') return;
+        try {
+            const key = 'guestCheckoutAccess';
+            const raw = window.localStorage.getItem(key);
+            const data: Record<string, { email: string; ts: number }> = raw ? JSON.parse(raw) : {};
+            const normalizedEmail = email.trim().toLowerCase();
+            data[orderCode] = { email: normalizedEmail, ts: Date.now() };
+            const sortedEntries = Object.entries(data)
+                .sort((a, b) => b[1].ts - a[1].ts)
+                .slice(0, 20);
+            const trimmedData: Record<string, { email: string; ts: number }> = {};
+            sortedEntries.forEach(([code, value]) => {
+                trimmedData[code] = value;
+            });
+            window.localStorage.setItem(key, JSON.stringify(trimmedData));
+        } catch (err) {
+            if (process.env.NODE_ENV !== 'production') {
+                console.warn('Failed to store guest checkout access', err);
+            }
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (cartEmpty || !isFormValid()) return;
@@ -303,13 +315,31 @@ const CheckoutPage: React.FC = () => {
         setSubmitting(true);
         
         try {
-            // Call checkout API
-            const response = await checkout({
-                phoneUserOrder: form.phone,
-                emailUserOrder: form.email,
-                userNote: form.note || '',
-                customerFullName: form.fullName,
-            });
+            let response: { success: boolean; data: any; message: string };
+
+            if (isLoggedIn) {
+                response = await checkout({
+                    phoneUserOrder: form.phone,
+                    emailUserOrder: form.email,
+                    userNote: form.note || '',
+                    customerFullName: form.fullName,
+                });
+            } else {
+                const guestPayload = {
+                    items: cart.products.map((item) => ({
+                        product_id: item.id,
+                        quantity: item.quantity,
+                        options: item.options && item.options.length > 0 ? item.options : undefined,
+                    })),
+                    phoneUserOrder: form.phone,
+                    emailUserOrder: form.email,
+                    userNote: form.note || '',
+                    customerFullName: form.fullName,
+                    discountCode: cart.couponCode,
+                };
+
+                response = await createGuestOrder(guestPayload);
+            }
             
             if (response.success) {
                 const orderData = response.data;
@@ -320,8 +350,17 @@ const CheckoutPage: React.FC = () => {
                     throw new Error('Không thể xác định thông tin đơn hàng. Vui lòng thử lại.');
                 }
 
-                // Revalidate cart (should be empty after checkout)
-                await mutateCart();
+                if (isLoggedIn) {
+                    await mutateCart();
+                } else {
+                    storeGuestCheckoutAccess(orderCode, form.email);
+                    dispatch(clearCart());
+                    
+                    // Mark this as the original session so success page auto-verifies
+                    if (typeof window !== 'undefined') {
+                        window.sessionStorage.setItem(`order_created_${orderCode}`, 'true');
+                    }
+                }
                 
                 // Show success message
                 showSuccess('Đặt hàng thành công!');

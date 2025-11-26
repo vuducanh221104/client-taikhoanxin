@@ -24,41 +24,126 @@ const CheckoutSuccessPage: React.FC = () => {
     const [mounted, setMounted] = useState(false);
     const [isQrModalOpen, setIsQrModalOpen] = useState(false);
     const [validationError, setValidationError] = useState<string | null>(null);
+    const [emailInput, setEmailInput] = useState('');
+    const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
+    const [verificationError, setVerificationError] = useState<string | null>(null);
+    const [checkedStoredEmail, setCheckedStoredEmail] = useState(false);
+    const [hasRedirectedToDetails, setHasRedirectedToDetails] = useState(false);
+    // Track if this is the same browser session that created the order
+    const [isOriginalSession, setIsOriginalSession] = useState(false);
     const searchParams = useSearchParams();
     const orderCodeParam = searchParams.get('order');
     const checkoutTokenParam = searchParams.get('token') || searchParams.get('key');
+    
+    // For logged-in users: always fetch
+    // For guest users: only fetch if submittedEmail is set AND it's either original session or user clicked verify
+    const shouldFetchCheckout = Boolean(
+        orderCodeParam && 
+        checkoutTokenParam && 
+        (currentUser || (submittedEmail && (isOriginalSession || submittedEmail)))
+    );
+    
     const {
         data: checkoutData,
         error: checkoutError,
         isLoading: checkoutLoading,
-    } = useCheckoutOrder(orderCodeParam, checkoutTokenParam);
+    } = useCheckoutOrder(
+        shouldFetchCheckout ? orderCodeParam : null,
+        shouldFetchCheckout ? checkoutTokenParam : null,
+        !currentUser ? submittedEmail : null
+    );
     const order = checkoutData?.data?.order;
     const isExpired = checkoutData?.data?.isExpired;
     const remainingSeconds = checkoutData?.data?.remainingSeconds ?? 0;
+
+    const getStoredGuestEmail = React.useCallback((orderCode: string) => {
+        if (typeof window === 'undefined') return null;
+        try {
+            const raw = window.localStorage.getItem('guestCheckoutAccess');
+            if (!raw) return null;
+            const data: Record<string, { email: string; ts: number }> = JSON.parse(raw);
+            const entry = data[orderCode];
+            return entry?.email || null;
+        } catch (err) {
+            if (process.env.NODE_ENV !== 'production') {
+                console.warn('Failed to read guest checkout access', err);
+            }
+            return null;
+        }
+    }, []);
+
+    const storeGuestEmail = React.useCallback((orderCode: string, email: string) => {
+        if (typeof window === 'undefined') return;
+        try {
+            const key = 'guestCheckoutAccess';
+            const raw = window.localStorage.getItem(key);
+            const data: Record<string, { email: string; ts: number }> = raw ? JSON.parse(raw) : {};
+            data[orderCode] = { email: email.trim().toLowerCase(), ts: Date.now() };
+            const sortedEntries = Object.entries(data)
+                .sort((a, b) => b[1].ts - a[1].ts)
+                .slice(0, 20);
+            const trimmedData: Record<string, { email: string; ts: number }> = {};
+            sortedEntries.forEach(([code, value]) => {
+                trimmedData[code] = value;
+            });
+            window.localStorage.setItem(key, JSON.stringify(trimmedData));
+        } catch (err) {
+            if (process.env.NODE_ENV !== 'production') {
+                console.warn('Failed to store guest checkout access', err);
+            }
+        }
+    }, []);
 
     useEffect(() => {
         setMounted(true);
     }, []);
 
+    // Check for stored email - only auto-fill, don't auto-submit for new sessions
+    useEffect(() => {
+        if (!currentUser && orderCodeParam && typeof window !== 'undefined') {
+            const storedEmail = getStoredGuestEmail(orderCodeParam);
+            if (storedEmail) {
+                // Auto-fill the email input
+                setEmailInput(storedEmail);
+                
+                // Check if this is the original session (order was created in this browser recently)
+                // We use sessionStorage to track if the order was just created
+                const sessionKey = `order_created_${orderCodeParam}`;
+                const wasJustCreated = window.sessionStorage.getItem(sessionKey);
+                
+                if (wasJustCreated) {
+                    // This is the original session - auto-verify
+                    setSubmittedEmail(storedEmail);
+                    setIsOriginalSession(true);
+                }
+                // If not original session, just show the form with pre-filled email
+                // User needs to click "Xác minh" to verify
+            }
+        }
+        setCheckedStoredEmail(true);
+    }, [currentUser, orderCodeParam, getStoredGuestEmail]);
+
     useEffect(() => {
         if (!mounted) return;
-
-        if (!currentUser) {
-            const redirectUrl = encodeURIComponent(`/checkout/success?${searchParams.toString()}`);
-            router.push(`/auth/login?redirect=${redirectUrl}`);
-            return;
-        }
 
         if (!orderCodeParam || !checkoutTokenParam) {
             setValidationError('Thiếu tham số xác thực đơn hàng hoặc tham số không hợp lệ.');
         } else {
             setValidationError(null);
         }
-    }, [mounted, orderCodeParam, checkoutTokenParam, currentUser, router, searchParams]);
+    }, [mounted, orderCodeParam, checkoutTokenParam]);
 
     // Lắng nghe trạng thái đơn hàng qua SSE và redirect khi thanh toán thành công
     useEffect(() => {
-        if (!mounted || !order || isExpired) return;
+        if (
+            !mounted ||
+            !order ||
+            isExpired ||
+            (!currentUser && !submittedEmail) ||
+            hasRedirectedToDetails
+        ) {
+            return;
+        }
 
         // Dùng cùng base URL với httpRequest.ts để tránh lệch port
         const backendUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:4000';
@@ -91,15 +176,28 @@ const CheckoutSuccessPage: React.FC = () => {
                             eventSource.close();
                         }
 
-                        // Redirect đến trang chi tiết đơn hàng nếu có mã, ngược lại quay về danh sách
-                        const targetPath = targetOrderCode
-                            ? `/account/orders/${targetOrderCode}`
-                            : '/account/orders';
+                        setHasRedirectedToDetails(true);
 
-                        if (typeof window !== 'undefined') {
-                            window.location.href = targetPath;
-                        } else {
-                            router.push(targetPath);
+                        if (currentUser) {
+                            const targetPath = targetOrderCode
+                                ? `/account/orders/${targetOrderCode}`
+                                : '/account/orders';
+
+                            if (typeof window !== 'undefined') {
+                                window.location.href = targetPath;
+                            } else {
+                                router.push(targetPath);
+                            }
+                        } else if (
+                            targetOrderCode &&
+                            checkoutTokenParam &&
+                            submittedEmail
+                        ) {
+                            const params = new URLSearchParams({
+                                token: checkoutTokenParam,
+                                email: submittedEmail,
+                            });
+                            router.push(`/orders/lookup/${targetOrderCode}?${params.toString()}`);
                         }
                     }
                 } catch (err) {
@@ -121,7 +219,16 @@ const CheckoutSuccessPage: React.FC = () => {
                 eventSource.close();
             }
         };
-    }, [mounted, order, router, isExpired]);
+    }, [
+        mounted,
+        order,
+        router,
+        isExpired,
+        currentUser,
+        checkoutTokenParam,
+        submittedEmail,
+        hasRedirectedToDetails,
+    ]);
 
     // Disable body scroll when QR modal is open
     useEffect(() => {
@@ -188,6 +295,53 @@ const CheckoutSuccessPage: React.FC = () => {
         return `${day}/${month}/${year}`;
     };
 
+useEffect(() => {
+    if (!currentUser && checkoutError) {
+        const status = (checkoutError as any)?.response?.status;
+        if (status === 403) {
+            const message =
+                (checkoutError as any)?.response?.data?.message ||
+                'Địa chỉ email không trùng khớp với đơn hàng.';
+            setVerificationError(message);
+            return;
+        }
+    }
+
+    if (displayOrder) {
+        setVerificationError(null);
+    }
+}, [checkoutError, currentUser, displayOrder]);
+
+useEffect(() => {
+    if (!currentUser && displayOrder && submittedEmail && orderCodeParam) {
+        storeGuestEmail(orderCodeParam, submittedEmail);
+    }
+}, [currentUser, displayOrder, submittedEmail, orderCodeParam, storeGuestEmail]);
+
+    const validateEmailFormat = (email: string) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
+
+    const handleVerifyEmail = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const trimmed = emailInput.trim();
+        if (!trimmed) {
+            setVerificationError('Vui lòng nhập địa chỉ email');
+            return;
+        }
+        if (!validateEmailFormat(trimmed)) {
+            setVerificationError('Địa chỉ email không hợp lệ');
+            return;
+        }
+        setVerificationError(null);
+        const normalized = trimmed.toLowerCase();
+        setSubmittedEmail(normalized);
+        if (orderCodeParam) {
+            storeGuestEmail(orderCodeParam, normalized);
+        }
+    };
+
     if (!mounted) {
         return null;
     }
@@ -196,13 +350,57 @@ const CheckoutSuccessPage: React.FC = () => {
         (checkoutError as any)?.response?.data?.message ||
         (checkoutError as any)?.response?.data?.error ||
         undefined;
-    const errorMessage = validationError || apiErrorMessage || checkoutError?.message;
-    const requiresLogin = !currentUser || (errorMessage && errorMessage.toLowerCase().includes('đăng nhập'));
-    const shouldShowError = !!errorMessage || (!checkoutLoading && !displayOrder);
+    const verificationErrorMessage =
+        !currentUser && (checkoutError as any)?.response?.status === 403
+            ? apiErrorMessage
+            : null;
+    const errorMessage =
+        validationError ||
+        (verificationErrorMessage ? null : apiErrorMessage) ||
+        (verificationErrorMessage ? null : checkoutError?.message);
+    const requiresLogin = Boolean(errorMessage && errorMessage.toLowerCase().includes('đăng nhập'));
+    const showVerificationForm =
+        !currentUser &&
+        checkedStoredEmail &&
+        (!displayOrder || Boolean(verificationError)) &&
+        !validationError;
+    const shouldShowError =
+        !showVerificationForm && (!!errorMessage || (!checkoutLoading && !displayOrder));
 
     return (
         <div className={cx('bill-page')}>
             <div className={cx('bill-container')}>
+                {showVerificationForm && (
+                    <div className={cx('verification-state')}>
+                        {verificationError && (
+                            <div className={cx('verification-banner')}>
+                                {verificationError}
+                            </div>
+                        )}
+                        <p className={cx('verification-message')}>
+                            Để xem đơn hàng này, bạn phải đăng nhập hoặc xác minh địa chỉ email được liên kết với đơn hàng.
+                        </p>
+                        <form className={cx('verification-form')} onSubmit={handleVerifyEmail}>
+                            <label htmlFor="verification-email">Địa chỉ email *</label>
+                            <input
+                                id="verification-email"
+                                type="email"
+                                value={emailInput}
+                                onChange={(e) => setEmailInput(e.target.value)}
+                                placeholder="you@example.com"
+                                required
+                            />
+                            <button
+                                type="submit"
+                                className={cx('btn', 'primary')}
+                                disabled={!emailInput.trim()}
+                            >
+                                Xác minh
+                            </button>
+                        </form>
+                    </div>
+                )}
+
                 {checkoutLoading ? (
                     <div className={cx('error-state')}>
                         <p>Đang tải thông tin đơn hàng...</p>

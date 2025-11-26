@@ -57,6 +57,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
     const [turnstileToken, setTurnstileToken] = useState('');
     const [turnstileError, setTurnstileError] = useState('');
     const [turnstileResetKey, setTurnstileResetKey] = useState(() => Date.now().toString());
+    const [googleAuthLink, setGoogleAuthLink] = useState<string | null>(null);
     
     const dropdownRef = useRef<HTMLDivElement>(null);
     const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -67,6 +68,32 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    // Build Google OAuth redirect URL
+    useEffect(() => {
+        if (!mounted) return;
+        if (typeof window === 'undefined') return;
+
+        try {
+            const serverBase = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:4000';
+            const normalizedBase = serverBase.endsWith('/') ? serverBase.slice(0, -1) : serverBase;
+
+            const callbackUrl = new URL('/auth/google/callback', window.location.origin);
+            const currentTarget = window.location.pathname + window.location.search;
+            if (currentTarget) {
+                const redirectParam = encodeURIComponent(currentTarget);
+                callbackUrl.searchParams.set('redirect', redirectParam);
+            }
+
+            const apiUrl = `${normalizedBase}/api/v1/auth/google/redirect?returnUrl=${encodeURIComponent(
+                callbackUrl.toString()
+            )}`;
+            setGoogleAuthLink(apiUrl);
+        } catch (error) {
+            console.error('Failed to build Google auth link from dropdown', error);
+            setGoogleAuthLink(null);
+        }
+    }, [mounted]);
 
     // Detect mobile
     useEffect(() => {
@@ -436,7 +463,17 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
                         <span>Hoặc</span>
                     </div>
                     <div className={cx('social-login')}>
-                        <button type="button" className={cx('social-button', 'google-button')}>
+                        <button
+                            type="button"
+                            className={cx('social-button', 'google-button')}
+                            onClick={() => {
+                                if (!googleAuthLink) {
+                                    showError('Chức năng đăng nhập Google chưa khả dụng.');
+                                    return;
+                                }
+                                window.location.href = googleAuthLink;
+                            }}
+                        >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>

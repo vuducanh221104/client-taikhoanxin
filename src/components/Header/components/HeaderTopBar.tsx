@@ -38,6 +38,9 @@ interface HeaderTopBarProps {
     loginDropdownTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
     loginDropdownCloseTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
     wishlistQuantity: number;
+    trendingSearchTitle: string;
+    trendingSearches: string[];
+    defaultSearchValue: string;
     isSearchOpen: boolean;
     toggleSearch: () => void;
     searchToggleRef: React.RefObject<HTMLButtonElement>;
@@ -75,6 +78,9 @@ const HeaderTopBar: React.FC<HeaderTopBarProps> = ({
     loginDropdownTimeoutRef,
     loginDropdownCloseTimeoutRef,
     wishlistQuantity,
+    trendingSearchTitle,
+    trendingSearches,
+    defaultSearchValue,
     isSearchOpen,
     toggleSearch,
     searchToggleRef,
@@ -131,6 +137,9 @@ const HeaderTopBar: React.FC<HeaderTopBarProps> = ({
                         recentSearches={recentSearches}
                         setRecentSearches={setRecentSearches}
                         isMobile={isMobile}
+                        trendingSearchTitle={trendingSearchTitle}
+                        trendingSearches={trendingSearches}
+                        defaultSearchValue={defaultSearchValue}
                     />
 
                     {/* User Actions */}

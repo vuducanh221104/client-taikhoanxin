@@ -25,7 +25,7 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({ product }) => {
     /**
      * PRIORITY LOGIC:
      * 1. If product has relatedProduct field in database → Call POST /api/v1/products/by-ids
-     * 2. If no relatedProduct → Call GET /api/v1/products/related-product?categorySlug=...&limit=8
+     * 2. If no relatedProduct → Call GET /api/v1/products/:slug/related?limit=8 (advanced related)
      */
     
     // Normalize relatedProduct to string array (handle both string[] and object[] formats from database)
@@ -74,15 +74,10 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({ product }) => {
         hasRelatedProductIds ? relatedProductIds : undefined
     );
 
-    // Fetch related products by category if no relatedProduct
+    // Fetch related products by slug (advanced behavior) if no relatedProduct
     const relatedProductsQuery = useRelatedProducts(
-        !hasRelatedProductIds && (categorySlug || categoryId)
-            ? { 
-                categorySlug, 
-                categoryId, 
-                limit: 8 
-            }
-            : undefined
+        !hasRelatedProductIds ? product?.slug : undefined,
+        !hasRelatedProductIds ? { limit: 8 } : undefined
     );
 
     // Select the appropriate query result

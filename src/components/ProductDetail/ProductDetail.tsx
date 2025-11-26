@@ -20,8 +20,9 @@ import { ProductListSkeleton } from '@/components/Skeleton';
 import { EmptyState } from '@/components/EmptyState';
 import { PackageIcon } from '@/components/Icons';
 import { addViewedProduct, type ViewedProductsResponse } from '@/services/userService';
-import { useSelector } from 'react-redux';
-import type { RootState } from '@/redux/store';
+import { useDispatch, useSelector } from 'react-redux';
+import type { RootState, AppDispatch } from '@/redux/store';
+import { addGuestViewedProduct } from '@/redux/viewedProductsSlice';
 
 const cx = classNames.bind(styles);
 
@@ -31,6 +32,7 @@ interface ProductDetailProps {
 
 const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
     const router = useRouter();
+    const dispatch = useDispatch<AppDispatch>();
     const { cache, mutate: globalMutate } = useSWRConfig();
     const currentUser = useSelector((state: RootState) => state.auth.login?.currentUser);
     const lastTrackedProductId = React.useRef<string | null>(null);
@@ -45,7 +47,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
 
     React.useEffect(() => {
         const productId = product?._id;
-        if (!productId || !currentUser?.accessToken) {
+        if (!productId) {
             return;
         }
 
@@ -55,70 +57,74 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
 
         lastTrackedProductId.current = productId;
 
-        const trackViewedProduct = async () => {
-            try {
-                await addViewedProduct(productId);
+        if (currentUser?.accessToken) {
+            const trackViewedProduct = async () => {
+                try {
+                    await addViewedProduct(productId);
 
-                const viewedProductsKey = '/api/v1/users/viewed-products?limit=50';
-                await globalMutate(
-                    viewedProductsKey,
-                    (current?: ViewedProductsResponse) => {
-                        const normalizedCurrent: ViewedProductsResponse = current || {
-                            success: true,
-                            data: [],
-                            pagination: {
-                                page: 1,
-                                limit: 50,
-                                total: 0,
-                                totalPages: 1,
-                            },
-                        };
+                    const viewedProductsKey = '/api/v1/users/viewed-products?limit=50';
+                    await globalMutate(
+                        viewedProductsKey,
+                        (current?: ViewedProductsResponse) => {
+                            const normalizedCurrent: ViewedProductsResponse = current || {
+                                success: true,
+                                data: [],
+                                pagination: {
+                                    page: 1,
+                                    limit: 50,
+                                    total: 0,
+                                    totalPages: 1,
+                                },
+                            };
 
-                        const existingData = normalizedCurrent.data || [];
-                        const updatedData = [
-                            product,
-                            ...existingData.filter((item) => item._id !== productId),
-                        ].slice(0, 50);
+                            const existingData = normalizedCurrent.data || [];
+                            const updatedData = [
+                                product,
+                                ...existingData.filter((item) => item._id !== productId),
+                            ].slice(0, 50);
 
-                        const updatedPagination = normalizedCurrent.pagination
-                            ? {
-                                  ...normalizedCurrent.pagination,
-                                  total: Math.max(
-                                      normalizedCurrent.pagination.total || 0,
-                                      updatedData.length
-                                  ),
-                                  totalPages: normalizedCurrent.pagination.limit
-                                      ? Math.ceil(
-                                            Math.max(
-                                                normalizedCurrent.pagination.total || 0,
-                                                updatedData.length
-                                            ) / normalizedCurrent.pagination.limit
-                                        )
-                                      : normalizedCurrent.pagination.totalPages,
-                              }
-                            : normalizedCurrent.pagination;
+                            const updatedPagination = normalizedCurrent.pagination
+                                ? {
+                                      ...normalizedCurrent.pagination,
+                                      total: Math.max(
+                                          normalizedCurrent.pagination.total || 0,
+                                          updatedData.length
+                                      ),
+                                      totalPages: normalizedCurrent.pagination.limit
+                                          ? Math.ceil(
+                                                Math.max(
+                                                    normalizedCurrent.pagination.total || 0,
+                                                    updatedData.length
+                                                ) / normalizedCurrent.pagination.limit
+                                            )
+                                          : normalizedCurrent.pagination.totalPages,
+                                  }
+                                : normalizedCurrent.pagination;
 
-                        return {
-                            ...normalizedCurrent,
-                            data: updatedData,
-                            pagination: updatedPagination,
-                        };
-                    },
-                    {
-                        revalidate: true,
-                        populateCache: true,
-                        rollbackOnError: false,
+                            return {
+                                ...normalizedCurrent,
+                                data: updatedData,
+                                pagination: updatedPagination,
+                            };
+                        },
+                        {
+                            revalidate: true,
+                            populateCache: true,
+                            rollbackOnError: false,
+                        }
+                    );
+                } catch (error) {
+                    if (process.env.NODE_ENV !== 'production') {
+                        console.error('Failed to track viewed product', error);
                     }
-                );
-            } catch (error) {
-                if (process.env.NODE_ENV !== 'production') {
-                    console.error('Failed to track viewed product', error);
                 }
-            }
-        };
+            };
 
-        trackViewedProduct();
-    }, [product?._id, currentUser?.accessToken, globalMutate]);
+            trackViewedProduct();
+        } else if (product) {
+            dispatch(addGuestViewedProduct(product));
+        }
+    }, [product, currentUser?.accessToken, globalMutate, dispatch]);
 
     // Extract price information (must be before conditional returns)
     const priceItem = product && Array.isArray(product.price) && product.price.length > 0 

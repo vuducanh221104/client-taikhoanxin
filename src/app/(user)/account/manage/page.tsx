@@ -22,7 +22,7 @@ export default function AccountManagePage() {
     const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
     
     // Fetch user profile from API (latest data from DB)
-    const { data: profileData, error: profileError, isLoading: profileLoading } = useProfile();
+    const { data: profileData, error: profileError, isLoading: profileLoading, mutate: mutateProfile } = useProfile();
 
     // Redirect to login if not authenticated
     React.useEffect(() => {
@@ -83,7 +83,7 @@ export default function AccountManagePage() {
                 {/* Main Content */}
                 <div className={cx('account-content')}>
                     {/* Overview Section */}
-                    <AccountOverview user={userProfile || currentUser} />
+                    <AccountOverview user={userProfile || currentUser} onProfileReload={mutateProfile} />
 
                     {/* Quick Tabs */}
                     <div className={cx('account-tabs')}>

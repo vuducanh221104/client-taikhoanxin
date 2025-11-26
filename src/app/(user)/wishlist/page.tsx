@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { useRouter } from 'next/navigation';
-import { RootState, AppDispatch } from '@/redux/store';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/redux/store';
 import ProductCard from '@/components/ProductCard';
 import { WishlistItem } from '@/services/wishlistService';
 import { addToCart } from '@/redux/cartSlice';
@@ -18,9 +17,7 @@ import { useWishlist } from '@/hooks/useWishlist';
 const cx = classNames.bind(styles);
 
 export default function WishlistPage() {
-    const router = useRouter();
     const dispatch = useDispatch<AppDispatch>();
-    const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
     const {
         wishlist,
         removeWishlistItem: removeWishlistItemMutation,
@@ -29,13 +26,6 @@ export default function WishlistPage() {
     const { showSuccess, showError } = useToast();
     const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
     const [hasFetchedWishlist, setHasFetchedWishlist] = useState(false);
-
-    // Redirect to login if not authenticated
-    useEffect(() => {
-        if (!currentUser) {
-            router.push('/auth/login');
-        }
-    }, [currentUser, router]);
 
     // Sync local state with wishlist data
     useEffect(() => {
@@ -78,7 +68,7 @@ export default function WishlistPage() {
     };
 
     const handleRemoveFromWishlist = async (item: WishlistItem) => {
-        if (!currentUser || !item?.productId) return;
+        if (!item?.productId) return;
 
         try {
             await removeWishlistItemMutation(item.productId);
@@ -88,10 +78,6 @@ export default function WishlistPage() {
             showError(errorMessage);
         }
     };
-
-    if (!currentUser) {
-        return null;
-    }
 
     return (
         <div className={cx('wishlist-page')}>

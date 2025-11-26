@@ -36,6 +36,12 @@ export interface MenuItem {
     sortOrder: number;
 }
 
+export interface TrendingSearchSection {
+    title: string;
+    defaultValue: string;
+    items: string[];
+}
+
 export interface FeaturedProductSection {
     _id?: string;
     numberSort: number;
@@ -67,6 +73,7 @@ export interface HomePage {
     news: NewsSection;
     popup: PopupSection;
     menu: MenuItem[];
+    trendingSearch: TrendingSearchSection;
     featuredProduct: FeaturedProductSection[];
     productBestSelling: ProductSection;
     other: ProductSection;

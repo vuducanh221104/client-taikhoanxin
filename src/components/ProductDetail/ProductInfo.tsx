@@ -92,6 +92,11 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
     const [isAddingToCart, setIsAddingToCart] = React.useState(false);
     const { mutate: globalMutate } = useSWRConfig();
+    const [isTosModalOpen, setIsTosModalOpen] = React.useState(false);
+    const [tosCheckboxChecked, setTosCheckboxChecked] = React.useState(false);
+    const [tosAccepted, setTosAccepted] = React.useState(false);
+    const [tosError, setTosError] = React.useState('');
+    const pendingActionRef = React.useRef<'add' | 'buy' | null>(null);
     
     // State for options values and errors
     const [optionsValues, setOptionsValues] = React.useState<Record<string, any>>({});
@@ -199,71 +204,69 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         return Object.keys(validationErrors).length === 0;
     }, [getOptionId, options, optionsValues]);
 
-    const handleAddToCart = async (): Promise<boolean> => {
-        // Check if user is logged in
-        if (!isLoggedIn || !currentUser) {
-            showInfo('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng');
-            router.push('/auth/login');
-            return false;
+    const collectSelectedOptions = React.useCallback(() => {
+        const allOptions: Array<{ title: string; value: any }> = [];
+
+        if (options && optionsValues) {
+            options.forEach((option) => {
+                const optionId = getOptionId(option);
+                const value = optionsValues[optionId];
+                const optionTitle = option.title || '';
+
+                if (value !== null && value !== undefined && value !== '') {
+                    allOptions.push({
+                        title: optionTitle,
+                        value,
+                    });
+                }
+            });
         }
 
+        return allOptions;
+    }, [getOptionId, options, optionsValues]);
+
+    const addToCartInternal = async (): Promise<boolean> => {
         if (!validateAllOptions()) {
             showError('Vui lòng kiểm tra lại thông tin yêu cầu');
             return false;
+        }
+
+        const productId = (product as any)._id || product.id;
+        const allOptions = collectSelectedOptions();
+        const priceToUse = selectedPackage.price || product.price;
+        const imageSrc = product.images?.[0] || product.imageSrc || product.image?.[0] || '/products/product-1.png';
+        const href = product.slug ? `/product/${product.slug}` : `/product/${product.id}`;
+
+        // Guest users: store cart items locally (Redux)
+        if (!isLoggedIn || !currentUser?.accessToken) {
+            dispatch(
+                addToCart({
+                    id: productId,
+                    productName: product.productName,
+                    price: priceToUse,
+                    oldPrice: product.oldPrice,
+                    href,
+                    imageSrc,
+                    imageAlt: product.productName,
+                    options: allOptions,
+                })
+            );
+            showSuccess(`Đã thêm "${product.productName}" vào giỏ hàng`);
+            return true;
         }
 
         setIsAddingToCart(true);
         let isSuccess = false;
 
         try {
-            // Get productId - use _id if available (from API), otherwise use id
-            const productId = (product as any)._id || product.id;
-            
-            // Prepare all options as an array of {title, value}
-            // Format: [{title: string, value: any}, {title: string, value: any}, ...]
-            const allOptions: Array<{ title: string; value: any }> = [];
-
-            // Collect all options with values
-            if (options && optionsValues) {
-                options.forEach((option) => {
-                    const optionId = getOptionId(option);
-                    const value = optionsValues[optionId];
-                    const optionTitle = option.title || '';
-                    
-                    // Only include options with values
-                    if (value !== null && value !== undefined && value !== '') {
-                        allOptions.push({
-                            title: optionTitle,
-                            value: value,
-                        });
-                    }
-                });
-            }
-
-            // Call API to add to cart with all options
             const response = await addToCartAPI({
                 productId,
                 quantity: 1,
-                options: allOptions.length > 0 ? allOptions : undefined, // Send all options as array
+                options: allOptions.length > 0 ? allOptions : undefined,
             });
 
             if (response.success) {
-                // Revalidate cart cache - use global mutate to broadcast to all components
                 await globalMutate('/api/v1/cart', undefined, { revalidate: true });
-                
-                // Also update Redux for backward compatibility (if needed)
-                dispatch(
-                    addToCart({
-                        id: product.id,
-                        productName: product.productName,
-                        price: selectedPackage.price || product.price,
-                        oldPrice: product.oldPrice,
-                        href: `/product/${product.id}`,
-                        imageSrc: '/products/product-1.png',
-                        imageAlt: product.productName,
-                    })
-                );
-                
                 showSuccess(`Đã thêm "${product.productName}" vào giỏ hàng`);
                 isSuccess = true;
             } else {
@@ -279,20 +282,35 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         return isSuccess;
     };
 
+    const ensureTosAccepted = (action: 'add' | 'buy') => {
+        if (tosAccepted) {
+            return true;
+        }
+        pendingActionRef.current = action;
+        setIsTosModalOpen(true);
+        setTosCheckboxChecked(false);
+        setTosError('');
+        return false;
+    };
+
+    const handleAddToCart = async (): Promise<boolean> => {
+        if (!ensureTosAccepted('add')) {
+            return false;
+        }
+        return addToCartInternal();
+    };
+
     const handleBuyNow = async () => {
-        const success = await handleAddToCart();
+        if (!ensureTosAccepted('buy')) {
+            return;
+        }
+        const success = await addToCartInternal();
         if (success) {
             window.location.href = '/cart';
         }
     };
 
     const handleToggleWishlist = async () => {
-        if (!isLoggedIn) {
-            showInfo('Vui lòng đăng nhập để thêm vào yêu thích');
-            router.push('/auth/login');
-            return;
-        }
-
         try {
             const added = await toggleWishlist({
                 productId: product.id,
@@ -306,11 +324,11 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                 imageAlt: product.productName,
             });
 
-            if (added) {
-                showSuccess(`Đã thêm "${product.productName}" vào yêu thích`);
-            } else {
-                showSuccess(`Đã xóa "${product.productName}" khỏi yêu thích`);
-            }
+            showSuccess(
+                added
+                    ? `Đã thêm "${product.productName}" vào yêu thích`
+                    : `Đã xóa "${product.productName}" khỏi yêu thích`
+            );
         } catch (error: any) {
             const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra. Vui lòng thử lại!';
             showError(errorMessage);
@@ -318,6 +336,35 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     };
 
     const displayPrice = selectedPackage.price || product.price;
+
+    const handleCloseTosModal = () => {
+        setIsTosModalOpen(false);
+        setTosCheckboxChecked(false);
+        setTosError('');
+        pendingActionRef.current = null;
+    };
+
+    const handleConfirmTosModal = async () => {
+        if (!tosCheckboxChecked) {
+            setTosError('Vui lòng xác nhận rằng bạn đã đọc kỹ thông tin sản phẩm.');
+            return;
+        }
+        setTosAccepted(true);
+        setIsTosModalOpen(false);
+        setTosError('');
+
+        const action = pendingActionRef.current;
+        pendingActionRef.current = null;
+
+        if (action === 'add') {
+            await addToCartInternal();
+        } else if (action === 'buy') {
+            const success = await addToCartInternal();
+            if (success) {
+                window.location.href = '/cart';
+            }
+        }
+    };
 
     return (
         <div className={cx('product-info')}>
@@ -729,6 +776,40 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                     </li>
                 </ul>
             </div>
+
+            {isTosModalOpen && (
+                <div className={cx('tos-modal-backdrop')} role="dialog" aria-modal="true">
+                    <div className={cx('tos-modal')}>
+                        <h3 className={cx('tos-modal-title')}>Xác nhận cam kết</h3>
+                        <div className={cx('tos-modal-message')}>
+                            <p>Chỉ hỗ trợ sử dụng với khách hàng ở Việt Nam</p>
+                            <p>Sản phẩm không hỗ trợ sử dụng với khách hàng ở nước ngoài.</p>
+                        </div>
+                        <label className={cx('tos-checkbox')}>
+                            <input
+                                type="checkbox"
+                                checked={tosCheckboxChecked}
+                                onChange={(e) => {
+                                    setTosCheckboxChecked(e.target.checked);
+                                    if (tosError) {
+                                        setTosError('');
+                                    }
+                                }}
+                            />
+                            <span>Tôi đã đọc kỹ thông tin của sản phẩm và đồng ý.</span>
+                        </label>
+                        {tosError && <div className={cx('tos-error')}>{tosError}</div>}
+                        <div className={cx('tos-actions')}>
+                            <button type="button" className={cx('tos-cancel')} onClick={handleCloseTosModal}>
+                                Hủy
+                            </button>
+                            <button type="button" className={cx('tos-confirm')} onClick={handleConfirmTosModal}>
+                                Xác nhận
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -7,6 +7,7 @@ import { ToastProvider } from '@/contexts/ToastContext';
 import { harmonyOS } from '@/assets/FontNext';
 import { Metadata, Viewport } from 'next/types';
 import ToastContainerWrapper from '@/components/Toast/ToastContainerWrapper';
+import PurchaseToastListener from '@/components/PublicFeed/PurchaseToastListener';
 import ErrorBoundary from '@/components/ErrorBoundary/ErrorBoundary';
 import LayoutWrapper from './LayoutWrapper';
 import { ConfirmDialogProvider } from '@/components/ConfirmDialog';
@@ -44,7 +45,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                                     {children}
                                 </LayoutWrapper>
                                 <ScrollToTop />
+                                {/* Global toast container */}
                                 <ToastContainerWrapper />
+                                {/* SSE-based purchase notifications */}
+                                <PurchaseToastListener />
                             </ConfirmDialogProvider>
                         </ToastProvider>
                     </ErrorBoundary>

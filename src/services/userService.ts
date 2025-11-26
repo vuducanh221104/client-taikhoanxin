@@ -66,13 +66,17 @@ export const useProfile = () => {
 /**
  * Get viewed products
  */
-export const useViewedProducts = (params?: { limit?: number; page?: number }) => {
+export const useViewedProducts = (
+    params?: { limit?: number; page?: number },
+    options?: { enabled?: boolean }
+) => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
 
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
-    const key = `/api/v1/users/viewed-products${queryString}`;
+    const enabled = options?.enabled ?? true;
+    const key = enabled ? `/api/v1/users/viewed-products${queryString}` : null;
     return useSWRUser<ViewedProductsResponse>(key);
 };
 

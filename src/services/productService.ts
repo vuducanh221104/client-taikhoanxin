@@ -79,6 +79,10 @@ export interface Product {
         };
     }>;
     relatedProduct?: string[]; // Array of product IDs
+    relatedSettings?: {
+        mode?: 'auto' | 'manual' | 'mixed';
+        maxItems?: number;
+    };
     createdAt: string;
     updatedAt: string;
 }
@@ -266,25 +270,21 @@ export const useProductsByIds = (productIds?: string[]) => {
 };
 
 /**
- * Get related products by category
- * @param params - Query parameters: categorySlug or categoryId, and limit
+ * Get related products by product slug (advanced related: manual + hành vi)
+ * @param slug - Product slug
+ * @param params - Optional params (limit)
  * @returns SWR hook for related products
  */
-export const useRelatedProducts = (params?: {
-    categorySlug?: string;
-    categoryId?: string;
-    limit?: number;
-}) => {
-    if (!params || (!params.categorySlug && !params.categoryId)) {
+export const useRelatedProducts = (slug?: string, params?: { limit?: number }) => {
+    if (!slug) {
         return useSWRUser<ProductListResponse>(null);
     }
 
     const queryParams = new URLSearchParams();
-    if (params.categorySlug) queryParams.append('categorySlug', params.categorySlug);
-    if (params.categoryId) queryParams.append('categoryId', params.categoryId);
-    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
 
-    const key = `/api/v1/products/related-product?${queryParams.toString()}`;
+    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
+    const key = `/api/v1/products/${slug}/related${queryString}`;
     return useSWRUser<ProductListResponse>(key);
 };
 

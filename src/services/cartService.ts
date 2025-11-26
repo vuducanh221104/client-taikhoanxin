@@ -58,6 +58,15 @@ export interface AddToCartData {
     options?: Array<{ title: string; value: any }>;
 }
 
+export interface ImportGuestCartPayload {
+    items: Array<{
+        productId: string;
+        slug?: string;
+        quantity: number;
+        options?: Array<{ title: string; value: any }>;
+    }>;
+}
+
 export interface UpdateCartItemData {
     quantity?: number;
     options?: Array<{ title: string; value: any }>;
@@ -137,6 +146,14 @@ export const applyDiscountCode = async (data: ApplyDiscountData): Promise<CartRe
  */
 export const removeDiscountCode = async (): Promise<CartResponse> => {
     const response = await del<CartResponse>('/api/v1/cart/remove-discount');
+    return response.data;
+};
+
+export const importGuestCart = async (data: ImportGuestCartPayload, accessToken?: string): Promise<CartResponse> => {
+    const config = accessToken
+        ? { headers: { Authorization: `Bearer ${accessToken}` } }
+        : {};
+    const response = await post<CartResponse>('/api/v1/cart/import-guest', data, config);
     return response.data;
 };
 

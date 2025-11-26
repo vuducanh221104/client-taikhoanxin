@@ -22,6 +22,9 @@ interface MobileSearchDropdownProps {
     recentSearches: string[];
     setRecentSearches: (searches: string[]) => void;
     searchDropdownRef: React.RefObject<HTMLDivElement>;
+    trendingSearchTitle: string;
+    trendingSearches: string[];
+    defaultSearchValue: string;
 }
 
 const MobileSearchDropdown: React.FC<MobileSearchDropdownProps> = ({
@@ -37,8 +40,14 @@ const MobileSearchDropdown: React.FC<MobileSearchDropdownProps> = ({
     recentSearches,
     setRecentSearches,
     searchDropdownRef,
+    trendingSearchTitle,
+    trendingSearches,
+    defaultSearchValue,
 }) => {
     if (!isSearchOpen) return null;
+
+    const popularSearches = trendingSearches?.length ? trendingSearches : [];
+    const placeholderText = defaultSearchValue || 'Tìm kiếm sản phẩm...';
 
     return (
         <>
@@ -81,7 +90,7 @@ const MobileSearchDropdown: React.FC<MobileSearchDropdownProps> = ({
                     )}
                     <input
                         type="text"
-                        placeholder="Tìm kiếm sản phẩm..."
+                        placeholder={placeholderText}
                         className={cx('search-dropdown-input')}
                         data-search-input="true"
                         value={searchValue}
@@ -206,39 +215,34 @@ const MobileSearchDropdown: React.FC<MobileSearchDropdownProps> = ({
                             )}
                             
                             {/* Popular Searches */}
-                            <div className={cx('search-popular-section')}>
-                                <h3 className={cx('search-section-title')}>
-                                    <FlameIcon className={cx('search-section-icon')} />
-                                    <span>Tìm kiếm phổ biến</span>
-                                </h3>
-                                <ul className={cx('search-popular-list')}>
-                                    {[
-                                        'Windows 11',
-                                        'Office 365',
-                                        'Tài khoản AI',
-                                        'Spotify Premium',
-                                        'Netflix',
-                                        'Adobe Creative',
-                                    ]
-                                        .filter(query => !recentSearches.includes(query))
-                                        .slice(0, isMobile ? 6 : 8)
-                                        .map((query, index) => (
-                                            <li key={index} className={cx('search-popular-item')}>
-                                                <button
-                                                    className={cx('search-popular-text')}
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        setSearchValue(query);
-                                                        handleSearch(query);
-                                                    }}
-                                                    type="button"
-                                                >
-                                                    {query}
-                                                </button>
-                                            </li>
-                                        ))}
-                                </ul>
-                            </div>
+                            {popularSearches.length > 0 && (
+                                <div className={cx('search-popular-section')}>
+                                    <h3 className={cx('search-section-title')}>
+                                        <FlameIcon className={cx('search-section-icon')} />
+                                        <span>{trendingSearchTitle}</span>
+                                    </h3>
+                                    <ul className={cx('search-popular-list')}>
+                                        {popularSearches
+                                            .filter(query => !recentSearches.includes(query))
+                                            .slice(0, isMobile ? 6 : 8)
+                                            .map((query, index) => (
+                                                <li key={index} className={cx('search-popular-item')}>
+                                                    <button
+                                                        className={cx('search-popular-text')}
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            setSearchValue(query);
+                                                            handleSearch(query);
+                                                        }}
+                                                        type="button"
+                                                    >
+                                                        {query}
+                                                    </button>
+                                                </li>
+                                            ))}
+                                    </ul>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className={cx('search-no-results')}>

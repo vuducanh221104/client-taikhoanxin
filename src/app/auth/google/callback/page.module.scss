@@ -1,0 +1,40 @@
+.page {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.card {
+    background: var(--bg-color, #fff);
+    border: 1px solid var(--border-color-light, #e4e4e7);
+    border-radius: 16px;
+    padding: 32px 28px;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+}
+
+.status-message {
+    font-size: 16px;
+    color: var(--text-color, #111);
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+.error {
+    color: var(--error-color, #ef4444);
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: var(--primary-color, #2563eb);
+    text-decoration: none;
+    margin-top: 8px;
+}
+

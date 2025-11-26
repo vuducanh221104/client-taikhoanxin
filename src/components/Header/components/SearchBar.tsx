@@ -22,6 +22,9 @@ interface SearchBarProps {
     recentSearches: string[];
     setRecentSearches: (searches: string[]) => void;
     isMobile: boolean;
+    trendingSearchTitle: string;
+    trendingSearches: string[];
+    defaultSearchValue: string;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
@@ -37,14 +40,26 @@ const SearchBar: React.FC<SearchBarProps> = ({
     recentSearches,
     setRecentSearches,
     isMobile,
+    trendingSearchTitle,
+    trendingSearches,
+    defaultSearchValue,
 }) => {
+    const popularSearches = trendingSearches?.length ? trendingSearches : [];
+    const placeholderText = defaultSearchValue || 'Tìm kiếm...';
+
+    const hasSearchResults = searchResults.length > 0;
+    const shouldShowSuggestions =
+        isSearchBarFocused &&
+        (hasSearchResults ||
+            (searchValue.trim() === '' && (recentSearches.length > 0 || popularSearches.length > 0)));
+
     return (
         <div className={cx('search-section')}>
             <div className={cx('search-input-wrapper')}>
                 <input
                     ref={searchBarInputRef}
                     type="text"
-                    placeholder="Tìm kiếm..."
+                    placeholder={placeholderText}
                     className={cx('search-input')}
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
@@ -68,13 +83,13 @@ const SearchBar: React.FC<SearchBarProps> = ({
             </div>
             
             {/* Inline Search Dropdown */}
-            {isSearchBarFocused && (searchResults.length > 0 || (searchValue.trim() === '' && recentSearches.length > 0)) && (
+            {shouldShowSuggestions && (
                 <div 
                     ref={searchBarDropdownRef}
                     className={cx('search-bar-dropdown')}
                     onMouseDown={(e) => e.preventDefault()}
                 >
-                    {searchResults.length > 0 ? (
+                    {hasSearchResults ? (
                         <ul className={cx('search-results-list')}>
                             {searchResults.map((product) => (
                                 <li key={product.id} className={cx('search-result-item')}>
@@ -170,38 +185,33 @@ const SearchBar: React.FC<SearchBarProps> = ({
                             )}
                             
                             {/* Popular Searches */}
-                            <div className={cx('search-popular-section')}>
-                                <h3 className={cx('search-section-title')}>
-                                    <FlameIcon className={cx('search-section-icon')} />
-                                    <span>Tìm kiếm phổ biến</span>
-                                </h3>
-                                <ul className={cx('search-popular-list')}>
-                                    {[
-                                        'Windows 11',
-                                        'Office 365',
-                                        'Tài khoản AI',
-                                        'Spotify Premium',
-                                        'Netflix',
-                                        'Adobe Creative',
-                                    ]
-                                        .filter(query => !recentSearches.includes(query))
-                                        .map((query, index) => (
-                                            <li key={index} className={cx('search-popular-item')}>
-                                                <button
-                                                    className={cx('search-popular-text')}
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        setSearchValue(query);
-                                                        handleSearch(query);
-                                                    }}
-                                                    type="button"
-                                                >
-                                                    {query}
-                                                </button>
-                                            </li>
-                                        ))}
-                                </ul>
-                            </div>
+                            {popularSearches.length > 0 && (
+                                <div className={cx('search-popular-section')}>
+                                    <h3 className={cx('search-section-title')}>
+                                        <FlameIcon className={cx('search-section-icon')} />
+                                        <span>{trendingSearchTitle}</span>
+                                    </h3>
+                                    <ul className={cx('search-popular-list')}>
+                                        {popularSearches
+                                            .filter(query => !recentSearches.includes(query))
+                                            .map((query, index) => (
+                                                <li key={index} className={cx('search-popular-item')}>
+                                                    <button
+                                                        className={cx('search-popular-text')}
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            setSearchValue(query);
+                                                            handleSearch(query);
+                                                        }}
+                                                        type="button"
+                                                    >
+                                                        {query}
+                                                    </button>
+                                                </li>
+                                            ))}
+                                    </ul>
+                                </div>
+                            )}
                         </div>
                     ) : null}
                 </div>

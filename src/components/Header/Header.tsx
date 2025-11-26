@@ -11,10 +11,23 @@ import MobileMenu from './components/MobileMenu';
 import { useHeaderScroll, useHeaderSearch, useHeaderMobile } from './hooks';
 import { useCart } from '@/services/cartService';
 import Cookies from 'js-cookie';
+import { useHomePage } from '@/services/homePageService';
 
 const cx = classNames.bind(styles);
 
 interface HeaderProps {}
+
+const DEFAULT_TRENDING_SEARCHES = [
+    'Windows 11',
+    'Office 365',
+    'Tài khoản AI',
+    'Spotify Premium',
+    'Netflix',
+    'Adobe Creative',
+];
+
+const DEFAULT_SEARCH_PLACEHOLDER = 'Tìm kiếm sản phẩm hot như Netflix Premium, Spotify...';
+const DEFAULT_TRENDING_TITLE = 'Tìm kiếm phổ biến';
 
 const Header: React.FC<HeaderProps> = () => {
     const [mounted, setMounted] = useState(false);
@@ -38,6 +51,14 @@ const Header: React.FC<HeaderProps> = () => {
     
     // Fetch cart from API if user is logged in
     const { data: cartData } = useCart();
+    const { data: homePageData } = useHomePage();
+
+    const trendingSearchConfig = homePageData?.data?.trendingSearch;
+    const trendingSearchTitle = trendingSearchConfig?.title || DEFAULT_TRENDING_TITLE;
+    const trendingSearchItems = trendingSearchConfig?.items && trendingSearchConfig.items.length > 0
+        ? trendingSearchConfig.items
+        : DEFAULT_TRENDING_SEARCHES;
+    const defaultSearchValue = trendingSearchConfig?.defaultValue || DEFAULT_SEARCH_PLACEHOLDER;
     
     // Use API cart if available, otherwise use Redux cart (for backward compatibility)
     const cart = React.useMemo(() => {
@@ -142,7 +163,7 @@ const Header: React.FC<HeaderProps> = () => {
         clearSearch,
         handleSearch,
         handleKeyDown,
-    } = useHeaderSearch(mounted, isMobile);
+    } = useHeaderSearch(mounted, isMobile, trendingSearchItems);
 
     // Set mounted state after component mounts (client-side only)
     useEffect(() => {
@@ -229,6 +250,9 @@ const Header: React.FC<HeaderProps> = () => {
                     loginDropdownTimeoutRef={loginDropdownTimeoutRef}
                     loginDropdownCloseTimeoutRef={loginDropdownCloseTimeoutRef}
                     wishlistQuantity={wishlistQuantity}
+                    trendingSearchTitle={trendingSearchTitle}
+                    trendingSearches={trendingSearchItems}
+                    defaultSearchValue={defaultSearchValue}
                     isSearchOpen={isSearchOpen}
                     toggleSearch={toggleSearch}
                     searchToggleRef={searchToggleRef}
@@ -256,6 +280,9 @@ const Header: React.FC<HeaderProps> = () => {
                     recentSearches={recentSearches}
                     setRecentSearches={setRecentSearches}
                     searchDropdownRef={searchDropdownRef}
+                    trendingSearchTitle={trendingSearchTitle}
+                    trendingSearches={trendingSearchItems}
+                    defaultSearchValue={defaultSearchValue}
                 />
 
                 {/* Header Hover Overlay */}

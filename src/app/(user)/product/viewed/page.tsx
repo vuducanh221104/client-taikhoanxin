@@ -6,11 +6,12 @@ import styles from './page.module.scss';
 import ProductCard from '@/components/ProductCard';
 import { FeaturedProduct } from '@/components/FeaturedProducts';
 import { detectProductGenre, mapProductToFeaturedProduct } from '@/services/productService';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '@/redux/cartSlice';
 import FilterBar, { FilterValues, SortOption } from '@/components/FilterBar';
 import { useViewedProducts } from '@/services/userService';
 import { ProductListSkeleton } from '@/components/Skeleton';
+import type { RootState } from '@/redux/store';
 
 const cx = classNames.bind(styles);
 
@@ -68,12 +69,22 @@ export default function ViewedProductsPage() {
     const [displayLimit, setDisplayLimit] = useState<number>(INITIAL_DISPLAY_LIMIT);
 
     const dispatch = useDispatch();
-    const { data, error, isLoading, mutate } = useViewedProducts({ limit: 50 });
-    const viewedProducts = data?.data ?? [];
+    const currentUser = useSelector((state: RootState) => state.auth.login?.currentUser);
+    const guestViewedProducts = useSelector((state: RootState) => state.viewedProducts.products);
+    const isLoggedIn = Boolean(currentUser?.accessToken);
+
+    const { data, error, isLoading, mutate } = useViewedProducts(
+        { limit: 50 },
+        { enabled: isLoggedIn }
+    );
+
+    const viewedProducts = isLoggedIn ? data?.data ?? [] : guestViewedProducts;
 
     useEffect(() => {
-        mutate(undefined, { revalidate: true });
-    }, [mutate]);
+        if (isLoggedIn) {
+            mutate(undefined, { revalidate: true });
+        }
+    }, [mutate, isLoggedIn]);
 
     // Map API products to FeaturedProduct format
     const mappedProducts = useMemo(() => {
@@ -177,8 +188,9 @@ export default function ViewedProductsPage() {
     }, [filteredProducts, displayLimit]);
 
     const hasMoreProducts = filteredProducts.length > displayLimit;
-    const hasError = Boolean(error);
-    const showEmptyState = !isLoading && !hasError && filteredProducts.length === 0;
+    const hasError = isLoggedIn ? Boolean(error) : false;
+    const effectiveIsLoading = isLoggedIn ? isLoading : false;
+    const showEmptyState = !effectiveIsLoading && !hasError && filteredProducts.length === 0;
 
     return (
         <div className={cx('products-page')}>
@@ -201,7 +213,7 @@ export default function ViewedProductsPage() {
                 />
 
                 {/* Products Grid */}
-                {isLoading ? (
+                {effectiveIsLoading ? (
                     <div className={cx('products-grid')}>
                         <ProductListSkeleton count={Math.min(displayLimit, LOAD_MORE_INCREMENT)} />
                     </div>

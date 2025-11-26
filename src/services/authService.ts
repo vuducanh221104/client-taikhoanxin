@@ -40,6 +40,10 @@ export interface ChangePasswordData {
     newPassword: string;
 }
 
+export interface GoogleLoginData {
+    idToken: string;
+}
+
 export interface RefreshTokenData {
     refreshToken: string;
 }
@@ -71,6 +75,22 @@ export const register = async (data: RegisterData): Promise<AuthResponse> => {
  */
 export const login = async (data: LoginData): Promise<AuthResponse> => {
     const response = await post<AuthResponse>('/api/v1/auth/login', data);
+    return response.data;
+};
+
+/**
+ * Login with Google ID token
+ */
+export const loginWithGoogle = async (data: GoogleLoginData): Promise<AuthResponse> => {
+    const response = await post<AuthResponse>('/api/v1/auth/google', data);
+    return response.data;
+};
+
+/**
+ * Exchange Google OAuth token (redirect flow)
+ */
+export const exchangeGoogleAuth = async (token: string): Promise<AuthResponse> => {
+    const response = await post<AuthResponse>('/api/v1/auth/google/exchange', { token });
     return response.data;
 };
 

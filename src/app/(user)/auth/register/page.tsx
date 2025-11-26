@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import classNames from 'classnames/bind';
@@ -16,6 +16,7 @@ const cx = classNames.bind(styles);
 
 export default function RegisterPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { showSuccess, showError } = useToast();
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -40,6 +41,22 @@ export default function RegisterPage() {
     const [turnstileToken, setTurnstileToken] = useState('');
     const [turnstileError, setTurnstileError] = useState('');
     const [turnstileResetKey, setTurnstileResetKey] = useState(() => Date.now().toString());
+    const [googleAuthLink, setGoogleAuthLink] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const redirectParam = searchParams.get('redirect');
+        const callbackUrl = new URL('/auth/google/callback', window.location.origin);
+        if (redirectParam) {
+            callbackUrl.searchParams.set('redirect', redirectParam);
+        }
+
+        const serverBase = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:4000';
+        const normalizedBase = serverBase.endsWith('/') ? serverBase.slice(0, -1) : serverBase;
+        const apiUrl = `${normalizedBase}/api/v1/auth/google/redirect?returnUrl=${encodeURIComponent(callbackUrl.toString())}`;
+        setGoogleAuthLink(apiUrl);
+    }, [searchParams]);
 
     const calculatePasswordStrength = (password: string) => {
         let strength = 0;
@@ -361,7 +378,16 @@ export default function RegisterPage() {
 
                     {/* Social Login */}
                     <div className={cx('social-login')}>
-                        <button type="button" className={cx('social-button', 'google-button')} disabled={loading}>
+                        <a
+                            href={googleAuthLink || '#'}
+                            className={cx('social-button', 'google-button')}
+                            onClick={(e) => {
+                                if (!googleAuthLink) {
+                                    e.preventDefault();
+                                    showError('Chức năng đăng ký Google chưa khả dụng.');
+                                }
+                            }}
+                        >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                                 <path
                                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -381,7 +407,7 @@ export default function RegisterPage() {
                                 />
                             </svg>
                             Đăng ký bằng Google
-                        </button>
+                        </a>
                     </div>
 
                     <div className={cx('auth-footer')}>

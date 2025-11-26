@@ -111,6 +111,27 @@ export interface CheckoutOrderPayload {
 }
 export type CheckoutOrderResponse = ApiResponse<CheckoutOrderPayload>;
 
+export interface RequestOrderLookupOtpPayload {
+    orderCode: string;
+    email: string;
+}
+
+export interface VerifyOrderLookupOtpPayload extends RequestOrderLookupOtpPayload {
+    otp: string;
+}
+
+export type OrderLookupOtpResponse = ApiResponse<{
+    orderId: string;
+    expiresAt: string;
+    resendAvailableAt?: string;
+}>;
+
+export type OrderLookupVerifyResponse = ApiResponse<{
+    token: string;
+    expiresAt: string;
+    order: Order;
+}>;
+
 export interface Payment {
     _id: string;
     orderId: string;
@@ -138,6 +159,22 @@ export interface CreateOrderData {
     emailUserOrder?: string;
 }
 
+export interface GuestOrderItem {
+    product_id: string;
+    quantity: number;
+    options?: Array<{ title: string; value: any }>;
+}
+
+export interface CreateGuestOrderData {
+    items: GuestOrderItem[];
+    phoneUserOrder: string;
+    emailUserOrder: string;
+    customerFullName?: string;
+    userNote?: string;
+    emailGiftForFriend?: string;
+    discountCode?: string;
+}
+
 // ============================================
 // GET HOOKS (SWR)
 // ============================================
@@ -161,7 +198,7 @@ export const useMyOrders = (params?: {
 /**
  * Get order by ID
  */
-export const useOrder = (id: string) => {
+export const useOrder = (id?: string | null) => {
     const key = id ? `/api/v1/orders/${id}` : null;
     return useSWRUser<OrderDetailResponse>(key);
 };
@@ -169,11 +206,17 @@ export const useOrder = (id: string) => {
 /**
  * Get checkout order info via token (public success page)
  */
-export const useCheckoutOrder = (orderId?: string | null, token?: string | null) => {
+export const useCheckoutOrder = (orderId?: string | null, token?: string | null, email?: string | null) => {
     if (!orderId || !token) {
         return useSWRUser<CheckoutOrderResponse>(null);
     }
-    const query = `/api/v1/orders/checkout/${orderId}?token=${encodeURIComponent(token)}`;
+    const params = new URLSearchParams({
+        token: token,
+    });
+    if (email) {
+        params.append('email', email);
+    }
+    const query = `/api/v1/orders/checkout/${orderId}?${params.toString()}`;
     return useSWRUser<CheckoutOrderResponse>(query);
 };
 
@@ -190,6 +233,14 @@ export const createOrder = async (data: CreateOrderData): Promise<OrderResponse>
 };
 
 /**
+ * Create new order for guest
+ */
+export const createGuestOrder = async (data: CreateGuestOrderData): Promise<OrderResponse> => {
+    const response = await post<OrderResponse>('/api/v1/orders/guest', data);
+    return response.data;
+};
+
+/**
  * Cancel order
  */
 export const cancelOrder = async (id: string): Promise<OrderResponse> => {
@@ -202,6 +253,16 @@ export const cancelOrder = async (id: string): Promise<OrderResponse> => {
  */
 export const resendAccountInfo = async (id: string): Promise<{ success: boolean; message: string }> => {
     const response = await post<{ success: boolean; message: string }>(`/api/v1/orders/${id}/resend-account`, {});
+    return response.data;
+};
+
+export const requestOrderLookupOtp = async (payload: RequestOrderLookupOtpPayload) => {
+    const response = await post<OrderLookupOtpResponse>('/api/v1/orders/lookup/request-otp', payload);
+    return response.data;
+};
+
+export const verifyOrderLookupOtp = async (payload: VerifyOrderLookupOtpPayload) => {
+    const response = await post<OrderLookupVerifyResponse>('/api/v1/orders/lookup/verify-otp', payload);
     return response.data;
 };
 

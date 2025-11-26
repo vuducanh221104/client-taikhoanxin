@@ -16,7 +16,9 @@ const cx = classNames.bind(styles);
 
 interface OrderDetailProps {
     orderCode: string;
-    userId: string;
+    userId?: string;
+    guestOrder?: Order | null;
+    mode?: 'auth' | 'guest';
 }
 
 interface OrderProductViewModel {
@@ -120,19 +122,27 @@ const mapOrderToViewModel = (apiOrder?: Order): OrderDetailViewModel | null => {
     };
 };
 
-const OrderDetail: React.FC<OrderDetailProps> = ({ orderCode, userId: _userId }) => {
+const OrderDetail: React.FC<OrderDetailProps> = ({
+    orderCode,
+    userId: _userId,
+    guestOrder,
+    mode = 'auth',
+}) => {
     const router = useRouter();
     const dispatch = useDispatch();
     const { showToast } = useToast();
-    const { data: orderResponse, error, isLoading } = useOrder(orderCode);
+    const shouldFetch = !guestOrder;
+    const { data: orderResponse, error, isLoading } = useOrder(shouldFetch ? orderCode : null);
+    const rawOrder = guestOrder ?? orderResponse?.data?.order;
     const order = useMemo(
-        () => mapOrderToViewModel(orderResponse?.data?.order),
-        [orderResponse]
+        () => mapOrderToViewModel(rawOrder),
+        [rawOrder]
     );
     const [copiedField, setCopiedField] = useState<string | null>(null);
     const [revealedFields, setRevealedFields] = useState<Set<string>>(new Set());
+    const isGuestMode = mode === 'guest';
 
-    if (isLoading) {
+    if (isLoading && shouldFetch) {
         return (
             <div className={cx('empty-wrapper')}>
                 <EmptyState
@@ -144,7 +154,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ orderCode, userId: _userId })
         );
     }
 
-    if (error) {
+    if (error && shouldFetch) {
         return (
             <div className={cx('empty-wrapper')}>
                 <EmptyState
@@ -213,6 +223,11 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ orderCode, userId: _userId })
     };
 
     const handleReorder = () => {
+        if (isGuestMode) {
+            showToast('Vui lòng đăng nhập để mua lại đơn hàng này', 'info');
+            router.push('/auth/login');
+            return;
+        }
         if (!order) return;
 
         // Add all products from order to cart
@@ -293,17 +308,29 @@ Email: support@taikhoanxin.com
                         Hiển thị thông tin các sản phẩm bạn đã mua tại Tài Khoản Xịn
                     </p>
                 </div>
-                <div className={cx('header-actions')}>
-                    <button className={cx('export-button')} onClick={handleExportReceipt}>
-                        <DownloadIcon size={18} />
-                        Xuất biên lai
-                    </button>
-                    <button className={cx('reorder-button')} onClick={handleReorder}>
-                        <ShoppingCartIcon size={18} />
-                        Mua lại đơn hàng
-                    </button>
-                </div>
+                {!isGuestMode && (
+                    <div className={cx('header-actions')}>
+                        <button className={cx('export-button')} onClick={handleExportReceipt}>
+                            <DownloadIcon size={18} />
+                            Xuất biên lai
+                        </button>
+                        <button className={cx('reorder-button')} onClick={handleReorder}>
+                            <ShoppingCartIcon size={18} />
+                            Mua lại đơn hàng
+                        </button>
+                    </div>
+                )}
             </div>
+
+            {/* {isGuestMode && (
+                <div className={cx('guest-warning')}>
+                    <AlertCircleIcon size={18} />
+                    <div>
+                        <strong>Thông tin đơn hàng chỉ hiển thị 1 lần.</strong>
+                        <p>Vui lòng lưu hoặc sao chép ngay để tránh mất quyền truy cập.</p>
+                    </div>
+                </div>
+            )} */}
 
             {/* Order Info Section */}
             <div className={cx('order-info-section')}>

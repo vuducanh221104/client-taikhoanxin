@@ -1106,19 +1106,34 @@ const CartPage: React.FC = () => {
                                 <strong className={cx('total-amount')}>{formatPrice(total)}₫</strong>
                             </div>
                             
-                            {/* Checkout Button */}
-                            <Link
-                                href="/checkout"
-                                className={cx('checkout-btn', { disabled: cart.products.length === 0 })}
-                                aria-disabled={cart.products.length === 0}
-                                onClick={(e) => {
-                                    if (cart.products.length === 0) {
-                                        e.preventDefault();
-                                    }
-                                }}
-                            >
-                                Tiến hành thanh toán
-                            </Link>
+                            {/* Checkout / Login Button */}
+                            {currentUser ? (
+                                <Link
+                                    href="/checkout"
+                                    className={cx('checkout-btn', { disabled: cart.products.length === 0 })}
+                                    aria-disabled={cart.products.length === 0}
+                                    onClick={(e) => {
+                                        if (cart.products.length === 0) {
+                                            e.preventDefault();
+                                        }
+                                    }}
+                                >
+                                    Tiến hành thanh toán
+                                </Link>
+                            ) : (
+                                <Link
+                                    href={`/auth/login?redirect=${encodeURIComponent('/checkout')}`}
+                                    className={cx('checkout-btn', 'login-to-checkout', { disabled: cart.products.length === 0 })}
+                                    aria-disabled={cart.products.length === 0}
+                                    onClick={(e) => {
+                                        if (cart.products.length === 0) {
+                                            e.preventDefault();
+                                        }
+                                    }}
+                                >
+                                    Đăng nhập để thanh toán
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </div>
