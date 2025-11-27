@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import classNames from 'classnames/bind';
 import styles from './HeroBanner.module.scss';
 
@@ -22,7 +23,7 @@ interface HeroBannerProps {
 
 const HeroBanner: React.FC<HeroBannerProps> = ({ bannerData, priority = false }) => {
     return (
-        <a href={bannerData.href} className={cx('hero-banner-wrapper')}>
+        <Link href={bannerData.href} className={cx('hero-banner-wrapper')}>
             <div className={cx('hero-banner')}>
                 <Image 
                     src={bannerData.image} 
@@ -36,7 +37,7 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ bannerData, priority = false })
                     fetchPriority={priority ? 'high' : 'low'}
                 />
             </div>
-        </a>
+        </Link>
     );
 };
 

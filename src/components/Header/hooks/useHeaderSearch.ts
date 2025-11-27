@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { searchProducts } from '@/services/productService';
+import { useSearchProducts, mapProductToFeaturedProduct } from '@/services/productService';
 import { FeaturedProduct } from '@/components/FeaturedProducts';
+import { useDebounce } from '@/hooks/useDebounce';
 
 const DEFAULT_RECENT_SEARCHES = [
     'Windows 11',
@@ -12,6 +13,8 @@ const DEFAULT_RECENT_SEARCHES = [
 ];
 
 export const useHeaderSearch = (mounted: boolean, isMobile: boolean, defaultTrendingSearches: string[] = []) => {
+    const SEARCH_LIMIT = 24;
+    const DEBOUNCE_DELAY = 400;
     const router = useRouter();
     const [searchValue, setSearchValue] = useState('');
     const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -53,15 +56,29 @@ export const useHeaderSearch = (mounted: boolean, isMobile: boolean, defaultTren
         hasInitializedRecentSearches.current = true;
     }, [defaultTrendingSearches]);
 
-    // Update search results when search value changes
+    const normalizedSearchValue = searchValue.trim();
+    const debouncedSearchValue = useDebounce(normalizedSearchValue, DEBOUNCE_DELAY);
+    const {
+        data: searchResponse,
+    } = useSearchProducts(debouncedSearchValue, { limit: SEARCH_LIMIT });
+
+    // Update search results when search API responds
     useEffect(() => {
-        if (searchValue.trim()) {
-            const results = searchProducts(searchValue, 5);
-            setSearchResults(results);
-        } else {
+        if (!debouncedSearchValue) {
             setSearchResults([]);
+            return;
         }
-    }, [searchValue]);
+
+        const products = searchResponse?.data || [];
+        if (!products.length) {
+            setSearchResults([]);
+            return;
+        }
+
+        setSearchResults(
+            products.slice(0, SEARCH_LIMIT).map((product) => mapProductToFeaturedProduct(product))
+        );
+    }, [debouncedSearchValue, searchResponse]);
 
     const toggleSearch = () => {
         setIsSearchOpen(!isSearchOpen);

@@ -306,7 +306,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         }
         const success = await addToCartInternal();
         if (success) {
-            window.location.href = '/cart';
+            router.push('/cart');
         }
     };
 
@@ -361,7 +361,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         } else if (action === 'buy') {
             const success = await addToCartInternal();
             if (success) {
-                window.location.href = '/cart';
+                router.push('/cart');
             }
         }
     };

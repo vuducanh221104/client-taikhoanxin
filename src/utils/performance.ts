@@ -2,22 +2,30 @@
  * Performance utilities
  */
 
-import { ComponentType, lazy, Suspense } from 'react';
+import {
+    ComponentProps,
+    ComponentType,
+    createElement,
+    lazy,
+    ReactNode,
+    Suspense,
+} from 'react';
 
 /**
  * Lazy load a component with Suspense fallback
  */
 export const lazyLoad = <T extends ComponentType<any>>(
     importFunc: () => Promise<{ default: T }>,
-    fallback?: React.ReactNode
+    fallback?: ReactNode
 ) => {
     const LazyComponent = lazy(importFunc);
 
-    return (props: any) => (
-        <Suspense fallback={fallback || <div>Loading...</div>}>
-            <LazyComponent {...props} />
-        </Suspense>
-    );
+    return (props: ComponentProps<T>) =>
+        createElement(
+            Suspense,
+            { fallback: fallback ?? createElement('div', null, 'Loading...') },
+            createElement(LazyComponent, props)
+        );
 };
 
 /**

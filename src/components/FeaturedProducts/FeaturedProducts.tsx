@@ -26,6 +26,8 @@ export interface FeaturedProduct {
     href?: string;
     imageSrc?: string;
     imageAlt?: string;
+    tags?: string[];
+    categoryIds?: string[];
 }
 
 export interface FeaturedProductsProps {

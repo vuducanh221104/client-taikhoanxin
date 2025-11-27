@@ -6,11 +6,11 @@ import classNames from 'classnames/bind';
 import styles from './page.module.scss';
 import ProductCard from '@/components/ProductCard';
 import { FeaturedProduct } from '@/components/FeaturedProducts';
-import { searchProducts, getProductCategory, detectProductGenre } from '@/services/productService';
+import { useSearchProducts, mapProductToFeaturedProduct, Product, detectProductGenre } from '@/services/productService';
 import { useDispatch } from 'react-redux';
 import { addToCart } from '@/redux/cartSlice';
 import { PlusIcon, SearchIcon } from '@/components/Icons';
-import FilterBar, { FilterValues, SortOption } from '@/components/FilterBar';
+import FilterBar, { FilterValues } from '@/components/FilterBar';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useToast } from '@/hooks/useToast';
 import { ProductListSkeleton } from '@/components/Skeleton';
@@ -61,6 +61,79 @@ const sortOptions = [
     { value: 'name-desc', label: 'Tên Z-A' },
 ];
 
+type CategoryFilterValue = 'all' | 'featured' | 'work' | 'ai' | 'bestSelling' | 'entertainment' | 'new';
+type GenreFilterValue = 'all' | 'account' | 'code' | 'license';
+
+interface SearchDisplayProduct extends FeaturedProduct {
+    raw: Product;
+    categoryFilter: CategoryFilterValue;
+    genreFilter: GenreFilterValue;
+}
+
+interface APIError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+    message?: string;
+}
+
+const SEARCH_RESULT_LIMIT = 120;
+const RECENT_DAYS_THRESHOLD = 30;
+
+const inferCategoryFilter = (product: Product): CategoryFilterValue => {
+    const tags = (product.tag || []).map(tag => tag.toLowerCase());
+    const name = product.name?.toLowerCase() || '';
+
+    const matchKeywords = (keywords: string[]) =>
+        keywords.some(keyword => name.includes(keyword) || tags.some(tag => tag.includes(keyword)));
+
+    const createdWithinDays = (() => {
+        if (!product.createdAt) return false;
+        const createdDate = new Date(product.createdAt);
+        if (Number.isNaN(createdDate.getTime())) return false;
+        const diffInDays = (Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
+        return diffInDays <= RECENT_DAYS_THRESHOLD;
+    })();
+
+    if (product.badge || product.isPopular || matchKeywords(['nổi bật', 'featured'])) {
+        return 'featured';
+    }
+    if (product.isBestSelling || product.sold >= 100 || matchKeywords(['bán chạy', 'best selling', 'hot'])) {
+        return 'bestSelling';
+    }
+    if (matchKeywords(['ai', 'chatgpt', 'midjourney', 'notion ai'])) {
+        return 'ai';
+    }
+    if (matchKeywords(['netflix', 'spotify', 'disney', 'entertainment', 'game', 'movie'])) {
+        return 'entertainment';
+    }
+    if (matchKeywords(['office', 'work', 'microsoft', 'excel', 'word', 'làm việc'])) {
+        return 'work';
+    }
+    if (createdWithinDays || matchKeywords(['mới', 'new'])) {
+        return 'new';
+    }
+    return 'all';
+};
+
+const inferGenreFilter = (productName: string): GenreFilterValue => {
+    const detected = detectProductGenre(productName);
+    return detected || 'all';
+};
+
+const getErrorMessage = (error: unknown): string => {
+    if (!error) {
+        return 'Có lỗi xảy ra. Vui lòng thử lại.';
+    }
+    if (typeof error === 'string') {
+        return error;
+    }
+    const apiError = error as APIError;
+    return apiError.response?.data?.message || apiError.message || 'Có lỗi xảy ra. Vui lòng thử lại.';
+};
+
 export default function SearchPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -76,6 +149,9 @@ export default function SearchPage() {
         sortBy: 'default',
     });
     const [displayLimit, setDisplayLimit] = useState<number>(INITIAL_DISPLAY_LIMIT);
+    const { data: searchResponse, error: searchError, isLoading: isSearching } = useSearchProducts(query, {
+        limit: SEARCH_RESULT_LIMIT,
+    });
 
     const dispatch = useDispatch();
     const searchInputRef = useRef<HTMLInputElement>(null);
@@ -84,9 +160,7 @@ export default function SearchPage() {
 
     // Update search value when query param changes
     useEffect(() => {
-        if (query) {
-            setSearchValue(query);
-        }
+        setSearchValue(query);
     }, [query]);
 
     // Reset display limit when filters or query change
@@ -108,32 +182,36 @@ export default function SearchPage() {
         }
     };
 
-    // Get products based on search query
-    const baseProducts = useMemo(() => {
+    // Get products based on search query from API
+    const baseProducts = useMemo<SearchDisplayProduct[]>(() => {
         if (!query || query.trim().length === 0) {
             return [];
         }
-        return searchProducts(query, 1000);
-    }, [query]);
+
+        const apiProducts = searchResponse?.data || [];
+        return apiProducts.map((product) => {
+            const mapped = mapProductToFeaturedProduct(product);
+            return {
+                ...mapped,
+                raw: product,
+                categoryFilter: inferCategoryFilter(product),
+                genreFilter: inferGenreFilter(mapped.productName),
+            };
+        });
+    }, [query, searchResponse?.data]);
 
     // Filter products
     const filteredProducts = useMemo(() => {
         let filtered = [...baseProducts];
 
-        // Filter by category - Check if product belongs to selected category
+        // Filter by category - Derived from product metadata
         if (filters.category !== 'all') {
-            filtered = filtered.filter(product => {
-                const productCategory = getProductCategory(product.id);
-                return productCategory === filters.category;
-            });
+            filtered = filtered.filter(product => product.categoryFilter === filters.category);
         }
 
         // Filter by genre - Detect genre from product name
         if (filters.genre !== 'all') {
-            filtered = filtered.filter(product => {
-                const productGenre = detectProductGenre(product.productName);
-                return productGenre === filters.genre;
-            });
+            filtered = filtered.filter(product => product.genreFilter === filters.genre);
         }
 
         // Filter by status
@@ -217,9 +295,8 @@ export default function SearchPage() {
             } else {
                 showSuccess(`Đã xóa "${product.productName}" khỏi yêu thích`);
             }
-        } catch (error: any) {
-            const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra. Vui lòng thử lại!';
-            showError(errorMessage);
+        } catch (error) {
+            showError(getErrorMessage(error));
         }
     };
 
@@ -248,6 +325,13 @@ export default function SearchPage() {
     }, [filteredProducts, displayLimit]);
 
     const hasMoreProducts = filteredProducts.length > displayLimit;
+    const trimmedQuery = query.trim();
+    const shouldPromptForQuery = trimmedQuery.length === 0;
+    const isInitialLoading = isSearching && !shouldPromptForQuery && baseProducts.length === 0;
+    const searchErrorMessage = getErrorMessage(searchError);
+    const shouldShowNoResults = !isSearching && !shouldPromptForQuery && baseProducts.length === 0 && !searchError;
+    const shouldShowFilteredEmpty =
+        !isSearching && !shouldPromptForQuery && baseProducts.length > 0 && filteredProducts.length === 0;
 
     const hasActiveFilters = filters.category !== 'all' || 
                              filters.genre !== 'all' || 
@@ -318,12 +402,22 @@ export default function SearchPage() {
                 )}
 
                 {/* Products Grid or Empty State */}
-                {!query ? (
+                {shouldPromptForQuery ? (
                     <div className={cx('empty-state')}>
                         <SearchIcon size={64} className={cx('empty-icon')} />
                         <p className={cx('empty-message')}>Nhập từ khóa để tìm kiếm sản phẩm</p>
                     </div>
-                ) : baseProducts.length === 0 ? (
+                ) : searchError ? (
+                    <EmptyState
+                        icon={<FileSearchIcon size={80} />}
+                        title="Không thể tải kết quả tìm kiếm"
+                        description={searchErrorMessage}
+                        actionLabel="Thử lại"
+                        onAction={() => router.refresh()}
+                    />
+                ) : isInitialLoading ? (
+                    <ProductListSkeleton count={INITIAL_DISPLAY_LIMIT} />
+                ) : shouldShowNoResults ? (
                     <EmptyState
                         icon={<FileSearchIcon size={80} />}
                         title={`Không tìm thấy sản phẩm cho "${query}"`}
@@ -331,7 +425,7 @@ export default function SearchPage() {
                         actionLabel="Khám phá sản phẩm"
                         actionHref="/products"
                     />
-                ) : filteredProducts.length === 0 ? (
+                ) : shouldShowFilteredEmpty ? (
                     <EmptyState
                         icon={<PackageIcon size={80} />}
                         title="Không có sản phẩm nào phù hợp"

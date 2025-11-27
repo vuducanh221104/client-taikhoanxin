@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import classNames from 'classnames/bind';
 import styles from './BannerSlider.module.scss';
 import { ChevronLeftIcon, ChevronRightIcon } from '@/components/Icons';
@@ -146,7 +147,7 @@ const BannerSlider: React.FC<BannerSliderProps> = ({
                         
                         return (
                             <div key={banner.id} className={cx('slide')}>
-                                <a href={banner.href} className={cx('banner-link')}>
+                                <Link href={banner.href} className={cx('banner-link')}>
                                     <Image
                                         src={banner.image}
                                         alt={banner.title || `Banner ${index + 1}`}
@@ -158,7 +159,7 @@ const BannerSlider: React.FC<BannerSliderProps> = ({
                                         fetchPriority={isFirstSlide ? 'high' : 'low'}
                                         sizes="(max-width: 999px) 100vw, 66vw"
                                     />
-                                </a>
+                                </Link>
                             </div>
                         );
                     })}

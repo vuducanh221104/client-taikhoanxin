@@ -41,6 +41,7 @@ export interface Product {
     isActive: boolean;
     badge: boolean;
     isPopular: boolean;
+    isBestSelling?: boolean;
     isAvailable: boolean;
     stock: number;
     sold: number;
@@ -187,16 +188,16 @@ export const useFeaturedProducts = (params?: {
     categoryId?: string;
     limit?: number;
 }) => {
-    if (!params || (!params.categorySlug && !params.categoryId)) {
-        return useSWRUser<ProductListResponse>(null);
+    let key: string | null = null;
+
+    if (params?.categorySlug || params?.categoryId) {
+        const queryParams = new URLSearchParams();
+        if (params.categorySlug) queryParams.append('categorySlug', params.categorySlug);
+        if (params.categoryId) queryParams.append('categoryId', params.categoryId);
+        if (params.limit) queryParams.append('limit', params.limit.toString());
+        key = `/api/v1/products/featured-product?${queryParams.toString()}`;
     }
 
-    const queryParams = new URLSearchParams();
-    if (params.categorySlug) queryParams.append('categorySlug', params.categorySlug);
-    if (params.categoryId) queryParams.append('categoryId', params.categoryId);
-    if (params.limit) queryParams.append('limit', params.limit.toString());
-
-    const key = `/api/v1/products/featured-product?${queryParams.toString()}`;
     return useSWRUser<ProductListResponse>(key);
 };
 
@@ -264,7 +265,7 @@ export const useProductsByIds = (productIds?: string[]) => {
         return () => {
             cancelled = true;
         };
-    }, [productIds?.join(',')]);
+    }, [productIds]);
 
     return { data, error, isLoading };
 };
@@ -276,15 +277,15 @@ export const useProductsByIds = (productIds?: string[]) => {
  * @returns SWR hook for related products
  */
 export const useRelatedProducts = (slug?: string, params?: { limit?: number }) => {
-    if (!slug) {
-        return useSWRUser<ProductListResponse>(null);
+    let key: string | null = null;
+
+    if (slug) {
+        const queryParams = new URLSearchParams();
+        if (params?.limit) queryParams.append('limit', params.limit.toString());
+        const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
+        key = `/api/v1/products/${slug}/related${queryString}`;
     }
 
-    const queryParams = new URLSearchParams();
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
-
-    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
-    const key = `/api/v1/products/${slug}/related${queryString}`;
     return useSWRUser<ProductListResponse>(key);
 };
 
@@ -295,12 +296,17 @@ export const useRelatedProducts = (slug?: string, params?: { limit?: number }) =
  * @returns SWR hook for search results
  */
 export const useSearchProducts = (query: string, params?: { page?: number; limit?: number }) => {
-    const searchParams = new URLSearchParams();
-    if (query) searchParams.append('search', query);
-    if (params?.page) searchParams.append('page', params.page.toString());
-    if (params?.limit) searchParams.append('limit', params.limit.toString());
-    
-    const key = searchParams.toString() ? `/api/v1/products/search?${searchParams.toString()}` : null;
+    const normalizedQuery = query?.trim();
+
+    let key: string | null = null;
+    if (normalizedQuery) {
+        const searchParams = new URLSearchParams();
+        searchParams.append('q', normalizedQuery);
+        if (params?.page) searchParams.append('page', params.page.toString());
+        if (params?.limit) searchParams.append('limit', params.limit.toString());
+        key = `/api/v1/products/search?${searchParams.toString()}`;
+    }
+
     return useSWRUser<ProductListResponse>(key);
 };
 
