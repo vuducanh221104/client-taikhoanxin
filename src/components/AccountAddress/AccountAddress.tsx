@@ -3,7 +3,6 @@
 import React, { useState, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { mutate } from 'swr';
-import Link from 'next/link';
 import classNames from 'classnames/bind';
 import styles from './AccountAddress.module.scss';
 import { CurrentUser } from '@/types/client';
@@ -194,8 +193,14 @@ const AccountAddress: React.FC<AccountAddressProps> = ({ user }) => {
             } else {
                 throw new Error('Cập nhật địa chỉ thất bại');
             }
-        } catch (err: any) {
-            const errorMessage = err?.response?.data?.message || err?.message || 'Có lỗi xảy ra. Vui lòng thử lại!';
+        } catch (err: unknown) {
+            let errorMessage = 'Có lỗi xảy ra. Vui lòng thử lại!';
+
+            if (err && typeof err === 'object') {
+                const maybeError = err as { response?: { data?: { message?: string } }; message?: string };
+                errorMessage = maybeError.response?.data?.message || maybeError.message || errorMessage;
+            }
+
             setError(errorMessage);
             showError(errorMessage);
         } finally {
@@ -329,10 +334,10 @@ const AccountAddress: React.FC<AccountAddressProps> = ({ user }) => {
                 </div>
 
                 <div className={cx('form-actions')}>
-                    <Link href="/account/addresses" className={cx('manage-address-link')}>
+                    <div className={cx('manage-address-link')} aria-disabled="true">
                         <MapPinIcon size={16} />
                         Quản lý địa chỉ mua hàng
-                    </Link>
+                    </div>
 
                     <label className={cx('checkbox-label')}>
                         <input

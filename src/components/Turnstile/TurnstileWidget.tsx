@@ -21,7 +21,7 @@ const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
     onExpire,
     resetKey,
     className,
-    size = 'invisible',
+    size = 'normal',
     theme = 'auto',
 }) => {
     if (!siteKey) {

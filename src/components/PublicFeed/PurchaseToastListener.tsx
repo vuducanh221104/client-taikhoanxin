@@ -90,14 +90,58 @@ const PurchaseToastListener: React.FC = () => {
 
     if (!visibleItem) return null;
 
+    // Extract duration from product name (e.g., "1 Tháng", "3 Tháng")
+    const extractDuration = (productName: string): string | null => {
+        const match = productName.match(/(\d+)\s*(tháng|month|THÁNG|MONTH)/i);
+        return match ? `${match[1]} ${match[2].toUpperCase() === 'THÁNG' ? 'THÁNG' : 'MONTH'}` : null;
+    };
+
+    // Extract product brand/service name (e.g., "Netflix", "Canva")
+    const extractBrand = (productName: string): string => {
+        const parts = productName.split(/\s+/);
+        return parts[0] || productName;
+    };
+
+    // Extract package type or category
+    const extractPackageType = (productName: string): string => {
+        const lowerName = productName.toLowerCase();
+        if (lowerName.includes('premium')) return 'GÓI PREMIUM';
+        if (lowerName.includes('pro')) return 'GÓI PRO';
+        if (lowerName.includes('gia hạn') || lowerName.includes('renewal')) return 'GÓI GIA HẠN';
+        if (lowerName.includes('gói') || lowerName.includes('package')) return 'GÓI DỊCH VỤ';
+        return 'GÓI DỊCH VỤ';
+    };
+
+    const duration = extractDuration(visibleItem.productName);
+    const brand = extractBrand(visibleItem.productName);
+    const packageType = extractPackageType(visibleItem.productName);
+
     return (
         <div className={cx('purchase-toast-wrapper')}>
             <div className={cx('purchase-toast')}>
-                {visibleItem.productImage && (
-                    <div className={cx('purchase-toast-image')}>
-                        <img src={visibleItem.productImage} alt={visibleItem.productName} />
-                    </div>
-                )}
+                <div className={cx('purchase-toast-image-wrapper')}>
+                    {visibleItem.productImage ? (
+                        <div className={cx('purchase-toast-image')}>
+                            <img
+                                src={visibleItem.productImage}
+                                alt={visibleItem.productName}
+                                className={cx('product-image')}
+                            />
+                        </div>
+                    ) : (
+                        <div className={cx('purchase-toast-image', 'placeholder')}>
+                            <div className={cx('package-label')}>{packageType}</div>
+                            <span className={cx('brand-text')}>{brand}</span>
+                        </div>
+                    )}
+                    <div className={cx('package-label-overlay')}>{packageType}</div>
+                    {duration && (
+                        <div className={cx('duration-badge')}>
+                            {duration}
+                        </div>
+                    )}
+                    <div className={cx('image-overlay')} />
+                </div>
                 <div className={cx('purchase-toast-content')}>
                     <div className={cx('purchase-toast-subtitle')}>
                         {visibleItem.subtitle}
@@ -112,7 +156,7 @@ const PurchaseToastListener: React.FC = () => {
                     aria-label="Đóng thông báo"
                     onClick={() => setVisibleItem(null)}
                 >
-                    <X size={18} />
+                    <X size={16} />
                 </button>
             </div>
         </div>

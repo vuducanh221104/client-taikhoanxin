@@ -53,6 +53,21 @@ interface LookupPageProps {
 
 type Step = 'form' | 'otp' | 'result';
 
+const stepperConfig = [
+    {
+        title: 'Nhập thông tin',
+        description: 'Điền mã đơn hàng và email đã dùng để mua hàng.',
+    },
+    {
+        title: 'Nhận OTP',
+        description: 'Mã bảo mật được gửi đến email của bạn để xác minh.',
+    },
+    {
+        title: 'Xem đơn hàng',
+        description: 'Theo dõi trạng thái và chi tiết giao nhận mới nhất.',
+    },
+];
+
 const OrderLookupPage: React.FC<LookupPageProps> = ({ initialOrderCode, initialEmail, initialToken }) => {
     const router = useRouter();
     const [orderCodeInput, setOrderCodeInput] = React.useState(initialOrderCode || '');
@@ -198,6 +213,33 @@ const OrderLookupPage: React.FC<LookupPageProps> = ({ initialOrderCode, initialE
             setVerificationToken(null);
         }
     }, [checkoutError]);
+
+    const currentStepIndex = React.useMemo<0 | 1 | 2>(() => {
+        if (step === 'otp') return 1;
+        if (step === 'result') return 2;
+        return 0;
+    }, [step]);
+
+    const renderStepper = () => (
+        <div className={cx('stepper')}>
+            {stepperConfig.map((item, index) => (
+                <div
+                    key={item.title}
+                    className={cx('stepper-item', {
+                        completed: index < currentStepIndex,
+                        active: index === currentStepIndex,
+                    })}
+                >
+                    <div className={cx('step-index')}>{index + 1}</div>
+                    <div className={cx('step-copy')}>
+                        <p>{item.title}</p>
+                        <span>{item.description}</span>
+                    </div>
+                    {index < stepperConfig.length - 1 && <div className={cx('step-divider')} />}
+                </div>
+            ))}
+        </div>
+    );
 
     const renderFormStep = () => (
         <div className={cx('card')}>
@@ -354,10 +396,53 @@ const OrderLookupPage: React.FC<LookupPageProps> = ({ initialOrderCode, initialE
     }
 
     return (
-        <div className={cx('lookup-page')}>
-            {step === 'form' && renderFormStep()}
-            {step === 'otp' && renderOtpStep()}
-            {step === 'result' && renderResultStep()}
+        <div className={cx('lookup-page', { 'is-result': step === 'result' })}>
+            <section className={cx('hero-section')}>
+                <div className={cx('hero-copy')}>
+                    <p className={cx('hero-eyebrow')}>Tài Khoản Xịn</p>
+                    <h2>Tra cứu đơn hàng mọi lúc, mọi nơi.</h2>
+                    <p>
+                        Chỉ cần mã đơn hàng và email đã dùng khi thanh toán, chúng tôi sẽ gửi mã OTP để bạn xem trạng thái
+                        mới nhất của đơn hàng một cách an toàn.
+                    </p>
+                    <ul>
+                        <li>
+                            <ShieldCheckIcon size={20} />
+                            <div>
+                                <strong>Bảo mật OTP</strong>
+                                <span>OTP chỉ tồn tại trong 60 giây để bảo vệ thông tin.</span>
+                            </div>
+                        </li>
+                        <li>
+                            <PackageIcon size={20} />
+                            <div>
+                                <strong>Theo dõi nhanh</strong>
+                                <span>Cập nhật đầy đủ trạng thái thanh toán và giao hàng.</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div className={cx('hero-badge')}>
+                    <span>24/7</span>
+                    <p>Hỗ trợ tra cứu</p>
+                </div>
+            </section>
+            <div className={cx('content')}>
+                {renderStepper()}
+                {step === 'form' && renderFormStep()}
+                {step === 'otp' && renderOtpStep()}
+                {step === 'result' && renderResultStep()}
+                <div className={cx('support-card')}>
+                    <div>
+                        <strong>Cần hỗ trợ thêm?</strong>
+                        <p>Đội ngũ CSKH của chúng tôi luôn sẵn sàng giải đáp và hỗ trợ thao tác tra cứu.</p>
+                    </div>
+                    <div className={cx('support-actions')}>
+                        <a href="mailto:cskh@taikhoanxin.com">cskh@taikhoanxin.com</a>
+                        <span>Hoặc chat trực tiếp trong giờ hành chính.</span>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

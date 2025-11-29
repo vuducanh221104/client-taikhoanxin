@@ -1,143 +1,320 @@
 .auth-page {
     min-height: 100vh;
-    display: flex;
-    width: 100%;
-    overflow: hidden;
-    position: relative;
-}
-
-.auth-form-section {
-    flex: 1;
+    padding: 32px 24px;
+    background: radial-gradient(circle at top, rgba(74, 99, 217, 0.12), transparent),
+        var(--bg-color);
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.forgot-shell {
+    width: min(1200px, 100%);
     background: var(--bg-color);
-    padding: 60px 80px;
-    overflow-y: auto;
+    border-radius: 32px;
+    border: 1px solid var(--border-color-lighter);
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(15, 23, 42, 0.12);
+
+    @media (max-width: 1024px) {
+        grid-template-columns: 1fr;
+    }
 }
 
-.form-container {
-    width: 100%;
-    max-width: 680px;
-}
-
-// Header with Back Button
-.forgot-password-header {
+.insight-panel {
+    background: linear-gradient(160deg, #1c2758 0%, #2e3f92 55%, #5a73ff 120%);
+    color: var(--text-color-white);
+    padding: 56px 48px;
     display: flex;
+    flex-direction: column;
+    gap: 32px;
+
+    @media (max-width: 1024px) {
+        padding: 40px 32px;
+    }
+}
+
+.brand-pill {
+    display: inline-flex;
     align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.insight-title {
+    font-size: 32px;
+    line-height: 1.3;
+    margin: 0;
+    font-weight: 700;
+
+    @media (max-width: 480px) {
+        font-size: 26px;
+    }
+}
+
+.insight-text {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.6;
+}
+
+.insight-steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
     gap: 16px;
-    margin-bottom: 40px;
+}
+
+.insight-step {
+    display: flex;
+    gap: 16px;
+    padding: 14px 18px;
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 18px;
+    backdrop-filter: blur(6px);
+}
+
+.step-index {
+    font-weight: 700;
+    font-size: 18px;
+    color: #bfc9ff;
+    min-width: 36px;
+}
+
+.step-label {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.step-hint {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.support-card {
+    background: rgba(9, 9, 11, 0.15);
+    border-radius: 20px;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.support-title {
+    margin: 0;
+    font-weight: 600;
+}
+
+.support-text {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 14px;
+}
+
+.support-link {
+    color: var(--text-color-white);
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.security-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.8);
+}
+
+.form-panel {
+    padding: 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    background: var(--bg-color);
+
+    @media (max-width: 768px) {
+        padding: 32px 24px;
+    }
+}
+
+.form-header {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
 }
 
 .back-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
     width: 40px;
     height: 40px;
-    background: none;
-    border: none;
-    cursor: pointer;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: transparent;
     color: var(--text-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
     transition: all 0.2s ease;
-    border-radius: 8px;
-    padding: 0;
 
     &:hover {
-        background: var(--bg-color-secondary);
         color: var(--primary-color);
-    }
-
-    &:active {
-        transform: scale(0.95);
-    }
-
-    svg {
-        width: 24px;
-        height: 24px;
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 12px rgba(74, 99, 217, 0.2);
     }
 }
 
-.forgot-password-title {
-    font-size: 32px;
+.step-eyebrow {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-color-tertiary);
+    font-weight: 600;
+}
+
+.step-title {
+    margin: 6px 0 4px;
+    font-size: 30px;
     font-weight: 700;
     color: var(--auth-title-color);
+
+    @media (max-width: 480px) {
+        font-size: 24px;
+    }
+}
+
+.step-description {
     margin: 0;
-    line-height: 1.3;
-    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--auth-text-color);
+    line-height: 1.6;
+}
+
+.progress-track {
+    position: relative;
+    padding-top: 12px;
+}
+
+.progress-bar {
+    position: relative;
+    height: 4px;
+    background: var(--border-color-lighter);
+    border-radius: 999px;
+
+    &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: var(--progress);
+        background: linear-gradient(90deg, var(--primary-color), #8994ff);
+        border-radius: inherit;
+        transition: width 0.25s ease;
+    }
+}
+
+.progress-dots {
+    margin-top: 12px;
+    display: flex;
+    gap: 12px;
+}
+
+.progress-dot {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: var(--text-color-secondary);
+    transition: all 0.2s ease;
+
+    &.is-active {
+        border-color: transparent;
+        background: linear-gradient(135deg, var(--primary-color) 0%, #4a63d9 100%);
+        color: var(--text-color-white);
+        box-shadow: 0 8px 16px rgba(74, 99, 217, 0.25);
+    }
+}
+
+.form-body {
+    background: var(--bg-color-secondary);
+    border-radius: 24px;
+    padding: 32px;
+    border: 1px solid var(--border-color-lighter);
+
+    @media (max-width: 480px) {
+        padding: 24px;
+    }
 }
 
 .auth-form {
-    margin-bottom: 24px;
-}
-
-.error-message {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 16px;
-    background: var(--auth-error-bg);
-    border: 1px solid var(--error-color);
-    border-radius: 12px;
-    color: var(--error-color);
-    font-size: 14px;
-    margin-bottom: 20px;
-    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-
-    .error-icon {
-        font-size: 16px;
-    }
+    flex-direction: column;
+    gap: 20px;
 }
 
 .form-group {
-    margin-bottom: 20px;
-    
-    &:last-of-type {
-        margin-bottom: 24px;
-    }
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .form-label {
-    display: block;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--auth-text-color);
-    margin-bottom: 10px;
-    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    line-height: 1.4;
 }
 
 .form-input {
     width: 100%;
-    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1.5px solid var(--border-color);
+    padding: 16px 18px;
     font-size: 16px;
-    font-weight: 700;
+    font-weight: 600;
     font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    color: var(--auth-input-text-color);
-    background: var(--auth-input-bg-color);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    outline: none;
-    box-sizing: border-box;
+    transition: all 0.2s ease;
+    background: var(--bg-color);
 
     &:focus {
         border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px var(--primary-color-light);
-        color: var(--auth-input-text-color);
-        font-weight: 700;
-        background: var(--auth-input-bg-color);
+        box-shadow: 0 0 0 3px rgba(74, 99, 217, 0.15);
+        outline: none;
     }
 
     &::placeholder {
-        font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        font-weight: 400;
-        color: var(--auth-placeholder-color);
-    }
-
-    &:disabled {
-        background: var(--bg-color-form);
-        cursor: not-allowed;
         color: var(--text-color-tertiary);
     }
 
@@ -145,278 +322,126 @@
         border-color: var(--error-color);
 
         &:focus {
-            border-color: var(--error-color);
-            box-shadow: 0 0 0 3px var(--auth-error-shadow);
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
         }
     }
 }
 
-.form-error-hint {
-    display: block;
-    font-size: 13px;
-    color: var(--error-color);
-    margin-top: 8px;
-    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-weight: 500;
-    line-height: 1.4;
-    animation: fadeIn 0.2s ease-in;
+.otp-input {
+    letter-spacing: 12px;
+    text-align: center;
+    font-size: 20px;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-4px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.password-wrapper {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: var(--text-color-secondary);
+    cursor: pointer;
+    padding: 0;
+}
+
+.form-error-hint {
+    font-size: 13px;
+    color: var(--error-color);
+    margin-top: -4px;
+}
+
+.form-hint {
+    font-size: 13px;
+    color: var(--text-color-secondary);
+}
+
+.rate-limit-notice {
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    background: rgba(245, 158, 11, 0.08);
+    font-size: 14px;
+    color: #b45309;
 }
 
 .submit-button {
     width: 100%;
-    padding: 16px 24px;
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--text-color-white);
-    background: linear-gradient(135deg, var(--info-color) 0%, var(--price-color) 100%);
-    background-size: 200% 200%;
+    padding: 16px 18px;
+    border-radius: 16px;
     border: none;
-    border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #4a63d9 100%);
+    color: var(--text-color-white);
+    font-size: 16px;
+    font-weight: 700;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    box-shadow: 0 4px 12px var(--auth-button-shadow);
-    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    position: relative;
-    overflow: hidden;
-
-    // Shine effect
-    &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-        transition: left 0.6s ease;
-    }
+    transition: all 0.2s ease;
+    box-shadow: 0 12px 24px rgba(74, 99, 217, 0.25);
 
     &:hover:not(:disabled) {
-        background: linear-gradient(135deg, var(--primary-color-hover) 0%, var(--info-color) 50%, var(--price-color) 100%);
-        background-size: 200% 200%;
-        animation: gradientShift 3s ease infinite;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px var(--auth-button-shadow-hover);
-
-        &::before {
-            left: 100%;
-        }
-    }
-
-    &:active:not(:disabled) {
-        transform: translateY(0);
-        animation: none;
+        transform: translateY(-1px);
+        box-shadow: 0 16px 32px rgba(74, 99, 217, 0.3);
     }
 
     &:disabled {
-        opacity: 0.7;
+        opacity: 0.6;
         cursor: not-allowed;
         transform: none;
-        animation: none;
+        box-shadow: none;
     }
 }
 
-// Gradient animation for submit button
-@keyframes gradientShift {
-    0% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0% 50%;
+.auth-footer {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text-color-secondary);
+    margin-top: 24px;
+
+    @media (max-width: 480px) {
+        flex-direction: column;
+        text-align: center;
     }
 }
 
-.loading-spinner {
-    width: 18px;
-    height: 18px;
-    border: 2px solid var(--auth-spinner-border);
-    border-top-color: var(--text-color-white);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+.auth-link {
+    color: var(--primary-color);
+    font-weight: 600;
 }
 
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-// Success Message
-.success-message {
+.success-card {
     text-align: center;
-    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .success-icon {
-    width: 64px;
-    height: 64px;
-    margin: 0 auto 24px;
+    width: 70px;
+    height: 70px;
+    border-radius: 24px;
+    margin: 0 auto;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--success-color) 0%, var(--info-color) 100%);
-    border-radius: 50%;
+    background: linear-gradient(135deg, #34d399, #10b981);
+    color: var(--text-color-white);
     font-size: 32px;
-    color: var(--text-color-white);
     font-weight: 700;
 }
 
-.success-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--auth-title-color);
-    margin: 0 0 16px 0;
-    line-height: 1.3;
-    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+.countdown-text {
+    font-size: 13px;
+    color: var(--text-color-secondary);
 }
 
-.success-text {
-    font-size: 16px;
-    font-weight: 400;
-    color: var(--auth-text-color);
-    margin: 0 0 32px 0;
-    line-height: 1.6;
-    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
-.back-to-login-button {
-    display: inline-block;
-    padding: 16px 32px;
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--text-color-white);
-    background: linear-gradient(135deg, var(--info-color) 0%, var(--price-color) 100%);
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    text-decoration: none;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 12px var(--auth-button-shadow);
-    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-
-    &:hover {
-        background: linear-gradient(135deg, var(--primary-color-hover) 0%, var(--info-color) 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px var(--auth-button-shadow-hover);
-    }
-
-    &:active {
-        transform: translateY(0);
+@media (max-width: 640px) {
+    .otp-input {
+        letter-spacing: 6px;
     }
 }
-
-// Banner Section
-.auth-banner-section {
-    flex: 1;
-    background: var(--primary-color);
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    min-height: 100vh;
-
-    @media (max-width: 999px) {
-        display: none;
-    }
-}
-
-.banner-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url('/banners/login-banner.png');
-    background-position: center center;
-    background-size: contain;
-    background-repeat: no-repeat;
-    z-index: 1;
-}
-
-.banner-image {
-    display: none; // Hide Image component, use background-image instead
-}
-
-// Responsive
-@media (max-width: 999px) {
-    .auth-banner-section {
-        display: none;
-    }
-
-    .auth-form-section {
-        width: 100%;
-        padding: 40px 24px;
-    }
-
-    .forgot-password-title {
-        font-size: 28px;
-    }
-}
-
-@media (max-width: 480px) {
-    .auth-form-section {
-        padding: 32px 20px;
-    }
-
-    .forgot-password-header {
-        margin-bottom: 32px;
-    }
-
-    .forgot-password-title {
-        font-size: 24px;
-    }
-
-    .back-button {
-        width: 36px;
-        height: 36px;
-
-        svg {
-            width: 20px;
-            height: 20px;
-        }
-    }
-
-    .form-container {
-        max-width: 100%;
-    }
-
-    .form-input {
-        padding: 12px 14px;
-        font-size: 16px; // Prevent zoom on iOS
-    }
-
-    .success-title {
-        font-size: 24px;
-    }
-
-    .success-text {
-        font-size: 14px;
-    }
-
-    .back-to-login-button {
-        padding: 14px 24px;
-        font-size: 16px;
-    }
-}
-

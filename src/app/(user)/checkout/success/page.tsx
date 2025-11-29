@@ -10,7 +10,7 @@ import classNames from 'classnames/bind';
 import styles from './bill.module.scss';
 import { useEffect, useState } from 'react';
 import bankInfo from '@/data/mockBankInfo.json';
-import { CloseIcon } from '@/components/Icons';
+import { CloseIcon, LockIcon, AlertCircleIcon } from '@/components/Icons';
 import { createPortal } from 'react-dom';
 import { useCheckoutOrder } from '@/services/orderService';
 
@@ -29,6 +29,7 @@ const CheckoutSuccessPage: React.FC = () => {
     const [verificationError, setVerificationError] = useState<string | null>(null);
     const [checkedStoredEmail, setCheckedStoredEmail] = useState(false);
     const [hasRedirectedToDetails, setHasRedirectedToDetails] = useState(false);
+    const [loginRedirectUrl, setLoginRedirectUrl] = useState('/auth/login');
     // Track if this is the same browser session that created the order
     const [isOriginalSession, setIsOriginalSession] = useState(false);
     const searchParams = useSearchParams();
@@ -96,6 +97,14 @@ const CheckoutSuccessPage: React.FC = () => {
 
     useEffect(() => {
         setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+        const next = `${window.location.pathname}${window.location.search}`;
+        setLoginRedirectUrl(`/auth/login?redirect=${encodeURIComponent(next)}`);
     }, []);
 
     // Check for stored email - only auto-fill, don't auto-submit for new sessions
@@ -255,11 +264,21 @@ const CheckoutSuccessPage: React.FC = () => {
                     item.fullName ||
                     (typeof populatedProduct === 'object' && (populatedProduct?.name || populatedProduct?.fullName)) ||
                     'Sản phẩm';
+                const productImage =
+                    (typeof populatedProduct === 'object' &&
+                        (populatedProduct?.image?.[0] ||
+                            populatedProduct?.thumbnail ||
+                            populatedProduct?.images?.[0])) ||
+                    (Array.isArray(item.image) ? item.image[0] : item.image) ||
+                    item.productImage ||
+                    item.productThumbnail;
+
                 return {
                     id: productId,
                     productName,
                     quantity: item.quantity || 1,
                     price: item.price || 0,
+                    image: productImage || '/products/product-2.png',
                 };
             }) || [];
 
@@ -364,8 +383,13 @@ useEffect(() => {
         checkedStoredEmail &&
         (!displayOrder || Boolean(verificationError)) &&
         !validationError;
+    const shouldShowExpiredState =
+        !checkoutLoading && Boolean(isExpired) && !showVerificationForm;
     const shouldShowError =
-        !showVerificationForm && (!!errorMessage || (!checkoutLoading && !displayOrder));
+        !showVerificationForm &&
+        !shouldShowExpiredState &&
+        (!!errorMessage || (!checkoutLoading && !displayOrder));
+    const expiredOrderCode = displayOrder?.code || orderCodeParam || '';
 
     return (
         <div className={cx('bill-page')}>
@@ -405,15 +429,71 @@ useEffect(() => {
                     <div className={cx('error-state')}>
                         <p>Đang tải thông tin đơn hàng...</p>
                     </div>
+                ) : shouldShowExpiredState ? (
+                    <div className={cx('error-state')}>
+                        <div className={cx('expired-card')}>
+                            <span className={cx('expired-pill')}>
+                                <AlertCircleIcon size={16} />
+                                Phiên thanh toán đã hết hạn
+                            </span>
+                            <h2 className={cx('expired-title')}>
+                                Phiên thanh toán của bạn đã hết hạn
+                            </h2>
+                            <p className={cx('expired-text')}>
+                                {expiredOrderCode
+                                    ? `Đơn hàng #${expiredOrderCode} đã vượt quá thời gian giữ chỗ nên hệ thống đã hủy phiên thanh toán.`
+                                    : 'Phiên thanh toán này đã kết thúc do quá thời gian cho phép. Bạn có thể tạo lại đơn hàng để tiếp tục mua sản phẩm.'}
+                                <br />
+                                Vui lòng đặt lại đơn hàng để tiếp tục.
+                            </p>
+                            <div className={cx('expired-actions')}>
+                                <Link href="/products" className={cx('btn', 'primary')}>
+                                    Đặt lại đơn hàng
+                                </Link>
+                                <Link href="/" className={cx('btn', 'ghost')}>
+                                    Về trang chủ
+                                </Link>
+                            </div>
+                            <p className={cx('expired-helper')}>
+                                Cần hỗ trợ?{' '}
+                                <Link href="/help/faq/support">Liên hệ đội ngũ CSKH</Link>
+                            </p>
+                        </div>
+                    </div>
                 ) : shouldShowError ? (
                     <div className={cx('error-state')}>
-                        <p>{errorMessage || 'Không tìm thấy thông tin đơn hàng. Vui lòng quay lại trang chủ.'}</p>
-                        <Link
-                            href={requiresLogin ? '/auth/login' : '/'}
-                            className={cx('btn', 'primary')}
-                        >
-                            {requiresLogin ? 'Đăng nhập ngay' : 'Về trang chủ'}
-                        </Link>
+                        <div className={cx('access-card')}>
+                            <div className={cx('access-icon')}>
+                                <LockIcon size={28} />
+                            </div>
+                            <h2 className={cx('access-title')}>Không thể truy cập đơn hàng</h2>
+                            <p className={cx('access-text')}>
+                                {errorMessage ||
+                                    (requiresLogin
+                                        ? 'Bạn cần đăng nhập bằng đúng tài khoản đã tạo đơn để tiếp tục xem chi tiết.'
+                                        : 'Đơn hàng này không tồn tại hoặc bạn không có quyền truy cập.')}
+                            </p>
+                            <div className={cx('access-actions')}>
+                                <Link
+                                    href={requiresLogin ? loginRedirectUrl : '/account/orders'}
+                                    className={cx('btn', 'primary')}
+                                >
+                                    {requiresLogin ? 'Đăng nhập đúng tài khoản' : 'Quay lại lịch sử đơn'}
+                                </Link>
+                                <Link
+                                    href="/account/orders"
+                                    className={cx('btn', 'ghost')}
+                                >
+                                    Xem đơn hàng của tôi
+                                </Link>
+                            </div>
+                            <p className={cx('access-helper')}>
+                                Cần trợ giúp?{' '}
+                                <Link href="/help/faq/support">
+                                    Liên hệ CSKH
+                                </Link>
+                            </p>
+                        </div>
                     </div>
                 ) : displayOrder ? (
                     <div className={cx('bill-card')}>
@@ -451,6 +531,7 @@ useEffect(() => {
                                             className={cx('bill-qr-image')}
                                             priority
                                         />
+                                        <div className={cx('bill-qr-scan-line')}></div>
                                     </div>
                                     <p className={cx('bill-qr-hint')}>Nhấn vào QR để phóng to</p>
                                 </div>
@@ -505,8 +586,17 @@ useEffect(() => {
                                 <div className={cx('bill-items')}>
                                     {displayOrder.items.map((item: any, index: number) => (
                                         <div className={cx('bill-item')} key={item.id || index}>
+                                            <div className={cx('bill-item-media')}>
+                                                <Image
+                                                    src={item.image || '/images/placeholder.png'}
+                                                    alt={item.productName}
+                                                    width={72}
+                                                    height={72}
+                                                    className={cx('bill-item-image')}
+                                                    loading="lazy"
+                                                />
+                                            </div>
                                             <div className={cx('bill-item-info')}>
-                                                <span className={cx('bill-item-number')}>{index + 1}.</span>
                                                 <span className={cx('bill-item-name')}>{item.productName}</span>
                                                 <span className={cx('bill-item-qty')}>x{item.quantity}</span>
                                             </div>
@@ -600,14 +690,17 @@ useEffect(() => {
                                 <CloseIcon size={24} />
                             </button>
                             <div className={cx('qr-modal-image-wrapper')}>
-                                <Image
-                                    src={displayOrder.vietQR?.image || '/payment/my-QR.png'}
-                                    alt="QR Code thanh toán - Full Screen"
-                                    width={600}
-                                    height={600}
-                                    className={cx('qr-modal-image')}
-                                    priority
-                                />
+                                <div className={cx('qr-modal-image-container')}>
+                                    <Image
+                                        src={displayOrder.vietQR?.image || '/payment/my-QR.png'}
+                                        alt="QR Code thanh toán - Full Screen"
+                                        width={600}
+                                        height={600}
+                                        className={cx('qr-modal-image')}
+                                        priority
+                                    />
+                                    <div className={cx('qr-modal-scan-line')}></div>
+                                </div>
                             </div>
                             <div className={cx('qr-modal-info')}>
                                 <div className={cx('qr-modal-info-item')}>

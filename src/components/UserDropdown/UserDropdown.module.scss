@@ -67,12 +67,34 @@
     flex-shrink: 0;
     background: var(--bg-color);
     border: 2px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.placeholder {
+        background: linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+        border-color: rgba(255, 255, 255, 0.5);
+    }
 }
 
 .avatar-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.avatar-initials {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.85);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
 }
 
 .user-email {

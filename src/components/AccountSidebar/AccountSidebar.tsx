@@ -71,7 +71,7 @@ const AccountSidebar: React.FC<AccountSidebarProps> = ({ activeItem = 'account' 
                         >
                             <div className={cx('sidebar-item-content')}>
                                 <div className={cx('sidebar-item-indicator')} />
-                                <Icon className={cx('sidebar-item-icon')} size={20} />
+                                <Icon className={cx('sidebar-item-icon')} size={24} />
                                 <span className={cx('sidebar-item-label')}>{item.label}</span>
                             </div>
                         </Link>

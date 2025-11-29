@@ -22,6 +22,18 @@ interface UserDropdownProps {
     onMouseLeave?: () => void;
 }
 
+const getInitials = (fullName?: string | null, fallback?: string | null) => {
+    const seed = fallback?.[0] || '?';
+    if (!fullName) return seed.toUpperCase();
+    const pieces = fullName
+        .trim()
+        .split(' ')
+        .filter(Boolean);
+    if (!pieces.length) return seed.toUpperCase();
+    if (pieces.length === 1) return pieces[0][0].toUpperCase();
+    return `${pieces[0][0]}${pieces[pieces.length - 1][0]}`.toUpperCase();
+};
+
 const UserDropdown: React.FC<UserDropdownProps> = ({ 
     isOpen: controlledIsOpen, 
     setIsOpen: controlledSetIsOpen,
@@ -154,7 +166,10 @@ const UserDropdown: React.FC<UserDropdownProps> = ({
         return null;
     }
 
-    const displayName = currentUser?.fullName?.trim() || currentUser?.user_name || currentUser.email;
+    const displayName = currentUser?.full_name?.trim() || currentUser?.user_name || currentUser.email;
+    const avatarSrc = currentUser.avatar?.trim() || '';
+    const isMissingAvatar = !avatarSrc;
+    const avatarInitials = getInitials(currentUser.full_name, currentUser.email);
 
     return (
         <div
@@ -175,14 +190,18 @@ const UserDropdown: React.FC<UserDropdownProps> = ({
                 >
                     {/* User Header */}
                     <div className={cx('user-header')}>
-                        <div className={cx('user-avatar')}>
+                        <div className={cx('user-avatar', { placeholder: isMissingAvatar })}>
+                            {isMissingAvatar ? (
+                                <span className={cx('avatar-initials')}>{avatarInitials}</span>
+                            ) : (
                             <Image
-                                src={currentUser.avatar || '/avatar/user-icon.webp'}
+                                    src={avatarSrc}
                                 alt={displayName}
                                 width={40}
                                 height={40}
                                 className={cx('avatar-image')}
                             />
+                            )}
                         </div>
                         <div className={cx('user-email')}>
                             {displayName}

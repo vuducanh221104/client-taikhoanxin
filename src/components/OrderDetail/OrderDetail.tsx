@@ -396,10 +396,16 @@ Email: support@taikhoanxin.com
                         {/* Account Info - Only show for completed orders */}
                         {['completed', 'warranty_completed'].includes(order.status) && product.accountEntries && product.accountEntries.length > 0 && (
                                 <div className={cx('account-info')}>
-                                    <h4 className={cx('account-title')}>
-                                        {product.accountDescription || 'Thông tin tài khoản'}
-                                    </h4>
-                                    
+                                    <div className={cx('account-title-row')}>
+                                        <div>
+                                            <h4 className={cx('account-title')}>
+                                                {product.accountDescription || 'Thông tin tài khoản'}
+                                            </h4>
+                                            <p className={cx('account-description')}>
+                                                Nhấn vào nội dung để copy nhanh thông tin đăng nhập
+                                            </p>
+                                        </div>
+                                    </div>
                                     {product.accountEntries.map((entry, index) => (
                                         <div key={index} className={cx('account-item')}>
                                             <div className={cx('account-field-single')}>

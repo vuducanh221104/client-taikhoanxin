@@ -210,15 +210,20 @@
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    padding: 1.5rem;
-    background: #f9fafb;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
+    padding: 1.75rem;
+    background: linear-gradient(135deg, #f0f7ff 0%, #fff 100%);
+    border-radius: 18px;
+    border: 1px solid #dbeafe;
+    box-shadow: 0 12px 30px rgba(59, 130, 246, 0.08);
 }
 
 .product-main {
     display: flex;
     gap: 1.5rem;
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.25rem;
+    border: 1px solid #e0edff;
 }
 
 .product-image-wrapper {
@@ -258,9 +263,9 @@
 }
 
 .product-name {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #111827;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
     margin: 0;
 }
 
@@ -270,24 +275,38 @@
 }
 
 .product-price {
-    font-size: 1.125rem;
+    font-size: 1.25rem;
     font-weight: 700;
-    color: #008fd0;
+    color: #005bb5;
 }
 
 // Account Info
 .account-info {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 1.25rem;
+    background: linear-gradient(145deg, #f4f8ff 0%, #ffffff 100%);
+    border: 1px solid #dbeafe;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
 }
 
 .account-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #111827;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0f172a;
     margin: 0 0 1rem 0;
+}
+
+.account-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.account-description {
+    margin: 0.35rem 0 0;
+    font-size: 0.875rem;
+    color: #64748b;
 }
 
 .account-field-single {
@@ -295,17 +314,19 @@
     align-items: center;
     gap: 1rem;
     padding: 1rem;
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
+    background: #ffffff;
+    border: 1px solid #e0edff;
+    border-radius: 12px;
     margin-bottom: 0.75rem;
+    box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.05);
 }
 
 .copy-icon-button {
     flex-shrink: 0;
-    background: none;
-    border: none;
-    padding: 0;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    padding: 0.4rem;
+    border-radius: 10px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -313,7 +334,9 @@
     transition: all 0.2s;
 
     &:hover {
-        transform: scale(1.1);
+        transform: scale(1.05);
+        background: #dbeafe;
+        border-color: #93c5fd;
     }
 
     &:active {
@@ -322,13 +345,13 @@
 }
 
 .copy-icon-main {
-    color: #3b82f6;
+    color: #2563eb;
 }
 
 .account-credentials {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
     flex: 1;
     flex-wrap: nowrap;
     white-space: nowrap;
@@ -344,9 +367,10 @@
 }
 
 .credential-value {
-    color: #111827;
-    font-weight: 500;
+    color: #0f172a;
+    font-weight: 600;
     display: inline-block;
+    font-size: 0.95rem;
     
     &.clickable {
         cursor: pointer;
@@ -384,12 +408,12 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.75rem;
-    background: #eff6ff;
-    border-radius: 6px;
+    padding: 0.85rem;
+    background: rgba(59, 130, 246, 0.08);
+    border-radius: 10px;
     font-size: 0.875rem;
-    color: #1e40af;
-    margin-bottom: 0.75rem;
+    color: #1e3a8a;
+    margin-bottom: 0.5rem;
 
     .hint-icon {
         flex-shrink: 0;
@@ -400,11 +424,11 @@
 .product-note {
     display: flex;
     align-items: flex-start;
-    gap: 0.5rem;
-    padding: 0.75rem;
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    border-radius: 6px;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    background: #fff5f5;
+    border: 1px solid #fecdd3;
+    border-radius: 12px;
     margin-top: 0.75rem;
 }
 
@@ -425,12 +449,12 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    padding: 0.75rem 1.5rem;
-    background: #3b82f6;
+    padding: 0.85rem 1.5rem;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
     color: #fff;
     border: none;
-    border-radius: 6px;
-    font-size: 0.9375rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
     font-weight: 500;
     text-decoration: none;
     cursor: pointer;

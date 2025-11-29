@@ -62,6 +62,7 @@ pids
 
 # Optional npm cache directory
 .npm
+.npm-cache
 
 # Optional eslint cache
 .eslintcache
@@ -89,7 +90,7 @@ dist
 
 # Gatsby files
 .cache/
-public
+#public
 
 # vuepress build output
 .vuepress/dist

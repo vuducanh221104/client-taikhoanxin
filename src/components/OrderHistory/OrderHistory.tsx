@@ -10,6 +10,7 @@ import { FilterIcon, CalendarIcon, ChevronDownIcon, RotateCcwIcon, CloseIcon } f
 import { EmptyState } from '@/components/EmptyState';
 import { PackageIcon } from '@/components/Icons';
 import { useToast } from '@/components/Toast';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 const cx = classNames.bind(styles);
 
@@ -39,6 +40,7 @@ const quickDateFilters = [
 const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
     const router = useRouter();
     const toast = useToast();
+    const { confirm } = useConfirm();
     const { data: ordersData, error, isLoading, mutate } = useMyOrders();
     
     // Map API response to component format
@@ -281,12 +283,17 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
     };
 
     const handleCancelOrder = async (orderId: string, orderCode: string) => {
-        if (!orderId || typeof window === 'undefined') {
+        if (!orderId) {
             return;
         }
 
-        const confirmMessage = `Bạn có chắc muốn huỷ đơn hàng #${orderCode}?`;
-        const isConfirmed = window.confirm(confirmMessage);
+        const isConfirmed = await confirm({
+            title: 'Huỷ đơn hàng',
+            message: `Bạn có chắc muốn huỷ đơn hàng #${orderCode}? Hành động này không thể hoàn tác.`,
+            variant: 'danger',
+            confirmText: 'Huỷ đơn',
+            cancelText: 'Giữ đơn',
+        });
 
         if (!isConfirmed) {
             return;

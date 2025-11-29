@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import classNames from 'classnames/bind';
 import styles from './page.module.scss';
 import { authForgotPassword, verifyForgotPasswordOTP, resetPassword } from '@/services/authService';
@@ -15,6 +14,20 @@ import { useToast } from '@/hooks/useToast';
 const cx = classNames.bind(styles);
 
 type Step = 'email' | 'otp' | 'password' | 'success';
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+        status?: number;
+    };
+    message?: string;
+}
+const journeySteps: Array<{ key: Step; label: string; hint: string }> = [
+    { key: 'email', label: 'Nhập email', hint: 'Gửi mã OTP vào hộp thư của bạn' },
+    { key: 'otp', label: 'Xác minh OTP', hint: 'Nhập mã gồm 6 chữ số để xác nhận' },
+    { key: 'password', label: 'Đặt lại mật khẩu', hint: 'Tạo mật khẩu mới an toàn hơn' },
+];
 
 export default function ForgotPasswordPage() {
     const router = useRouter();
@@ -39,14 +52,14 @@ export default function ForgotPasswordPage() {
     };
 
     // Calculate remaining time for rate limit
-    const calculateRemainingTime = (): number => {
+    const calculateRemainingTime = useCallback((): number => {
         const lastSent = getLastOTPSentTime();
         if (!lastSent) return 0;
         const now = Date.now();
         const elapsed = Math.floor((now - lastSent) / 1000);
         const remaining = 60 - elapsed;
         return remaining > 0 ? remaining : 0;
-    };
+    }, []);
 
     // Rate limit countdown effect
     useEffect(() => {
@@ -56,7 +69,7 @@ export default function ForgotPasswordPage() {
         } else {
             setRateLimitCountdown(0);
         }
-    }, []);
+    }, [calculateRemainingTime]);
 
     // Countdown timer for rate limit
     useEffect(() => {
@@ -84,7 +97,7 @@ export default function ForgotPasswordPage() {
         if (remaining > 0) {
             setRateLimitCountdown(remaining);
         }
-    }, []);
+    }, [calculateRemainingTime]);
     
     // Countdown effect for success screen
     useEffect(() => {
@@ -210,7 +223,7 @@ export default function ForgotPasswordPage() {
         setLoading(true);
 
         try {
-            const response = await authForgotPassword({
+            await authForgotPassword({
                 email: email.trim(),
                 turnstileToken,
             });
@@ -220,16 +233,19 @@ export default function ForgotPasswordPage() {
             showSuccess('Mã OTP đã được gửi đến email của bạn.');
             setStep('otp');
             resetTurnstile();
-        } catch (error: any) {
+        } catch (error) {
+            const apiError = error as ApiError;
             // Xử lý rate limit error (429)
-            if (error?.response?.status === 429) {
-                const errorMessage = error?.response?.data?.message || 'Vui lòng đợi 60 giây trước khi yêu cầu gửi lại mã OTP.';
+            if (apiError?.response?.status === 429) {
+                const errorMessage =
+                    apiError?.response?.data?.message || 'Vui lòng đợi 60 giây trước khi yêu cầu gửi lại mã OTP.';
                 showError(errorMessage);
                 // Set rate limit countdown nếu server trả về 429
                 setLastOTPSentTime(Date.now());
                 setRateLimitCountdown(60);
             } else {
-                const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra. Vui lòng thử lại!';
+                const errorMessage =
+                    apiError?.response?.data?.message || apiError?.message || 'Có lỗi xảy ra. Vui lòng thử lại!';
                 showError(errorMessage);
             }
             resetTurnstile();
@@ -254,14 +270,16 @@ export default function ForgotPasswordPage() {
         setLoading(true);
 
         try {
-            const response = await verifyForgotPasswordOTP({
+            await verifyForgotPasswordOTP({
                 email: email.trim(),
                 otp: otp.trim(),
             });
             showSuccess('OTP hợp lệ. Vui lòng nhập mật khẩu mới.');
             setStep('password');
-        } catch (error: any) {
-            const errorMessage = error?.response?.data?.message || error?.message || 'OTP không chính xác. Vui lòng thử lại!';
+        } catch (error) {
+            const apiError = error as ApiError;
+            const errorMessage =
+                apiError?.response?.data?.message || apiError?.message || 'OTP không chính xác. Vui lòng thử lại!';
             setOtpError(errorMessage);
             showError(errorMessage);
         } finally {
@@ -295,15 +313,17 @@ export default function ForgotPasswordPage() {
         setLoading(true);
 
         try {
-            const response = await resetPassword({
+            await resetPassword({
                 email: email.trim(),
                 otp: otp.trim(),
                 newPassword,
                 turnstileToken,
             });
             setStep('success');
-        } catch (error: any) {
-            const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra. Vui lòng thử lại!';
+        } catch (error) {
+            const apiError = error as ApiError;
+            const errorMessage =
+                apiError?.response?.data?.message || apiError?.message || 'Có lỗi xảy ra. Vui lòng thử lại!';
             showError(errorMessage);
             resetPasswordTurnstile();
         } finally {
@@ -329,319 +349,365 @@ export default function ForgotPasswordPage() {
         resetPasswordTurnstile();
     };
 
+    const totalSteps = journeySteps.length;
+    const activeStepIndex = Math.max(journeySteps.findIndex((item) => item.key === step), 0);
+    const currentStage =
+        step === 'success'
+            ? { label: 'Hoàn tất', hint: 'Bạn có thể đăng nhập bằng mật khẩu mới.' }
+            : journeySteps[activeStepIndex] || journeySteps[0];
+    const progressPercent = step === 'success' ? 100 : ((activeStepIndex + 1) / totalSteps) * 100;
+
+    const handleNavigateBack = () => {
+        if (step === 'email') {
+            router.back();
+        } else if (step === 'otp') {
+            handleBackToEmail();
+        } else if (step === 'password') {
+            handleBackToOTP();
+        }
+    };
+
     return (
         <div className={cx('auth-page')}>
-            {/* Left Side - Form */}
-            <div className={cx('auth-form-section')}>
-                <div className={cx('form-container')}>
-                    {/* Success Screen - Show first when success */}
-                    {step === 'success' ? (
-                        <div className={cx('success-message')}>
-                            <div className={cx('success-icon')}>✓</div>
-                            <h2 className={cx('success-title')}>Đặt lại mật khẩu thành công!</h2>
-                            <p className={cx('success-text')}>
-                                Mật khẩu của bạn đã được đặt lại thành công. Vui lòng đăng nhập lại với mật khẩu mới.
-                            </p>
-                            <p className={cx('countdown-text')}>
-                                Tự động chuyển đến trang đăng nhập sau <strong>{countdown}</strong> giây...
-                            </p>
-                            <Button
-                                type="button"
-                                variant="primary"
-                                size="large"
-                                fullWidth
-                                onClick={() => router.push('/auth/login')}
-                                className={cx('submit-button')}
-                            >
-                                Quay về đăng nhập
-                            </Button>
-                        </div>
-                    ) : (
-                        <>
-                            {/* Header with Back Button */}
-                            <div className={cx('forgot-password-header')}>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        if (step === 'email') {
-                                            router.back();
-                                        } else if (step === 'otp') {
-                                            handleBackToEmail();
-                                        } else {
-                                            handleBackToOTP();
-                                        }
-                                    }}
-                                    className={cx('back-button')}
-                                    aria-label="Quay lại"
-                                >
-                                    <ChevronLeftIcon size={24} />
-                                </button>
-                                <h1 className={cx('forgot-password-title')}>
-                                    {step === 'email' && 'Quên mật khẩu'}
-                                    {step === 'otp' && 'Nhập mã OTP'}
-                                    {step === 'password' && 'Đặt lại mật khẩu'}
-                                </h1>
-                            </div>
-
-                            {/* Step 1: Email Form */}
-                            {step === 'email' && (
-                        <form onSubmit={handleEmailSubmit} className={cx('auth-form')} noValidate>
-                        <div className={cx('form-group')}>
-                            <label htmlFor="email" className={cx('form-label')}>
-                                Địa chỉ email
-                            </label>
-                            <input
-                                id="email"
-                                type="email"
-                                className={cx('form-input', {
-                                    'input-error': touchedEmail && emailError,
-                                })}
-                                placeholder="Nhập địa chỉ email"
-                                value={email}
-                                    onChange={(e) => {
-                                        setEmail(e.target.value);
-                                        if (emailError) setEmailError('');
-                                    }}
-                                    onBlur={() => {
-                                        setTouchedEmail(true);
-                                        setEmailError(validateEmail(email));
-                                    }}
-                                disabled={loading}
-                            />
-                            {touchedEmail && emailError && (
-                                <span className={cx('form-error-hint')}>{emailError}</span>
-                            )}
-                        </div>
-
-                            <div className={cx('form-group')}>
-                                <TurnstileWidget
-                                    resetKey={turnstileResetKey}
-                                    onSuccess={(token) => {
-                                        setTurnstileToken(token);
-                                        setTurnstileError('');
-                                    }}
-                                    onExpire={() => {
-                                        setTurnstileToken('');
-                                        setTurnstileError('Phiên xác minh đã hết hạn. Vui lòng thử lại.');
-                                    }}
-                                    onError={(message) => {
-                                        setTurnstileToken('');
-                                        setTurnstileError(message || 'Không thể xác minh. Vui lòng thử lại.');
-                                    }}
-                                />
-                                {turnstileError && <span className={cx('form-error-hint')}>{turnstileError}</span>}
-                            </div>
-
-                            {rateLimitCountdown > 0 && (
-                                <div className={cx('rate-limit-notice')}>
-                                    <p className={cx('rate-limit-text')}>
-                                        Vui lòng đợi <strong>{rateLimitCountdown}</strong> giây trước khi yêu cầu gửi lại mã OTP.
-                                    </p>
+            <div className={cx('forgot-shell')}>
+                <section className={cx('insight-panel')}>
+                    <div className={cx('brand-pill')}>Tài Khoản Xịn</div>
+                    <h2 className={cx('insight-title')}>Khôi phục tài khoản an toàn trong vài bước</h2>
+                    <p className={cx('insight-text')}>
+                        Chúng tôi sử dụng xác thực hai lớp và Turnstile của Cloudflare để bảo vệ tài khoản của bạn trong toàn
+                        bộ quá trình đặt lại mật khẩu.
+                    </p>
+                    <ul className={cx('insight-steps')}>
+                        {journeySteps.map((item, index) => (
+                            <li key={item.key} className={cx('insight-step')}>
+                                <span className={cx('step-index')}>{`0${index + 1}`}</span>
+                                <div>
+                                    <p className={cx('step-label')}>{item.label}</p>
+                                    <span className={cx('step-hint')}>{item.hint}</span>
                                 </div>
-                            )}
+                            </li>
+                        ))}
+                    </ul>
+                    <div className={cx('support-card')}>
+                        <div>
+                            <p className={cx('support-title')}>Cần trợ giúp ngay?</p>
+                            <span className={cx('support-text')}>Đội ngũ CSKH phản hồi trong 5 phút.</span>
+                        </div>
+                        <Link href="mailto:support@taikhoanxin.vn" className={cx('support-link')}>
+                            support@taikhoanxin.vn
+                        </Link>
+                    </div>
+                    <div className={cx('security-badge')}>
+                        <span className={cx('badge-dot')} />
+                        Mã hóa SSL & Cloudflare Turnstile
+                    </div>
+                </section>
 
-                        <Button
-                            type="submit"
-                            variant="primary"
-                            size="large"
-                            fullWidth
-                            isLoading={loading}
-                            loadingText="Đang gửi..."
-                            className={cx('submit-button')}
-                            disabled={loading || rateLimitCountdown > 0}
-                        >
-                            {rateLimitCountdown > 0 ? `Gửi lại sau ${rateLimitCountdown}s` : 'Gửi mã OTP'}
-                        </Button>
-                        </form>
+                <section className={cx('form-panel')}>
+                    <div className={cx('form-header')}>
+                        <button type="button" className={cx('back-button')} onClick={handleNavigateBack} aria-label="Quay lại">
+                            <ChevronLeftIcon size={20} />
+                        </button>
+                        <div>
+                            <span className={cx('step-eyebrow')}>
+                                {step === 'success' ? 'Hoàn tất' : `Bước ${activeStepIndex + 1}/${totalSteps}`}
+                            </span>
+                            <h1 className={cx('step-title')}>
+                                {step === 'success' ? 'Đặt lại mật khẩu thành công' : currentStage.label}
+                            </h1>
+                            <p className={cx('step-description')}>
+                                {step === 'success'
+                                    ? 'Bạn sẽ được chuyển đến trang đăng nhập trong giây lát.'
+                                    : currentStage.hint}
+                            </p>
+                        </div>
+                    </div>
+
+                    {step !== 'success' && (
+                        <div className={cx('progress-track')}>
+                            <div className={cx('progress-bar')} style={{ '--progress': `${progressPercent}%` } as React.CSSProperties} />
+                            <div className={cx('progress-dots')}>
+                                {journeySteps.map((item, index) => (
+                                    <span
+                                        key={item.key}
+                                        className={cx('progress-dot', {
+                                            'is-active': index <= activeStepIndex,
+                                        })}
+                                    >
+                                        {index + 1}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
                     )}
 
-                    {/* Step 2: OTP Form */}
-                    {step === 'otp' && (
-                        <form onSubmit={handleOTPSubmit} className={cx('auth-form')} noValidate>
-                            <div className={cx('form-group')}>
-                                <label htmlFor="otp" className={cx('form-label')}>
-                                    Mã OTP
-                                </label>
-                                <input
-                                    id="otp"
-                                    type="text"
-                                    maxLength={6}
-                                    className={cx('form-input', {
-                                        'input-error': touchedOtp && otpError,
-                                    })}
-                                    placeholder="Nhập mã OTP 6 chữ số"
-                                    value={otp}
-                                    onChange={(e) => {
-                                        const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                                        setOtp(value);
-                                        if (otpError) setOtpError('');
-                                    }}
-                                    onBlur={() => {
-                                        setTouchedOtp(true);
-                                        setOtpError(validateOTP(otp));
-                                    }}
-                                    disabled={loading}
-                                />
-                                {touchedOtp && otpError && (
-                                    <span className={cx('form-error-hint')}>{otpError}</span>
-                                )}
-                                <p className={cx('form-hint')}>
-                                    Mã OTP đã được gửi đến <strong>{email}</strong>
+                    <div className={cx('form-body')}>
+                        {step === 'success' ? (
+                            <div className={cx('success-card')}>
+                                <div className={cx('success-icon')}>✓</div>
+                                <h2>Hoàn tất!</h2>
+                                <p>Mật khẩu mới đã được cập nhật. Hãy đăng nhập và tiếp tục mua sắm nhé.</p>
+                                <p className={cx('countdown-text')}>
+                                    Tự động chuyển sau <strong>{countdown}</strong> giây...
                                 </p>
+                                <Button
+                                    type="button"
+                                    variant="primary"
+                                    size="large"
+                                    fullWidth
+                                    className={cx('submit-button')}
+                                    onClick={() => router.push('/auth/login')}
+                                >
+                                    Quay lại đăng nhập
+                                </Button>
                             </div>
+                        ) : (
+                            <>
+                                {step === 'email' && (
+                                    <form onSubmit={handleEmailSubmit} className={cx('auth-form')} noValidate>
+                                        <div className={cx('form-group')}>
+                                            <label htmlFor="email" className={cx('form-label')}>
+                                                Địa chỉ email
+                                            </label>
+                                            <input
+                                                id="email"
+                                                type="email"
+                                                className={cx('form-input', {
+                                                    'input-error': touchedEmail && emailError,
+                                                })}
+                                                placeholder="Nhập email bạn đã đăng ký"
+                                                value={email}
+                                                onChange={(e) => {
+                                                    setEmail(e.target.value);
+                                                    if (emailError) setEmailError('');
+                                                }}
+                                                onBlur={() => {
+                                                    setTouchedEmail(true);
+                                                    setEmailError(validateEmail(email));
+                                                }}
+                                                disabled={loading}
+                                            />
+                                            {touchedEmail && emailError && (
+                                                <span className={cx('form-error-hint')}>{emailError}</span>
+                                            )}
+                                        </div>
 
-                            <Button
-                                type="submit"
-                                variant="primary"
-                                size="large"
-                                fullWidth
-                                isLoading={loading}
-                                loadingText="Đang xác minh..."
-                                className={cx('submit-button')}
-                                disabled={loading}
-                            >
-                                Xác minh OTP
-                            </Button>
-                        </form>
-                    )}
+                                        <div className={cx('form-group')}>
+                                            <TurnstileWidget
+                                                resetKey={turnstileResetKey}
+                                                onSuccess={(token) => {
+                                                    setTurnstileToken(token);
+                                                    setTurnstileError('');
+                                                }}
+                                                onExpire={() => {
+                                                    setTurnstileToken('');
+                                                    setTurnstileError('Phiên xác minh đã hết hạn. Vui lòng thử lại.');
+                                                }}
+                                                onError={(message) => {
+                                                    setTurnstileToken('');
+                                                    setTurnstileError(message || 'Không thể xác minh. Vui lòng thử lại.');
+                                                }}
+                                            />
+                                            {turnstileError && <span className={cx('form-error-hint')}>{turnstileError}</span>}
+                                        </div>
 
-                    {/* Step 3: Password Form */}
-                    {step === 'password' && (
-                        <form onSubmit={handlePasswordSubmit} className={cx('auth-form')} noValidate>
-                            <div className={cx('form-group')}>
-                                <label htmlFor="newPassword" className={cx('form-label')}>
-                                    Mật khẩu mới
-                                </label>
-                                <div className={cx('password-wrapper')}>
-                                    <input
-                                        id="newPassword"
-                                        type={showPassword ? 'text' : 'password'}
-                                        className={cx('form-input', {
-                                            'input-error': touchedPassword && passwordError,
-                                        })}
-                                        placeholder="Nhập mật khẩu mới"
-                                        value={newPassword}
-                                        onChange={(e) => {
-                                            setNewPassword(e.target.value);
-                                            if (passwordError) setPasswordError('');
-                                            if (touchedConfirmPassword && confirmPassword) {
-                                                setConfirmPasswordError(validateConfirmPassword(confirmPassword, e.target.value));
-                                            }
-                                        }}
-                                        onBlur={() => {
-                                            setTouchedPassword(true);
-                                            setPasswordError(validatePassword(newPassword));
-                                        }}
-                                        disabled={loading}
-                                    />
-                                    <button
-                                        type="button"
-                                        className={cx('password-toggle')}
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        tabIndex={-1}
-                                    >
-                                        {showPassword ? <EyeIcon size={20} /> : <EyeOffIcon size={20} />}
-                                    </button>
-                                </div>
-                                {touchedPassword && passwordError && (
-                                    <span className={cx('form-error-hint')}>{passwordError}</span>
+                                        {rateLimitCountdown > 0 && (
+                                            <div className={cx('rate-limit-notice')}>
+                                                <p>Vui lòng đợi {rateLimitCountdown}s trước khi yêu cầu mã mới.</p>
+                                            </div>
+                                        )}
+
+                                        <Button
+                                            type="submit"
+                                            variant="primary"
+                                            size="large"
+                                            fullWidth
+                                            isLoading={loading}
+                                            loadingText="Đang gửi..."
+                                            className={cx('submit-button')}
+                                            disabled={loading || rateLimitCountdown > 0}
+                                        >
+                                            {rateLimitCountdown > 0 ? `Gửi lại sau ${rateLimitCountdown}s` : 'Gửi mã OTP'}
+                                        </Button>
+                                    </form>
                                 )}
-                            </div>
 
-                            <div className={cx('form-group')}>
-                                <label htmlFor="confirmPassword" className={cx('form-label')}>
-                                    Xác nhận mật khẩu
-                                </label>
-                                <div className={cx('password-wrapper')}>
-                                    <input
-                                        id="confirmPassword"
-                                        type={showConfirmPassword ? 'text' : 'password'}
-                                        className={cx('form-input', {
-                                            'input-error': touchedConfirmPassword && confirmPasswordError,
-                                        })}
-                                        placeholder="Nhập lại mật khẩu"
-                                        value={confirmPassword}
-                                        onChange={(e) => {
-                                            setConfirmPassword(e.target.value);
-                                            if (confirmPasswordError) setConfirmPasswordError('');
-                                        }}
-                                        onBlur={() => {
-                                            setTouchedConfirmPassword(true);
-                                            setConfirmPasswordError(validateConfirmPassword(confirmPassword, newPassword));
-                                        }}
-                                        disabled={loading}
-                                    />
-                                    <button
-                                        type="button"
-                                        className={cx('password-toggle')}
-                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                        tabIndex={-1}
-                                    >
-                                        {showConfirmPassword ? <EyeIcon size={20} /> : <EyeOffIcon size={20} />}
-                                    </button>
-                                </div>
-                                {touchedConfirmPassword && confirmPasswordError && (
-                                    <span className={cx('form-error-hint')}>{confirmPasswordError}</span>
+                                {step === 'otp' && (
+                                    <form onSubmit={handleOTPSubmit} className={cx('auth-form')} noValidate>
+                                        <div className={cx('form-group')}>
+                                            <label htmlFor="otp" className={cx('form-label')}>
+                                                Mã OTP
+                                            </label>
+                                            <input
+                                                id="otp"
+                                                type="text"
+                                                maxLength={6}
+                                                className={cx('form-input', 'otp-input', {
+                                                    'input-error': touchedOtp && otpError,
+                                                })}
+                                                placeholder="••••••"
+                                                value={otp}
+                                                onChange={(e) => {
+                                                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                                    setOtp(value);
+                                                    if (otpError) setOtpError('');
+                                                }}
+                                                onBlur={() => {
+                                                    setTouchedOtp(true);
+                                                    setOtpError(validateOTP(otp));
+                                                }}
+                                                disabled={loading}
+                                            />
+                                            {touchedOtp && otpError && (
+                                                <span className={cx('form-error-hint')}>{otpError}</span>
+                                            )}
+                                            <p className={cx('form-hint')}>
+                                                Mã đã gửi đến <strong>{email}</strong>. Kiểm tra cả thư rác nếu chưa thấy nhé!
+                                            </p>
+                                        </div>
+
+                                        <Button
+                                            type="submit"
+                                            variant="primary"
+                                            size="large"
+                                            fullWidth
+                                            isLoading={loading}
+                                            loadingText="Đang xác minh..."
+                                            className={cx('submit-button')}
+                                            disabled={loading}
+                                        >
+                                            Xác minh OTP
+                                        </Button>
+                                    </form>
                                 )}
-                            </div>
 
-                            <div className={cx('form-group')}>
-                                <TurnstileWidget
-                                    resetKey={passwordResetKey}
-                                    onSuccess={(token) => {
-                                        setTurnstileToken(token);
-                                        setTurnstileError('');
-                                    }}
-                                    onExpire={() => {
-                                        setTurnstileToken('');
-                                        setTurnstileError('Phiên xác minh đã hết hạn. Vui lòng thử lại.');
-                                    }}
-                                    onError={(message) => {
-                                        setTurnstileToken('');
-                                        setTurnstileError(message || 'Không thể xác minh. Vui lòng thử lại.');
-                                    }}
-                                />
-                                {turnstileError && <span className={cx('form-error-hint')}>{turnstileError}</span>}
-                            </div>
+                                {step === 'password' && (
+                                    <form onSubmit={handlePasswordSubmit} className={cx('auth-form')} noValidate>
+                                        <div className={cx('form-group')}>
+                                            <label htmlFor="newPassword" className={cx('form-label')}>
+                                                Mật khẩu mới
+                                            </label>
+                                            <div className={cx('password-wrapper')}>
+                                                <input
+                                                    id="newPassword"
+                                                    type={showPassword ? 'text' : 'password'}
+                                                    className={cx('form-input', {
+                                                        'input-error': touchedPassword && passwordError,
+                                                    })}
+                                                    placeholder="Tối thiểu 6 ký tự"
+                                                    value={newPassword}
+                                                    onChange={(e) => {
+                                                        setNewPassword(e.target.value);
+                                                        if (passwordError) setPasswordError('');
+                                                        if (touchedConfirmPassword && confirmPassword) {
+                                                            setConfirmPasswordError(
+                                                                validateConfirmPassword(confirmPassword, e.target.value),
+                                                            );
+                                                        }
+                                                    }}
+                                                    onBlur={() => {
+                                                        setTouchedPassword(true);
+                                                        setPasswordError(validatePassword(newPassword));
+                                                    }}
+                                                    disabled={loading}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className={cx('password-toggle')}
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    tabIndex={-1}
+                                                >
+                                                    {showPassword ? <EyeIcon size={20} /> : <EyeOffIcon size={20} />}
+                                                </button>
+                                            </div>
+                                            {touchedPassword && passwordError && (
+                                                <span className={cx('form-error-hint')}>{passwordError}</span>
+                                            )}
+                                        </div>
 
-                            <Button
-                                type="submit"
-                                variant="primary"
-                                size="large"
-                                fullWidth
-                                isLoading={loading}
-                                loadingText="Đang xử lý..."
-                                className={cx('submit-button')}
-                                disabled={loading}
-                            >
-                                Đặt lại mật khẩu
-                            </Button>
-                        </form>
-                    )}
+                                        <div className={cx('form-group')}>
+                                            <label htmlFor="confirmPassword" className={cx('form-label')}>
+                                                Xác nhận mật khẩu
+                                            </label>
+                                            <div className={cx('password-wrapper')}>
+                                                <input
+                                                    id="confirmPassword"
+                                                    type={showConfirmPassword ? 'text' : 'password'}
+                                                    className={cx('form-input', {
+                                                        'input-error': touchedConfirmPassword && confirmPasswordError,
+                                                    })}
+                                                    placeholder="Nhập lại mật khẩu"
+                                                    value={confirmPassword}
+                                                    onChange={(e) => {
+                                                        setConfirmPassword(e.target.value);
+                                                        if (confirmPasswordError) setConfirmPasswordError('');
+                                                    }}
+                                                    onBlur={() => {
+                                                        setTouchedConfirmPassword(true);
+                                                        setConfirmPasswordError(
+                                                            validateConfirmPassword(confirmPassword, newPassword),
+                                                        );
+                                                    }}
+                                                    disabled={loading}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className={cx('password-toggle')}
+                                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                    tabIndex={-1}
+                                                >
+                                                    {showConfirmPassword ? <EyeIcon size={20} /> : <EyeOffIcon size={20} />}
+                                                </button>
+                                            </div>
+                                            {touchedConfirmPassword && confirmPasswordError && (
+                                                <span className={cx('form-error-hint')}>{confirmPasswordError}</span>
+                                            )}
+                                        </div>
 
-                            <div className={cx('auth-footer')}>
-                                <span>Bạn đã nhớ mật khẩu? </span>
-                                <Link href="/auth/login" className={cx('auth-link')}>
-                                    Đăng nhập ngay
-                                </Link>
-                            </div>
-                        </>
-                    )}
-                </div>
-            </div>
+                                        <div className={cx('form-group')}>
+                                            <TurnstileWidget
+                                                resetKey={passwordResetKey}
+                                                onSuccess={(token) => {
+                                                    setTurnstileToken(token);
+                                                    setTurnstileError('');
+                                                }}
+                                                onExpire={() => {
+                                                    setTurnstileToken('');
+                                                    setTurnstileError('Phiên xác minh đã hết hạn. Vui lòng thử lại.');
+                                                }}
+                                                onError={(message) => {
+                                                    setTurnstileToken('');
+                                                    setTurnstileError(message || 'Không thể xác minh. Vui lòng thử lại.');
+                                                }}
+                                            />
+                                            {turnstileError && <span className={cx('form-error-hint')}>{turnstileError}</span>}
+                                        </div>
 
-            {/* Right Side - Banner */}
-            <div className={cx('auth-banner-section')}>
-                <div className={cx('banner-container')}>
-                    <Image
-                        src="/banners/login-banner.png"
-                        alt="Tài Khoản Xịn Banner"
-                        fill
-                        className={cx('banner-image')}
-                        priority
-                        quality={90}
-                    />
-                </div>
+                                        <Button
+                                            type="submit"
+                                            variant="primary"
+                                            size="large"
+                                            fullWidth
+                                            isLoading={loading}
+                                            loadingText="Đang xử lý..."
+                                            className={cx('submit-button')}
+                                            disabled={loading}
+                                        >
+                                            Đặt lại mật khẩu
+                                        </Button>
+                                    </form>
+                                )}
+
+                                <div className={cx('auth-footer')}>
+                                    <span>Bạn đã nhớ mật khẩu?</span>
+                                    <Link href="/auth/login" className={cx('auth-link')}>
+                                        Đăng nhập ngay
+                                    </Link>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </section>
             </div>
         </div>
     );

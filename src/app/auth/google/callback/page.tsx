@@ -13,6 +13,7 @@ import { clearCart as clearGuestCart } from '@/redux/cartSlice';
 import { importGuestCart } from '@/services/cartService';
 import { useSWRConfig } from 'swr';
 import { useToast } from '@/hooks/useToast';
+import { LoaderIcon, ShieldCheckIcon, AlertCircleIcon } from '@/components/Icons';
 
 const cx = classNames.bind(styles);
 
@@ -131,7 +132,20 @@ const GoogleAuthCallbackPage = () => {
 
     return (
         <div className={cx('page')}>
-            <div className={cx('card')}>
+            <div className={cx('card', { error: isError })}>
+                <div className={cx('icon-wrapper')}>
+                    {isError ? (
+                        <AlertCircleIcon size={48} className={cx('status-icon', 'error-icon')} />
+                    ) : (
+                        <div className={cx('loading-wrapper')}>
+                            <LoaderIcon size={48} className={cx('status-icon', 'spinner')} />
+                            <div className={cx('pulse-ring')} />
+                        </div>
+                    )}
+                </div>
+                <h2 className={cx('title')}>
+                    {isError ? 'Xác minh thất bại' : 'Đang xác minh đăng nhập Google'}
+                </h2>
                 <p className={cx('status-message', { error: isError })}>{message}</p>
                 {isError && (
                     <Link href="/auth/login" className={cx('back-link')}>

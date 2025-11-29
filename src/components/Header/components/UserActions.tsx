@@ -31,6 +31,9 @@ interface UserActionsProps {
     cartDropdownCloseTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
 }
 
+const HOVER_OPEN_DELAY = 120;
+const HOVER_CLOSE_DELAY = 350;
+
 const UserActions: React.FC<UserActionsProps> = ({
     mounted,
     currentUser,
@@ -61,7 +64,7 @@ const UserActions: React.FC<UserActionsProps> = ({
             }
             loginDropdownTimeoutRef.current = setTimeout(() => {
                 setIsLoginDropdownOpen(true);
-            }, 120);
+            }, HOVER_OPEN_DELAY);
         }
     };
 
@@ -73,7 +76,7 @@ const UserActions: React.FC<UserActionsProps> = ({
             }
             loginDropdownCloseTimeoutRef.current = setTimeout(() => {
                 setIsLoginDropdownOpen(false);
-            }, 200);
+            }, HOVER_CLOSE_DELAY);
         }
     };
 
@@ -96,7 +99,7 @@ const UserActions: React.FC<UserActionsProps> = ({
         }
         loginDropdownCloseTimeoutRef.current = setTimeout(() => {
             setIsLoginDropdownOpen(false);
-        }, 200);
+        }, HOVER_CLOSE_DELAY);
     };
 
     const handleCartMouseEnter = () => {
@@ -110,7 +113,7 @@ const UserActions: React.FC<UserActionsProps> = ({
             }
             cartDropdownTimeoutRef.current = setTimeout(() => {
                 setIsCartDropdownOpen(true);
-            }, 120);
+            }, HOVER_OPEN_DELAY);
         }
     };
 
@@ -122,7 +125,7 @@ const UserActions: React.FC<UserActionsProps> = ({
             }
             cartDropdownCloseTimeoutRef.current = setTimeout(() => {
                 setIsCartDropdownOpen(false);
-            }, 200);
+            }, HOVER_CLOSE_DELAY);
         }
     };
 
@@ -145,7 +148,7 @@ const UserActions: React.FC<UserActionsProps> = ({
         }
         cartDropdownCloseTimeoutRef.current = setTimeout(() => {
             setIsCartDropdownOpen(false);
-        }, 200);
+        }, HOVER_CLOSE_DELAY);
     };
 
     return (

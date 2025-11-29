@@ -44,6 +44,14 @@ const SearchBar: React.FC<SearchBarProps> = ({
     trendingSearches,
     defaultSearchValue,
 }) => {
+    const dropdownHoverRef = React.useRef(false);
+
+    const keepDropdownOpen = () => {
+        if (dropdownHoverRef.current) {
+            setIsSearchBarFocused(true);
+        }
+    };
+
     const popularSearches = trendingSearches?.length ? trendingSearches : [];
     const placeholderText = defaultSearchValue || 'Tìm kiếm...';
 
@@ -66,11 +74,18 @@ const SearchBar: React.FC<SearchBarProps> = ({
                     onKeyDown={handleKeyDown}
                     onFocus={() => setIsSearchBarFocused(true)}
                     onBlur={(e) => {
+                        const relatedTarget = e.relatedTarget as Node | null;
                         setTimeout(() => {
-                            if (!searchBarDropdownRef.current?.contains(e.relatedTarget as Node)) {
+                            const dropdownEl = searchBarDropdownRef.current;
+                            const isClickInsideDropdown =
+                                !!relatedTarget && !!dropdownEl && dropdownEl.contains(relatedTarget);
+
+                            if (!dropdownHoverRef.current && !isClickInsideDropdown) {
                                 setIsSearchBarFocused(false);
+                            } else {
+                                keepDropdownOpen();
                             }
-                        }, 200);
+                        }, 120);
                     }}
                     aria-label="Tìm kiếm sản phẩm"
                 />
@@ -88,6 +103,18 @@ const SearchBar: React.FC<SearchBarProps> = ({
                     ref={searchBarDropdownRef}
                     className={cx('search-bar-dropdown')}
                     onMouseDown={(e) => e.preventDefault()}
+                    onMouseEnter={() => {
+                        dropdownHoverRef.current = true;
+                        keepDropdownOpen();
+                    }}
+                    onMouseLeave={() => {
+                        dropdownHoverRef.current = false;
+                        setTimeout(() => {
+                            if (!searchBarInputRef.current?.matches(':focus')) {
+                                setIsSearchBarFocused(false);
+                            }
+                        }, 150);
+                    }}
                 >
                     {hasSearchResults ? (
                         <ul className={cx('search-results-list')}>
@@ -128,11 +155,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
                                                     {product.price.toLocaleString('vi-VN')} ₫
                                                 </span>
                                             </div>
-                                        </div>
-                                        <div className={cx('search-result-status')}>
-                                            <p className={cx('search-result-description')}>
-                                                {product.status === 'in-stock' ? 'Còn hàng' : 'Hết hàng'}
-                                            </p>
                                         </div>
                                     </Link>
                                 </li>
@@ -191,7 +213,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
                                         <FlameIcon className={cx('search-section-icon')} />
                                         <span>{trendingSearchTitle}</span>
                                     </h3>
-                                    <ul className={cx('search-popular-list')}>
+                                    <ul
+                                        className={cx('search-popular-list', {
+                                            'is-column': recentSearches.length === 0,
+                                        })}
+                                    >
                                         {popularSearches
                                             .filter(query => !recentSearches.includes(query))
                                             .map((query, index) => (

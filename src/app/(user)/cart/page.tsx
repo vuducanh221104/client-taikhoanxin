@@ -750,9 +750,8 @@ const CartPage: React.FC = () => {
                         <div className={cx('table')}>
                             <div className={cx('thead')}>
                                 <div className={cx('th', 'product')}>Sản phẩm</div>
-                                <div className={cx('th', 'price')}>Giá</div>
                                 <div className={cx('th', 'qty')}>Số lượng</div>
-                                <div className={cx('th', 'subtotal')}>Tạm tính</div>
+                                <div className={cx('th', 'price')}>Giá</div>
                             </div>
 
                             <div className={cx('tbody')}>
@@ -804,19 +803,16 @@ const CartPage: React.FC = () => {
                                                         </Link>
                                                             {/* Display options if available */}
                                                             {p.options && Array.isArray(p.options) && p.options.length > 0 && (
-                                                                <div className={cx('product-options')}>
+                                                                <div className={cx('product-meta')}>
                                                                     {p.options.map((opt: any, idx: number) => (
-                                                                        <div key={idx} className={cx('option-item')}>
-                                                                            <span className={cx('option-title')}>{opt.title}:</span>
-                                                                            <span className={cx('option-value')}>{opt.value}</span>
+                                                                        <div key={idx} className={cx('meta-row')}>
+                                                                            <span className={cx('meta-label')}>{opt.title}</span>
+                                                                            <span className={cx('meta-value')}>{opt.value}</span>
                                                                         </div>
                                                                     ))}
                                                                 </div>
                                                             )}
                                                         </div>
-                                                    </div>
-                                                    <div className={cx('td', 'price')}>
-                                                        {formatPrice(p.price)}₫
                                                     </div>
                                                     <div className={cx('td', 'qty')}>
                                                         <button
@@ -838,7 +834,7 @@ const CartPage: React.FC = () => {
                                                             <PlusIcon size={14} />
                                                         </button>
                                                     </div>
-                                                    <div className={cx('td', 'subtotal')}>
+                                                    <div className={cx('td', 'price')}>
                                                         {formatPrice(subtotal)}₫
                                                     </div>
                                                 </div>
@@ -879,11 +875,11 @@ const CartPage: React.FC = () => {
                                                     </Link>
                                                         {/* Display options if available */}
                                                         {p.options && Array.isArray(p.options) && p.options.length > 0 && (
-                                                            <div className={cx('product-options')}>
+                                                            <div className={cx('product-meta')}>
                                                                 {p.options.map((opt: any, idx: number) => (
-                                                                    <div key={idx} className={cx('option-item')}>
-                                                                        <span className={cx('option-title')}>{opt.title}:</span>
-                                                                        <span className={cx('option-value')}>{opt.value}</span>
+                                                                    <div key={idx} className={cx('meta-row')}>
+                                                                        <span className={cx('meta-label')}>{opt.title}</span>
+                                                                        <span className={cx('meta-value')}>{opt.value}</span>
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -1008,8 +1004,11 @@ const CartPage: React.FC = () => {
                                         </>
                                     ) : (
                                         <div className={cx('referral-applied')}>
-                                            <div className={cx('referral-info')}>
-                                                <span className={cx('referral-code')}>🎉 {referralCodeInput}</span>
+                                            <div className={cx('referral-code-row')}>
+                                                <span className={cx('referral-code-pill')}>
+                                                    <span className={cx('referral-code-emoji')}>🎉</span>
+                                                    {(savedReferralCode || referralCodeInput || '').toUpperCase()}
+                                                </span>
                                                 <button 
                                                     className={cx('referral-remove')}
                                                     onClick={handleRemoveReferralCode}
@@ -1019,11 +1018,9 @@ const CartPage: React.FC = () => {
                                                     <XIcon size={16} />
                                                 </button>
                                             </div>
-                                            {referralCodeSuccess && (
-                                                <div className={cx('referral-message', 'success')}>
-                                                    ✓ {referralCodeSuccess}
-                                                </div>
-                                            )}
+                                            <div className={cx('referral-message', 'success')}>
+                                                ✓ {referralCodeSuccess || 'Mã giới thiệu đã được áp dụng'}
+                                            </div>
                                         </div>
                                     )}
                                 </div>

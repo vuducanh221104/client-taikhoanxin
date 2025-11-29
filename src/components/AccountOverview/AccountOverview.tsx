@@ -13,26 +13,40 @@ const cx = classNames.bind(styles);
 
 interface AccountOverviewProps {
     user: CurrentUser;
-    onProfileReload?: () => Promise<any> | void;
+    onProfileReload?: () => Promise<void> | void;
 }
 
+const extractErrorMessage = (error: unknown, fallback: string) => {
+    if (typeof error === 'string') return error;
+    if (error instanceof Error) return error.message || fallback;
+    if (error && typeof error === 'object') {
+        const errObj = error as { response?: { data?: { message?: string } }; message?: string };
+        return errObj.response?.data?.message || errObj.message || fallback;
+    }
+    return fallback;
+};
+
+const getInitials = (fullName?: string | null, email?: string | null) => {
+    const fallback = email?.[0] || '?';
+    if (!fullName) return fallback.toUpperCase();
+    const words = fullName
+        .trim()
+        .split(' ')
+        .filter(Boolean);
+    if (!words.length) return fallback.toUpperCase();
+    if (words.length === 1) return words[0][0].toUpperCase();
+    return `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase();
+};
+
 const AccountOverview: React.FC<AccountOverviewProps> = ({ user, onProfileReload }) => {
-    const [avatar, setAvatar] = useState(user.avatar || '/avatar/user-icon.webp');
+    const [avatar, setAvatar] = useState<string | null>(user.avatar || null);
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { showSuccess, showError } = useToast();
 
     useEffect(() => {
-        setAvatar(user.avatar || '/avatar/user-icon.webp');
+        setAvatar(user.avatar || null);
     }, [user.avatar]);
-
-    const formatBalance = (amount: number): string => {
-        return new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency: 'VND',
-            minimumFractionDigits: 0,
-        }).format(amount);
-    };
 
     const formatDate = (dateString?: string): string => {
         if (!dateString) return 'N/A';
@@ -75,10 +89,9 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ user, onProfileReload
                 await updateProfile({ avatar: file });
                 showSuccess('Cập nhật ảnh đại diện thành công!');
                 await onProfileReload?.();
-            } catch (error: any) {
-                const errorMessage = error?.response?.data?.message || error?.message || 'Không thể cập nhật ảnh đại diện. Vui lòng thử lại!';
-                showError(errorMessage);
-                setAvatar(user.avatar || '/avatar/user-icon.webp');
+            } catch (error: unknown) {
+                showError(extractErrorMessage(error, 'Không thể cập nhật ảnh đại diện. Vui lòng thử lại!'));
+                setAvatar(user.avatar || null);
             } finally {
                 setIsUploading(false);
             }
@@ -96,6 +109,9 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ user, onProfileReload
         }
     };
 
+    const placeholderInitials = getInitials(user.full_name, user.email);
+    const isPlaceholder = !avatar;
+
     return (
         <div className={cx('account-overview')}>
             <h2 className={cx('section-title')}>Tổng quan</h2>
@@ -103,7 +119,13 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ user, onProfileReload
             <div className={cx('overview-content')}>
                 {/* Avatar Section */}
                 <div className={cx('avatar-section')}>
-                    <div className={cx('avatar-wrapper')}>
+                    <div className={cx('avatar-wrapper', { placeholder: isPlaceholder })}>
+                        {isPlaceholder ? (
+                            <>
+                                <span className={cx('avatar-initials')}>{placeholderInitials}</span>
+                                <span className={cx('avatar-helper')}>Chưa có ảnh</span>
+                            </>
+                        ) : (
                         <Image
                             src={avatar}
                             alt={user.full_name || user.email}
@@ -111,6 +133,7 @@ const AccountOverview: React.FC<AccountOverviewProps> = ({ user, onProfileReload
                             height={120}
                             className={cx('avatar-image')}
                         />
+                        )}
                     </div>
                     <button
                         type="button"

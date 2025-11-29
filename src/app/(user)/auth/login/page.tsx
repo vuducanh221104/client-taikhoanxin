@@ -9,7 +9,7 @@ import classNames from 'classnames/bind';
 import styles from './page.module.scss';
 import { authLogin, type AuthResponse } from '@/services/authService';
 import { loginSuccess, loginFailed } from '@/redux/authSlice';
-import { EyeIcon, EyeOffIcon } from '@/components/Icons';
+import { EyeIcon, EyeOffIcon, CheckCircleIcon } from '@/components/Icons';
 import { useToast } from '@/hooks/useToast';
 import { Button } from '@/components/Button';
 import TurnstileWidget from '@/components/Turnstile/TurnstileWidget';
@@ -323,7 +323,9 @@ export default function LoginPage() {
                             </Link>
                         </div>
 
-                        <div className={cx('form-group')}>
+                        <div className={cx('form-group', 'turnstile-group')}>
+                            <div className={cx('turnstile-wrapper', { verified: !!turnstileToken })}>
+                                {!turnstileToken ? (
                             <TurnstileWidget
                                 resetKey={turnstileResetKey}
                                 onSuccess={(token) => {
@@ -338,7 +340,35 @@ export default function LoginPage() {
                                     setTurnstileToken('');
                                     setTurnstileError(message || 'Không thể xác minh. Vui lòng thử lại.');
                                 }}
+                                        className={cx('turnstile-widget')}
                             />
+                                ) : (
+                                    <div className={cx('turnstile-success')}>
+                                        <div className={cx('success-content')}>
+                                            <div className={cx('success-icon-wrapper')}>
+                                                <CheckCircleIcon size={20} className={cx('success-icon')} />
+                                            </div>
+                                            <span className={cx('success-text')}>Thành công!</span>
+                                        </div>
+                                        <div className={cx('cloudflare-branding')}>
+                                            <div className={cx('cloudflare-logo')}>
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                                    <path d="M13.55 2.5L15.5 8.5H22L16.5 12L18.45 18L12 14.5L5.55 18L7.5 12L2 8.5H8.5L10.45 2.5L13.55 2.5Z" fill="#F6821F"/>
+                                                </svg>
+                                            </div>
+                                            <div className={cx('cloudflare-links')}>
+                                                <a href="https://www.cloudflare.com/privacy/" target="_blank" rel="noopener noreferrer" className={cx('cloudflare-link')}>
+                                                    Quyền riêng tư
+                                                </a>
+                                                <span className={cx('link-separator')}>•</span>
+                                                <a href="https://www.cloudflare.com/terms/" target="_blank" rel="noopener noreferrer" className={cx('cloudflare-link')}>
+                                                    Điều khoản
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                             {turnstileError && <span className={cx('form-error-hint')}>{turnstileError}</span>}
                         </div>
 

@@ -644,7 +644,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                                             <div className={cx('cart-item-header')}>
                                                 <Link 
                                                     href={product.href || '#'}
-                                                    className={cx('cart-item-name')}
+                                                    className={cx('cart-item-name-link')}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         // Set flag để tránh click outside handler can thiệp
@@ -670,21 +670,21 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                                                         }
                                                     }}
                                                 >
-                                                    {product.productName}
+                                                    <span className={cx('cart-item-name')}>{product.productName}</span>
                                                 </Link>
-                                                {/* Display options if available */}
-                                                {product.options && Array.isArray(product.options) && product.options.length > 0 && (
-                                                    <div className={cx('product-options')}>
-                                                        {product.options.map((opt: any, idx: number) => (
-                                                            <div key={idx} className={cx('option-item')}>
-                                                                <span className={cx('option-title')}>{opt.title}:</span>
-                                                                <span className={cx('option-value')}>{opt.value}</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
                                             </div>
-                                            <div className={cx('cart-item-footer')}>
+                                            {/* Display options if available */}
+                                            {product.options && Array.isArray(product.options) && product.options.length > 0 && (
+                                                <div className={cx('cart-item-meta')}>
+                                                    {product.options.map((opt: any, idx: number) => (
+                                                        <div key={idx} className={cx('meta-row')}>
+                                                            <span className={cx('meta-label')}>{opt.title}</span>
+                                                            <span className={cx('meta-value')}>{opt.value}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            <div className={cx('cart-item-controls')}>
                                                 <button
                                                     className={cx('cart-item-remove')}
                                                     onClick={(e) => handleRemove(e, product.id)}
@@ -693,30 +693,30 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                                                 >
                                                     <XIcon size={isMobile ? 18 : 16} />
                                                 </button>
-                                            </div>
-                                            <div className={cx('cart-item-quantity')}>
-                                                <button
-                                                    className={cx('quantity-btn', 'quantity-minus')}
-                                                    onClick={(e) => handleDecrease(e, product.id, product.quantity)}
-                                                    disabled={product.quantity <= 1}
-                                                    type="button"
-                                                    aria-label="Giảm số lượng"
-                                                >
-                                                    <MinusIcon size={isMobile ? 16 : 14} />
-                                                </button>
-                                                <span className={cx('quantity-value')}>{product.quantity}</span>
-                                                <button
-                                                    className={cx('quantity-btn', 'quantity-plus')}
-                                                    onClick={(e) => handleIncrease(e, product.id, product.quantity)}
-                                                    type="button"
-                                                    aria-label="Tăng số lượng"
-                                                >
-                                                    <PlusIcon size={isMobile ? 16 : 14} />
-                                                </button>
-                                            </div>
-                                            <div className={cx('cart-item-price')}>
-                                                <span className={cx('cart-item-quantity-text')}>{product.quantity} ×</span>{' '}
-                                                <span className={cx('cart-item-price-value')}>{formatPrice(product.price)} ₫</span>
+                                                <div className={cx('cart-item-quantity')}>
+                                                    <button
+                                                        className={cx('quantity-btn', 'quantity-minus')}
+                                                        onClick={(e) => handleDecrease(e, product.id, product.quantity)}
+                                                        disabled={product.quantity <= 1}
+                                                        type="button"
+                                                        aria-label="Giảm số lượng"
+                                                    >
+                                                        <MinusIcon size={isMobile ? 16 : 14} />
+                                                    </button>
+                                                    <span className={cx('quantity-value')}>{product.quantity}</span>
+                                                    <button
+                                                        className={cx('quantity-btn', 'quantity-plus')}
+                                                        onClick={(e) => handleIncrease(e, product.id, product.quantity)}
+                                                        type="button"
+                                                        aria-label="Tăng số lượng"
+                                                    >
+                                                        <PlusIcon size={isMobile ? 16 : 14} />
+                                                    </button>
+                                                </div>
+                                                <div className={cx('cart-item-price')}>
+                                                    <span className={cx('cart-item-quantity-text')}>{product.quantity} ×</span>{' '}
+                                                    <span className={cx('cart-item-price-value')}>{formatPrice(product.price)} ₫</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </Link>

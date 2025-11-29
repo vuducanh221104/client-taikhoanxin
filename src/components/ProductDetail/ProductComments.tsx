@@ -75,7 +75,7 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
             if (!input) {
                 return {
                     username: 'Khách hàng',
-                    avatar: '/avatar/user-icon.webp',
+                    avatar: '/avatar/user-icon.png',
                     isVerified: false,
                     isCustomerService: false,
                 };
@@ -84,7 +84,7 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
             if (typeof input === 'string') {
                 return {
                     username: 'Khách hàng',
-                    avatar: '/avatar/user-icon.webp',
+                    avatar: '/avatar/user-icon.png',
                     isVerified: false,
                     isCustomerService: false,
                 };
@@ -92,7 +92,7 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
 
             return {
                 username: input.fullName || 'Khách hàng',
-                avatar: input.avatar || '/avatar/user-icon.webp',
+                avatar: input.avatar || '/avatar/user-icon.png',
                 isVerified: Boolean((input as any).isVerified),
                 isCustomerService: Boolean((input as any).role && (input as any).role >= 2),
             };
@@ -117,7 +117,7 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
                             return {
                         id: reply._id,
                         username: replyUser.username,
-                        avatar: replyUser.avatar || (reply.role === 'admin' ? '/avatar/cskh-icon.png' : '/avatar/user-icon.webp'),
+                        avatar: replyUser.avatar || (reply.role === 'admin' ? '/avatar/cskh-icon.png' : '/avatar/user-icon.png'),
                         timestamp: reply.createdAt,
                         text: reply.comment,
                         isCustomerService: reply.role !== 'user',
@@ -221,81 +221,93 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
     };
 
     const renderComment = (commentItem: DisplayComment, isReply: boolean = false) => (
-        <div key={commentItem.id} className={cx('comment-item', { 'is-reply': isReply })}>
+        <article key={commentItem.id} className={cx('comment-row', { 'is-reply': isReply })}>
+            <div className={cx('timeline-marker')}>
+                <span className={cx('timeline-dot', { 'is-reply': isReply })} />
+                {!isReply && <span className={cx('timeline-line')} />}
+            </div>
+            <div className={cx('comment-card')}>
                 <div className={cx('comment-avatar')}>
                     <Image
-                    src={
-                        commentItem.avatar ||
-                        (commentItem.isCustomerService ? '/avatar/cskh-icon.png' : '/avatar/user-icon.webp')
-                    }
-                    alt={commentItem.username}
-                        width={40}
-                        height={40}
+                        src={
+                            commentItem.avatar ||
+                            (commentItem.isCustomerService ? '/avatar/cskh-icon.png' : '/avatar/user-icon.png')
+                        }
+                        alt={commentItem.username}
+                        width={48}
+                        height={48}
                         className={cx('avatar-image')}
                         onError={(e) => {
-                        (e.target as HTMLImageElement).src = commentItem.isCustomerService
-                            ? '/avatar/cskh-icon.png'
-                            : '/avatar/user-icon.webp';
+                            (e.target as HTMLImageElement).src = commentItem.isCustomerService
+                                ? '/avatar/cskh-icon.png'
+                                : '/avatar/user-icon.png';
                         }}
                     />
                 </div>
+
                 <div className={cx('comment-content')}>
                     <div className={cx('comment-header')}>
                         <div className={cx('comment-user-info')}>
-                        <span className={cx('comment-username')}>{commentItem.username}</span>
-                        {commentItem.isVerified && <CheckCircleIcon size={16} className={cx('verified-icon')} />}
-                        {commentItem.hasPurchased && (
+                            <span className={cx('comment-username')}>{commentItem.username}</span>
+                            {commentItem.isVerified && <CheckCircleIcon size={16} className={cx('verified-icon')} />}
+                            {commentItem.hasPurchased && (
                                 <span className={cx('purchased-badge')}>
                                     <DiamondIcon size={12} />
                                     <span>Đã mua sản phẩm</span>
                                 </span>
                             )}
+                            {commentItem.isCustomerService && <span className={cx('staff-badge')}>CSKH</span>}
                         </div>
-                    <span className={cx('comment-timestamp')}>{formatTimestamp(commentItem.timestamp)}</span>
+                        <span className={cx('comment-timestamp')}>{formatTimestamp(commentItem.timestamp)}</span>
                     </div>
-                <div className={cx('comment-text')}>{commentItem.text}</div>
-                <button className={cx('reply-button')} type="button" onClick={() => handleReplyClick(commentItem)}>
-                    <MessageCircleIcon size={14} />
-                    <span>Trả lời</span>
-                </button>
-                {commentItem.replies && commentItem.replies.length > 0 && (
-                        <div className={cx('comment-replies')}>
-                        {commentItem.replies.map((reply) => renderComment(reply, true))}
+
+                    <div className={cx('comment-text')}>{commentItem.text}</div>
+
+                    <div className={cx('comment-footer')}>
+                        <button className={cx('reply-button')} type="button" onClick={() => handleReplyClick(commentItem)}>
+                            <MessageCircleIcon size={14} />
+                            <span>Trả lời</span>
+                        </button>
+                    </div>
+
+                    {commentItem.replies && commentItem.replies.length > 0 && (
+                        <div className={cx('comment-replies')}>{commentItem.replies.map((reply) => renderComment(reply, true))}</div>
+                    )}
+
+                    {commentItem.isRoot && replyTarget?.rootId === commentItem.id && (
+                        <div className={cx('inline-reply-form')}>
+                            <textarea
+                                className={cx('inline-reply-input')}
+                                rows={3}
+                                value={replyDraft}
+                                onChange={(e) => setReplyDraft(e.target.value)}
+                                placeholder="Nhập phản hồi của bạn..."
+                                disabled={submitting}
+                            />
+                            <div className={cx('inline-reply-actions')}>
+                                <button
+                                    type="button"
+                                    className={cx('inline-reply-cancel')}
+                                    onClick={resetReplyState}
+                                    disabled={submitting}
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    type="button"
+                                    className={cx('inline-reply-submit')}
+                                    onClick={handleReplySubmit}
+                                    disabled={submitting || !replyDraft.trim()}
+                                >
+                                    {submitting ? 'Đang gửi...' : 'Gửi phản hồi'}
+                                </button>
+                            </div>
                         </div>
                     )}
-                {commentItem.isRoot && replyTarget?.rootId === commentItem.id && (
-                    <div className={cx('inline-reply-form')}>
-                        <textarea
-                            className={cx('inline-reply-input')}
-                            rows={3}
-                            value={replyDraft}
-                            onChange={(e) => setReplyDraft(e.target.value)}
-                            placeholder="Nhập phản hồi của bạn..."
-                            disabled={submitting}
-                        />
-                        <div className={cx('inline-reply-actions')}>
-                            <button
-                                type="button"
-                                className={cx('inline-reply-cancel')}
-                                onClick={resetReplyState}
-                                disabled={submitting}
-                            >
-                                Hủy
-                            </button>
-                            <button
-                                type="button"
-                                className={cx('inline-reply-submit')}
-                                onClick={handleReplySubmit}
-                                disabled={submitting || !replyDraft.trim()}
-                            >
-                                {submitting ? 'Đang gửi...' : 'Gửi phản hồi'}
-                            </button>
-                        </div>
-                    </div>
-                )}
                 </div>
             </div>
-        );
+        </article>
+    );
 
     const renderCommentsList = () => {
         if (!productId) {
@@ -322,69 +334,109 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
         : 'Thời gian phản hồi trung bình: 5 phút!';
 
     return (
-        <div className={cx('product-comments')}>
-            <h3 className={cx('comments-title')}>Bình luận</h3>
-            <p className={cx('comments-info')}>{commentsInfo}</p>
-
-            <div className={cx('comments-list')}>{renderCommentsList()}</div>
-
-            <form className={cx('comments-form')} onSubmit={handleSubmit}>
-                {replyTarget ? (
-                    <div className={cx('replying-notice')}>
-                        <span>Đang trả lời cho: {replyTarget.username}. Khung nhập nằm ngay dưới bình luận đó.</span>
-                        <button type="button" onClick={resetReplyState} disabled={submitting}>
-                            Hủy trả lời
-                        </button>
+        <section className={cx('product-comments')}>
+            <div className={cx('comments-hero')}>
+                <div className={cx('hero-copy')}>
+                    <p className={cx('hero-eyebrow')}>Phản hồi thực tế</p>
+                    <h3 className={cx('comments-title')}>Bình luận & đánh giá</h3>
+                    <p className={cx('comments-info')}>{commentsInfo}</p>
+                </div>
+                <div className={cx('hero-metrics')}>
+                    <div className={cx('metric-card')}>
+                        <span className={cx('metric-label')}>Điểm trung bình</span>
+                        <strong className={cx('metric-value')}>
+                            {averageRating ? averageRating.toFixed(1) : '5.0'}
+                        </strong>
+                        <p>{totalReviews} lượt đánh giá</p>
                     </div>
-                ) : (
-                    <>
-                        <div className={cx('rating-selector')}>
-                            <span className={cx('rating-label')}>Đánh giá của bạn:</span>
-                            <div className={cx('rating-options')}>
-                                {ratingOptions.map((value) => (
-                                    <button
-                                        key={value}
-                                        type="button"
-                                        className={cx('rating-option', { 'is-active': selectedRating === value })}
-                                        onClick={() => setSelectedRating(value)}
-                                    >
-                                        <StarIcon size={14} />
-                                        <span>{value}</span>
-                                    </button>
-                                ))}
-                            </div>
+                    <div className={cx('metric-card')}>
+                        <span className={cx('metric-label')}>Khách mua xác nhận</span>
+                        <strong className={cx('metric-value')}>{verifiedPurchaseCount}</strong>
+                        <p>Đánh giá đã mua hàng</p>
+                    </div>
+                    <div className={cx('metric-card')}>
+                        <span className={cx('metric-label')}>Phản hồi hỗ trợ</span>
+                        <strong className={cx('metric-value')}>~5 phút</strong>
+                        <p>Trung bình phản hồi</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className={cx('comments-layout')}>
+                <div className={cx('thread-panel')}>
+                    <div className={cx('thread-timeline')}>{renderCommentsList()}</div>
+                </div>
+
+                <div className={cx('composer-panel')}>
+                    <div className={cx('composer-card')}>
+                        <div className={cx('composer-header')}>
+                            <h4>Chia sẻ trải nghiệm</h4>
+                            <p>Đánh giá của bạn giúp chúng tôi cải thiện dịch vụ mỗi ngày.</p>
                         </div>
-
-                        <textarea
-                            className={cx('comments-input')}
-                            placeholder={
-                                canInteract
-                                    ? 'Chia sẻ trải nghiệm của bạn về sản phẩm này'
-                                    : 'Vui lòng đăng nhập để gửi bình luận'
-                            }
-                            value={comment}
-                            onChange={(e) => setComment(e.target.value)}
-                            rows={4}
-                            disabled={!canInteract}
-                        />
-
-                        <button type="submit" className={cx('comments-submit')} disabled={submitting || !canInteract}>
-                            {submitting ? (
-                                <>
-                                    <span className={cx('loading-spinner')}></span>
-                                    <span>Đang gửi...</span>
-                                </>
+                        <form className={cx('comments-form')} onSubmit={handleSubmit}>
+                            {replyTarget ? (
+                                <div className={cx('replying-notice')}>
+                                    <span>Đang trả lời cho: {replyTarget.username}. Khung nhập nằm ngay dưới bình luận đó.</span>
+                                    <button type="button" onClick={resetReplyState} disabled={submitting}>
+                                        Hủy trả lời
+                                    </button>
+                                </div>
                             ) : (
                                 <>
-                                    <SendIcon size={18} />
-                                    <span>Gửi bình luận</span>
+                                    <div className={cx('rating-selector')}>
+                                        <span className={cx('rating-label')}>Đánh giá của bạn</span>
+                                        <div className={cx('rating-options')}>
+                                            {ratingOptions.map((value) => (
+                                                <button
+                                                    key={value}
+                                                    type="button"
+                                                    className={cx('rating-option', { 'is-active': selectedRating === value })}
+                                                    onClick={() => setSelectedRating(value)}
+                                                >
+                                                    <StarIcon size={14} />
+                                                    <span>{value} sao</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <textarea
+                                        className={cx('comments-input')}
+                                        placeholder={
+                                            canInteract
+                                                ? 'Chia sẻ trải nghiệm của bạn về sản phẩm này'
+                                                : 'Vui lòng đăng nhập để gửi bình luận'
+                                        }
+                                        value={comment}
+                                        onChange={(e) => setComment(e.target.value)}
+                                        rows={4}
+                                        disabled={!canInteract}
+                                    />
+
+                                    <button
+                                        type="submit"
+                                        className={cx('comments-submit')}
+                                        disabled={submitting || !canInteract}
+                                    >
+                                        {submitting ? (
+                                            <>
+                                                <span className={cx('loading-spinner')}></span>
+                                                <span>Đang gửi...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <SendIcon size={18} />
+                                                <span>Gửi bình luận</span>
+                                            </>
+                                        )}
+                                    </button>
                                 </>
                             )}
-                        </button>
-                    </>
-                )}
-            </form>
-        </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
     );
 };
 

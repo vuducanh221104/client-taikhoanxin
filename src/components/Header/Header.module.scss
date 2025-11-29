@@ -377,29 +377,6 @@
                 flex-wrap: wrap;
             }
 
-            .search-result-status {
-                flex-shrink: 0;
-                display: flex;
-                align-items: center;
-                padding: 4px 10px;
-                background: var(--bg-color-secondary);
-                border-radius: 6px;
-                transition: all 0.2s ease;
-
-                .search-result-link:hover & {
-                    background: var(--primary-color-light);
-                }
-            }
-
-            .search-result-description {
-                font-size: 13px;
-                color: var(--text-color-secondary);
-                margin: 0;
-                line-height: 1.4;
-                font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                font-weight: 500;
-            }
-
             .search-result-old-price {
                 font-size: 13px;
                 color: var(--text-color-tertiary);
@@ -618,6 +595,20 @@
                     display: flex;
                     flex-wrap: wrap;
                     gap: 8px;
+
+                    &.is-column {
+                        flex-direction: column;
+
+                        .search-popular-item {
+                            width: 100%;
+
+                            .search-popular-text {
+                                width: 100%;
+                                justify-content: flex-start;
+                                text-align: left;
+                            }
+                        }
+                    }
                 }
 
                 .search-popular-item {
@@ -1869,6 +1860,7 @@
     position: relative;
     z-index: 1001;
     overflow: visible;
+    transition: background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
     // isolation: isolate; // Removed để dropdown có thể hiển thị trên middle-bar
 
     .container {
@@ -2169,6 +2161,16 @@
 
 // Mobile Medium (max-width: 768px)
 @media (max-width: 768px) {
+    .middle-bar {
+        background: linear-gradient(180deg, rgba(74, 144, 226, 0.08), rgba(255, 255, 255, 0.97));
+        border-top: none;
+        border-bottom: none;
+        padding: 6px;
+        box-shadow: 0 8px 24px rgba(29, 50, 89, 0.12);
+        border-radius: 18px;
+        margin: 0 12px 12px;
+    }
+
     .top-bar {
         padding: 12px 0;
     }
@@ -2226,27 +2228,40 @@
     }
 
     .middle-bar-content {
-        gap: 8px;
-        padding: 10px 0;
-        overflow-x: visible;
-        overflow-y: visible;
+        gap: 10px;
+        padding: 10px 4px;
+        overflow-x: auto;
+        overflow-y: hidden;
         justify-content: flex-start;
-        flex-wrap: wrap;
-        row-gap: 8px;
+        flex-wrap: nowrap;
+        row-gap: 0;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+
+        &::-webkit-scrollbar {
+            height: 0;
+        }
 
         > :first-child {
-            margin-right: 10px;
+            margin-right: 6px;
         }
 
         .quick-link {
-            padding: 8px 12px;
+            padding: 8px 14px;
             font-size: 12px;
             flex-shrink: 0;
-            min-height: 36px;
-            min-width: 36px;
-            justify-content: center;
+            min-height: 40px;
+            min-width: 120px;
+            justify-content: flex-start;
             position: relative;
             touch-action: manipulation;
+            scroll-snap-align: center;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color-light);
+            border-radius: 999px;
+            box-shadow: 0 6px 18px rgba(23, 42, 79, 0.08);
+            color: var(--text-color);
+            gap: 10px;
 
             // Tooltip on hover (for icon-only links)
             &:hover::after {
@@ -2286,10 +2301,12 @@
                 width: 18px;
                 height: 18px;
                 flex-shrink: 0;
+                color: var(--primary-color);
             }
 
             span {
-                display: none;
+                display: inline;
+                font-weight: 600;
             }
         }
     }
@@ -2308,6 +2325,12 @@
 
 // Mobile Small (max-width: 480px)
 @media (max-width: 480px) {
+    .middle-bar {
+        border-radius: 16px;
+        margin: 0 10px 10px;
+        padding: 5px;
+    }
+
     .top-bar {
         padding: 10px 0;
     }
@@ -2355,25 +2378,37 @@
     }
 
     .middle-bar-content {
-        gap: 6px;
-        padding: 8px 0;
-        overflow-x: visible;
-        overflow-y: visible;
-        flex-wrap: wrap;
-        row-gap: 8px;
+        gap: 8px;
+        padding: 8px 2px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        flex-wrap: nowrap;
+        row-gap: 0;
+        scroll-snap-type: x mandatory;
+
+        &::-webkit-scrollbar {
+            height: 0;
+        }
 
         > :first-child {
-            margin-right: 8px;
+            margin-right: 6px;
         }
 
         .quick-link {
-            padding: 8px 10px;
+            padding: 8px 12px;
             font-size: 12px;
-            min-height: 32px;
-            min-width: 32px;
-            justify-content: center;
+            min-height: 36px;
+            min-width: 110px;
+            justify-content: flex-start;
             position: relative;
             touch-action: manipulation;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color-light);
+            border-radius: 999px;
+            box-shadow: 0 4px 12px rgba(23, 42, 79, 0.08);
+            color: var(--text-color);
+            gap: 8px;
+            scroll-snap-align: center;
 
             // Tooltip on hover (for icon-only links)
             &:hover::after {
@@ -2410,13 +2445,15 @@
             }
 
             .quick-link-icon {
-                width: 16px;
-                height: 16px;
+                width: 18px;
+                height: 18px;
                 flex-shrink: 0;
+                color: var(--primary-color);
             }
 
             span {
-                display: none;
+                display: inline;
+                font-weight: 600;
             }
         }
     }

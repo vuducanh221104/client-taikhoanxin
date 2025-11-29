@@ -68,7 +68,7 @@
 
 .thead {
     display: grid;
-    grid-template-columns: 1fr 140px 160px 160px;
+    grid-template-columns: minmax(0, 1fr) 140px 140px;
     gap: 0;
     padding: 16px 20px;
     background: var(--bg-color-secondary);
@@ -78,6 +78,12 @@
     @media (max-width: 999px) {
         display: none;
     }
+}
+.th.qty {
+    text-align: center;
+}
+.th.price {
+    text-align: right;
 }
 
 .tbody {
@@ -94,7 +100,7 @@
 // Desktop Table Layout
 .tr {
     display: grid;
-    grid-template-columns: 1fr 140px 160px 160px;
+    grid-template-columns: minmax(0, 1fr) 140px 140px;
     gap: 0;
     padding: 16px 20px;
     border-bottom: 2px solid var(--border-color-lighter);
@@ -107,24 +113,24 @@
 
 .td.product {
     display: grid;
-    grid-template-columns: auto 120px 1fr;
+    grid-template-columns: auto 140px minmax(0, 1fr);
     align-items: center;
-    gap: 12px;
+    column-gap: 18px;
     
     @media (max-width: 1200px) {
-        grid-template-columns: auto 100px 1fr;
+        grid-template-columns: auto 130px minmax(0, 1fr);
     }
     
     @media (max-width: 999px) {
-        grid-template-columns: auto 90px 1fr;
+        grid-template-columns: auto 110px minmax(0, 1fr);
     }
     
     @media (max-width: 768px) {
-        grid-template-columns: auto 80px 1fr;
+        grid-template-columns: auto 95px minmax(0, 1fr);
     }
     
     @media (max-width: 480px) {
-        grid-template-columns: auto 70px 1fr;
+        grid-template-columns: auto 85px minmax(0, 1fr);
     }
 }
 
@@ -139,8 +145,8 @@
     &:hover { background: var(--bg-color-light-hover); color: var(--error-color); }
 }
 .thumb {
-    width: 120px; 
-    height: 80px; 
+    width: 150px; 
+    aspect-ratio: 16 / 9; 
     border-radius: 8px; 
     overflow: hidden; 
     background: #f3f3f3;
@@ -150,23 +156,19 @@
     justify-content: center;
     
     @media (max-width: 1200px) {
-        width: 100px;
-        height: 67px;
+        width: 135px;
     }
     
     @media (max-width: 999px) {
-        width: 90px;
-        height: 60px;
+        width: 130px;
     }
     
     @media (max-width: 768px) {
-        width: 80px;
-        height: 54px;
+        width: 110px;
     }
     
     @media (max-width: 480px) {
-        width: 70px;
-        height: 47px;
+        width: 100px;
     }
     
     .thumb-image {
@@ -176,28 +178,24 @@
     }
 }
 .placeholder { 
-    width: 120px; 
-    height: 80px; 
+    width: 150px; 
+    aspect-ratio: 16 / 9; 
     background: #eaeaea;
     
     @media (max-width: 1200px) {
-        width: 100px;
-        height: 67px;
+        width: 140px;
     }
     
     @media (max-width: 999px) {
-        width: 90px;
-        height: 60px;
+        width: 130px;
     }
     
     @media (max-width: 768px) {
-        width: 80px;
-        height: 54px;
+        width: 110px;
     }
     
     @media (max-width: 480px) {
-        width: 70px;
-        height: 47px;
+        width: 100px;
     } 
     border-radius: 8px;
     flex-shrink: 0;
@@ -214,10 +212,70 @@
     }
 }
 
-.td.price, .td.subtotal { font-weight: 700; color: var(--price-color); }
+.product-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.product-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    background: var(--bg-color-secondary);
+    border: 1px solid var(--border-color-light);
+    border-radius: 12px;
+}
+
+.meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.meta-label {
+    font-weight: 600;
+    color: var(--text-color);
+    position: relative;
+    padding-right: 4px;
+
+    &::after {
+        content: ':';
+        position: absolute;
+        right: 0;
+    }
+}
+
+.meta-value {
+    font-weight: 500;
+    color: var(--text-color-secondary);
+    word-break: break-word;
+    flex: 1;
+}
+
+.td.price {
+    font-weight: 700;
+    color: var(--price-color);
+    text-align: right;
+    justify-self: flex-end;
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+}
 
 .td.qty {
-    display: flex; align-items: center; gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    justify-self: center;
+    width: 100%;
+    max-width: 140px;
 }
 .qty-btn {
     width: 28px; height: 28px; border-radius: 6px;
@@ -254,7 +312,7 @@
 .cart-item-banner {
     width: 100%;
     height: auto;
-    aspect-ratio: 2 / 1;
+    aspect-ratio: 16 / 9;
     overflow: hidden;
     background: var(--bg-color-secondary);
     position: relative;
@@ -319,6 +377,7 @@
         align-items: center;
         gap: 12px;
         flex-wrap: wrap;
+        justify-content: space-between;
     }
     
     .current-price {
@@ -348,6 +407,28 @@
         font-weight: 700;
         font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         line-height: 1;
+    }
+
+    @media (max-width: 640px) {
+        margin-top: 6px;
+
+        .price-wrapper {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+        }
+
+        .current-price {
+            font-size: 20px;
+        }
+
+        .old-price {
+            font-size: 14px;
+        }
+
+        .discount-badge {
+            margin-top: 4px;
+        }
     }
 }
 
@@ -718,6 +799,71 @@
     }
 }
 
+.referral-applied {
+    margin-top: 10px;
+    padding: 14px 16px;
+    background: var(--bg-color);
+    border-radius: 16px;
+    border: 1px solid var(--border-color-light);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 2px 10px rgba(76, 175, 80, 0.08);
+    
+    @media (max-width: 999px) {
+        padding: 16px;
+        border-radius: 18px;
+    }
+}
+
+.referral-code-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.referral-code-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-color);
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg-color-secondary);
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--border-color-lighter);
+    
+    @media (max-width: 999px) {
+        font-size: 15px;
+    }
+}
+
+.referral-code-emoji {
+    font-size: 16px;
+}
+
+.referral-remove {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &:hover {
+        background: var(--bg-color-secondary);
+        color: var(--error-color);
+        border-color: var(--error-color);
+    }
+}
+
 .referral-message {
     margin-top: 8px;
     padding: 8px 12px;
@@ -733,14 +879,17 @@
     }
     
     &.success {
-        background: rgba(76, 175, 80, 0.1);
-        color: #4caf50;
-        border: 1px solid rgba(76, 175, 80, 0.2);
+        background: rgba(76, 175, 80, 0.12);
+        color: #2e7d32;
+        border: 1px solid rgba(76, 175, 80, 0.25);
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
     
     @media (max-width: 999px) {
         font-size: 14px;
-        padding: 10px 14px;
+        padding: 12px 14px;
     }
 }
 

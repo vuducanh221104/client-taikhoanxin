@@ -49,7 +49,8 @@
         }
 
         .current-price {
-            color: var(--price-color); // Màu xanh dương cho cả light và dark variant
+            color: #9ddcff; // Sáng hơn để nổi bật trên nền tối
+            text-shadow: 0 0 8px rgba(74, 222, 255, 0.25);
         }
 
         .old-price {
