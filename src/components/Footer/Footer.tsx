@@ -9,9 +9,7 @@ import { MailIcon, PhoneIcon, ClockIcon, FacebookIcon, InstagramIcon, YoutubeIco
 
 const cx = classNames.bind(styles);
 
-interface FooterProps {}
-
-const Footer: React.FC<FooterProps> = () => {
+const Footer: React.FC = () => {
     return (
         <footer className={cx('footer-wrapper')}>
             <div className={cx('footer-container')}>
@@ -87,6 +85,9 @@ const Footer: React.FC<FooterProps> = () => {
                             </li>
                             <li>
                                 <Link href="/products/best-selling">Bán chạy nhất</Link>
+                            </li>
+                            <li>
+                                <Link href="/orders/lookup">Tra cứu đơn hàng</Link>
                             </li>
                         </ul>
                     </div>

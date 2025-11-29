@@ -5,6 +5,7 @@
 /.pnp
 .pnp.js
 .yarn/install-state.gz
+.npm-cache
 
 # testing
 /coverage
@@ -62,7 +63,6 @@ pids
 
 # Optional npm cache directory
 .npm
-.npm-cache
 
 # Optional eslint cache
 .eslintcache

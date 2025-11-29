@@ -1,10 +1,35 @@
 @import '@/styles/mixins';
 
 .footer-wrapper {
-    background: var(--bg-color-dark);
+    background: linear-gradient(135deg, var(--bg-color-dark) 0%, rgba(25, 30, 45, 0.98) 50%, var(--bg-color-dark) 100%);
     color: var(--text-color-white);
     margin-top: 60px;
     border-top: 1px solid rgba(255, 255, 255, 0.1); // Keep for subtle border
+    position: relative;
+    
+    // Thêm overlay gradient để tạo độ sâu
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+            180deg,
+            rgba(91, 124, 255, 0.03) 0%,
+            transparent 30%,
+            transparent 70%,
+            rgba(91, 124, 255, 0.05) 100%
+        );
+        pointer-events: none;
+        z-index: 0;
+    }
+    
+    > * {
+        position: relative;
+        z-index: 1;
+    }
 }
 
 .footer-container {
