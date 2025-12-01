@@ -240,6 +240,9 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
         });
     }, [allOrders, appliedFilters]);
 
+    const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+    const filterPanelRef = React.useRef<HTMLDivElement | null>(null);
+
     const handleFilter = (e: React.FormEvent) => {
         e.preventDefault();
         // Don't apply filters if there's an amount error
@@ -272,6 +275,37 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
             appliedFilters.dateFrom !== '' ||
             appliedFilters.dateTo !== ''
         );
+    }, [appliedFilters]);
+
+    const activeFilterCount = useMemo(() => {
+        let count = 0;
+        if (appliedFilters.status !== 'all') count += 1;
+        if (appliedFilters.orderCode) count += 1;
+        if (appliedFilters.amountFrom) count += 1;
+        if (appliedFilters.amountTo) count += 1;
+        if (appliedFilters.dateFrom) count += 1;
+        if (appliedFilters.dateTo) count += 1;
+        return count;
+    }, [appliedFilters]);
+
+    const activeFilterBadges = useMemo(() => {
+        const badges: string[] = [];
+        if (appliedFilters.status !== 'all') {
+            const statusLabel = orderStatuses.find(s => s.value === appliedFilters.status)?.label;
+            if (statusLabel) badges.push(statusLabel);
+        }
+        if (appliedFilters.orderCode) badges.push(`Mã: ${appliedFilters.orderCode}`);
+        if (appliedFilters.amountFrom || appliedFilters.amountTo) {
+            const from = appliedFilters.amountFrom || '0';
+            const to = appliedFilters.amountTo || '∞';
+            badges.push(`Số tiền: ${from} - ${to}`);
+        }
+        if (appliedFilters.dateFrom || appliedFilters.dateTo) {
+            const from = appliedFilters.dateFrom || 'Ngày đầu';
+            const to = appliedFilters.dateTo || 'Hiện tại';
+            badges.push(`Thời gian: ${from} → ${to}`);
+        }
+        return badges;
     }, [appliedFilters]);
 
     const canCancelOrder = (status: Order['orderStatus']) => {
@@ -369,16 +403,49 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
 
             {/* Filter Controls */}
             <div className={cx('filter-section')}>
-                {hasActiveFilters && (
-                    <div className={cx('reset-filters-wrapper')}>
-                        <button className={cx('reset-filters-button')} onClick={handleReset} type="button">
-                            <RotateCcwIcon size={16} />
-                            <span>Khôi phục bộ lọc</span>
+                <div className={cx('filter-toggle-bar')}>
+                    <div className={cx('filter-summary')}>
+                        <span>
+                            {hasActiveFilters
+                                ? `Đang áp dụng ${activeFilterCount} bộ lọc`
+                                : 'Chưa áp dụng bộ lọc nào'}
+                        </span>
+                        {hasActiveFilters && activeFilterBadges.length > 0 && (
+                            <div className={cx('active-filter-badges')}>
+                                {activeFilterBadges.map((badge, index) => (
+                                    <span key={index} className={cx('filter-chip')}>
+                                        {badge}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    <div className={cx('filter-toggle-actions')}>
+                        {hasActiveFilters && (
+                            <button className={cx('reset-filters-button')} onClick={handleReset} type="button">
+                                <RotateCcwIcon size={16} />
+                                <span>Khôi phục</span>
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            className={cx('filter-toggle-button', { 'is-open': isFilterPanelOpen })}
+                            onClick={() => setIsFilterPanelOpen(prev => !prev)}
+                        >
+                            <FilterIcon size={16} />
+                            <span>Bộ lọc</span>
+                            {hasActiveFilters && <span className={cx('filter-count')}>{activeFilterCount}</span>}
+                            <ChevronDownIcon size={14} className={cx('toggle-icon')} />
                         </button>
                     </div>
-                )}
+                </div>
 
-                <form onSubmit={handleFilter} className={cx('filter-form')}>
+                <div
+                    className={cx('filter-dropdown', { 'is-open': isFilterPanelOpen })}
+                    ref={filterPanelRef}
+                >
+                    {isFilterPanelOpen && (
+                        <form onSubmit={handleFilter} className={cx('filter-form')}>
                     {/* Row 1: Basic Filters */}
                     <div className={cx('filter-row', 'basic-filters-row')}>
                         <div className={cx('basic-filters-group')}>
@@ -616,7 +683,9 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
                             Áp dụng bộ lọc
                         </button>
                     </div>
-                </form>
+                        </form>
+                    )}
+                </div>
             </div>
 
             {/* Orders Table */}

@@ -347,10 +347,24 @@
     &:active {
         transform: scale(0.95);
     }
+
+    &.copied {
+        background: #d1fae5;
+        border-color: #22c55e;
+
+        &:hover {
+            background: #bbf7d0;
+            border-color: #16a34a;
+        }
+    }
 }
 
 .copy-icon-main {
     color: #2563eb;
+
+    &.check-icon {
+        color: #22c55e;
+    }
 }
 
 .account-credentials {
@@ -392,7 +406,17 @@
             }
         }
         
-        &:not(.blurred):hover {
+        &.copied {
+            color: #22c55e;
+            background: #d1fae5;
+            
+            &:hover {
+                background: #bbf7d0;
+                color: #16a34a;
+            }
+        }
+        
+        &:not(.blurred):not(.copied):hover {
             background: #e5e7eb;
             color: #3b82f6;
         }

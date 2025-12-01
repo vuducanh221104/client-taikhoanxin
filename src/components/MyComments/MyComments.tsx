@@ -51,6 +51,8 @@ const MyComments: React.FC<MyCommentsProps> = React.memo(({ userId }) => {
     const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
     const typeDropdownRef = React.useRef<HTMLDivElement>(null);
 
+    const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+
     // Close dropdown when clicking outside
     React.useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -135,6 +137,30 @@ const MyComments: React.FC<MyCommentsProps> = React.memo(({ userId }) => {
         );
     }, [appliedFilters]);
 
+    const activeFilterCount = useMemo(() => {
+        let count = 0;
+        if (appliedFilters.type !== 'all') count += 1;
+        if (appliedFilters.content) count += 1;
+        if (appliedFilters.dateFrom) count += 1;
+        if (appliedFilters.dateTo) count += 1;
+        return count;
+    }, [appliedFilters]);
+
+    const activeFilterBadges = useMemo(() => {
+        const badges: string[] = [];
+        if (appliedFilters.type !== 'all') {
+            const typeLabel = commentTypes.find(t => t.value === appliedFilters.type)?.label;
+            if (typeLabel) badges.push(typeLabel);
+        }
+        if (appliedFilters.content) badges.push(`Nội dung: "${appliedFilters.content}"`);
+        if (appliedFilters.dateFrom || appliedFilters.dateTo) {
+            const from = appliedFilters.dateFrom || 'Từ đầu';
+            const to = appliedFilters.dateTo || 'Hiện tại';
+            badges.push(`Thời gian: ${from} → ${to}`);
+        }
+        return badges;
+    }, [appliedFilters]);
+
     return (
         <div className={cx('my-comments')}>
             {/* Header */}
@@ -147,15 +173,49 @@ const MyComments: React.FC<MyCommentsProps> = React.memo(({ userId }) => {
 
             {/* Filter Section */}
             <div className={cx('filter-section')}>
-                {hasActiveFilters && (
-                    <div className={cx('reset-filters-wrapper')}>
-                        <button className={cx('reset-filters-button')} onClick={handleReset} type="button">
-                            <RotateCcwIcon size={16} />
-                            <span>Khôi phục bộ lọc</span>
+                <div className={cx('filter-toggle-bar')}>
+                    <div className={cx('filter-summary')}>
+                        <span>
+                            {hasActiveFilters
+                                ? `Đang áp dụng ${activeFilterCount} bộ lọc`
+                                : 'Chưa áp dụng bộ lọc nào'}
+                        </span>
+                        {hasActiveFilters && activeFilterBadges.length > 0 && (
+                            <div className={cx('active-filter-badges')}>
+                                {activeFilterBadges.map((badge, index) => (
+                                    <span key={index} className={cx('filter-chip')}>
+                                        {badge}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    <div className={cx('filter-toggle-actions')}>
+                        {hasActiveFilters && (
+                            <button
+                                className={cx('reset-filters-button')}
+                                onClick={handleReset}
+                                type="button"
+                            >
+                                <RotateCcwIcon size={16} />
+                                <span>Khôi phục</span>
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            className={cx('filter-toggle-button', { 'is-open': isFilterPanelOpen })}
+                            onClick={() => setIsFilterPanelOpen(prev => !prev)}
+                        >
+                            <FilterIcon size={16} />
+                            <span>Bộ lọc</span>
+                            {hasActiveFilters && <span className={cx('filter-count')}>{activeFilterCount}</span>}
+                            <ChevronDownIcon size={14} className={cx('toggle-icon')} />
                         </button>
                     </div>
-                )}
+                </div>
 
+                <div className={cx('filter-dropdown', { 'is-open': isFilterPanelOpen })}>
+                    {isFilterPanelOpen && (
                 <form onSubmit={handleFilter} className={cx('filter-form')}>
                     {/* Row 1: Basic Filters */}
                     <div className={cx('filter-row', 'basic-filters-row')}>
@@ -269,6 +329,8 @@ const MyComments: React.FC<MyCommentsProps> = React.memo(({ userId }) => {
                         </button>
                     </div>
                 </form>
+                    )}
+                </div>
             </div>
 
             {/* Comments Table - Desktop */}

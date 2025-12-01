@@ -78,6 +78,7 @@ import {
     Users,
     LayoutDashboard,
     FileText as DocumentText,
+    Wrench,
 } from 'lucide-react';
 import React from 'react';
 
@@ -176,6 +177,7 @@ export const DashboardIcon = createIcon(LayoutDashboard, 20);
 export const DocumentTextIcon = createIcon(DocumentText, 20);
 export const ChartBarIcon = createIcon(BarChart3, 20);
 export const DownloadIcon = createIcon(Download, 20);
+export const ToolIcon = createIcon(Wrench, 20);
 
 // Category Icon - Using Grid icon from Lucide
 import { Grid, List, ArrowUpDown } from 'lucide-react';

@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import classNames from 'classnames/bind';
 import styles from '../Header.module.scss';
-import { EyeIcon, FlameIcon, PercentIcon, CreditCardIcon } from '@/components/Icons';
+import { EyeIcon, FlameIcon, PercentIcon, ToolIcon } from '@/components/Icons';
 import CategoryDropdown from '@/components/CategoryDropdown/CategoryDropdown';
 
 const cx = classNames.bind(styles);
@@ -47,12 +47,12 @@ const HeaderMiddleBar: React.FC<HeaderMiddleBarProps> = ({ setIsHeaderHoverOverl
                         <span>Sản phẩm khuyến mại</span>
                     </Link>
                     <Link 
-                        href="/payment" 
+                        href="/tools" 
                         className={cx('quick-link')}
-                        aria-label="Hình thức thanh toán"
+                        aria-label="Tools"
                     >
-                        <CreditCardIcon className={cx('quick-link-icon')} />
-                        <span>Hình thức thanh toán</span>
+                        <ToolIcon className={cx('quick-link-icon')} />
+                        <span>Tools</span>
                     </Link>
                 </div>
             </div>
