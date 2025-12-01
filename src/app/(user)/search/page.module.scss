@@ -66,6 +66,25 @@
     }
 }
 
+.search-content-wrapper {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 32px;
+    margin-top: 32px;
+
+    @media (max-width: 999px) {
+        grid-template-columns: 1fr;
+        gap: 24px;
+        margin-top: 24px;
+    }
+}
+
+.search-products-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
 .search-bar-section {
     margin-bottom: 32px;
 

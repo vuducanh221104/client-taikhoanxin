@@ -1,22 +1,33 @@
 @keyframes skeleton-loading {
     0% {
-        background-position: -200px 0;
+        background-position: -200% 0;
     }
     100% {
-        background-position: calc(200px + 100%) 0;
+        background-position: 200% 0;
     }
 }
 
 .skeleton-base {
     background: linear-gradient(
         90deg,
-        var(--bg-color-tertiary) 0px,
-        var(--bg-color-secondary) 40px,
-        var(--bg-color-tertiary) 80px
+        #f0f0f0 0px,
+        #e0e0e0 40px,
+        #f0f0f0 80px
     );
-    background-size: 200px 100%;
+    background-size: 200% 100%;
     animation: skeleton-loading 1.5s ease-in-out infinite;
     border-radius: 8px;
+    will-change: background-position;
+    
+    // Dark mode support
+    @media (prefers-color-scheme: dark) {
+        background: linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.05) 0px,
+            rgba(255, 255, 255, 0.1) 40px,
+            rgba(255, 255, 255, 0.05) 80px
+        );
+    }
 }
 
 .skeleton-line {
@@ -33,17 +44,24 @@
 // Product Card Skeleton
 .skeleton-product-card {
     position: relative;
-    background: var(--bg-color);
+    background: #ffffff;
     border-radius: 12px;
     overflow: hidden;
-    border: 1px solid var(--border-color-light);
+    border: 1px solid #e5e7eb;
     padding: 12px;
     display: flex;
     flex-direction: column;
     gap: 12px;
+    min-height: 0;
+    box-sizing: border-box;
 
     &.dark-variant {
         background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        background: rgba(255, 255, 255, 0.03);
         border-color: rgba(255, 255, 255, 0.1);
     }
 }
@@ -54,6 +72,8 @@
     aspect-ratio: 1;
     border-radius: 8px;
     margin-bottom: 0;
+    min-height: 0;
+    flex-shrink: 0;
 }
 
 .skeleton-content {
@@ -126,6 +146,8 @@
     grid-template-columns: repeat(var(--columns, 4), 1fr);
     gap: 20px;
     width: 100%;
+    min-height: 0;
+    box-sizing: border-box;
 
     @media (max-width: 999px) {
         grid-template-columns: repeat(2, 1fr);
@@ -140,14 +162,20 @@
 
 // Filter Skeleton
 .skeleton-filter {
-    background: linear-gradient(135deg, var(--bg-color) 0%, var(--bg-color-secondary) 100%);
-    border: 1px solid var(--border-color);
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
     border-radius: 12px;
     padding: 20px;
-    box-shadow: 0 2px 8px var(--shadow-color-light);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
     gap: 16px;
+    box-sizing: border-box;
+    
+    @media (prefers-color-scheme: dark) {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
 }
 
 .skeleton-filter-row {

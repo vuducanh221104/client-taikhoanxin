@@ -115,16 +115,9 @@ export default function WishlistPage() {
                                     isFavorite={true}
                                     onAddToCart={() => handleAddToCart(item)}
                                     onToggleFavorite={() => handleRemoveFromWishlist(item)}
+                                    showRemoveButton={true}
+                                    onRemove={() => handleRemoveFromWishlist(item)}
                                 />
-                                <button
-                                    className={cx('remove-button')}
-                                    onClick={() => handleRemoveFromWishlist(item)}
-                                    aria-label="Xóa khỏi yêu thích"
-                                    type="button"
-                                >
-                                    <TrashIcon size={18} />
-                                    <span>Xóa</span>
-                                </button>
                             </div>
                         ))}
                     </div>

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import classNames from 'classnames/bind';
 import styles from './CartDropdown.module.scss';
-import { CartIcon, XIcon, MinusIcon, PlusIcon } from '@/components/Icons';
+import { CartIcon, XIcon, MinusIcon, PlusIcon, TrashIcon } from '@/components/Icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '@/redux/store';
 import { removeFromCart, updateQuantity } from '@/redux/cartSlice';
@@ -672,6 +672,14 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                                                 >
                                                     <span className={cx('cart-item-name')}>{product.productName}</span>
                                                 </Link>
+                                                <button
+                                                    className={cx('cart-item-remove')}
+                                                    onClick={(e) => handleRemove(e, product.id)}
+                                                    aria-label="Xóa sản phẩm"
+                                                    type="button"
+                                                >
+                                                    <TrashIcon size={isMobile ? 18 : 16} />
+                                                </button>
                                             </div>
                                             {/* Display options if available */}
                                             {product.options && Array.isArray(product.options) && product.options.length > 0 && (
@@ -685,14 +693,6 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                                                 </div>
                                             )}
                                             <div className={cx('cart-item-controls')}>
-                                                <button
-                                                    className={cx('cart-item-remove')}
-                                                    onClick={(e) => handleRemove(e, product.id)}
-                                                    aria-label="Xóa sản phẩm"
-                                                    type="button"
-                                                >
-                                                    <XIcon size={isMobile ? 18 : 16} />
-                                                </button>
                                                 <div className={cx('cart-item-quantity')}>
                                                     <button
                                                         className={cx('quantity-btn', 'quantity-minus')}

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Image } from '@/components/Image';
 import classNames from 'classnames/bind';
 import styles from './ProductCard.module.scss';
-import { CartIcon, HeartIcon } from '@/components/Icons';
+import { CartIcon, HeartIcon, TrashIcon } from '@/components/Icons';
 import ProductBadges from './ProductBadges';
 
 const cx = classNames.bind(styles);
@@ -27,6 +27,8 @@ export interface ProductCardProps {
     isFavorite?: boolean; // External favorite state
     onAddToCart?: () => void;
     onToggleFavorite?: (id: string) => void;
+    showRemoveButton?: boolean; // Show remove button in card
+    onRemove?: () => void; // Remove handler
     // New badge props
     fastDelivery?: boolean;
     freeShipping?: boolean;
@@ -56,6 +58,8 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(({
     isFavorite: externalIsFavorite,
     onAddToCart,
     onToggleFavorite,
+    showRemoveButton = false,
+    onRemove,
     // New badge props
     fastDelivery,
     freeShipping,
@@ -138,11 +142,20 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(({
         }
     };
 
+    const handleRemove = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (onRemove) {
+            onRemove();
+        }
+    };
+
     // Determine stock status (use new stock prop or fallback to status)
     const stockStatus = stock || (status === 'out-of-stock' ? 'out-of-stock' : 'in-stock');
+    const isOutOfStock = stockStatus === 'out-of-stock';
 
     const CardContent = (
-        <div className={cx('product-card', { 'dark-variant': variant === 'dark' })}>
+        <div className={cx('product-card', { 'dark-variant': variant === 'dark', 'out-of-stock': isOutOfStock })}>
             {/* Product Badges */}
             <ProductBadges
                 stock={stockStatus}
@@ -151,6 +164,7 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(({
                 warranty={warranty}
                 soldCount={soldCount}
                 isHot={isHot}
+                discountPercent={discountPercent > 0 ? discountPercent : undefined}
             />
 
             {/* Action Buttons */}
@@ -209,11 +223,21 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(({
                     {oldPrice && oldPrice > price && (
                         <span className={cx('old-price')}>{formatPrice(oldPrice)}₫</span>
                     )}
-                    {discountPercent > 0 && (
-                        <span className={cx('discount-badge')}>-{discountPercent}%</span>
-                    )}
                 </div>
             </div>
+
+            {/* Remove Button */}
+            {showRemoveButton && onRemove && (
+                <button
+                    className={cx('remove-button')}
+                    onClick={handleRemove}
+                    aria-label="Xóa khỏi yêu thích"
+                    type="button"
+                >
+                    <TrashIcon size={18} />
+                    <span>Xóa</span>
+                </button>
+            )}
         </div>
     );
 

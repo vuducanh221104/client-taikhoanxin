@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import classNames from 'classnames/bind';
 import styles from './Skeleton.module.scss';
 import ProductCardSkeleton from './ProductCardSkeleton';
@@ -18,17 +18,25 @@ const ProductListSkeleton: React.FC<ProductListSkeletonProps> = ({
     variant = 'light',
     columns 
 }) => {
+    const skeletonItems = useMemo(() => {
+        return Array.from({ length: count }, (_, index) => (
+            <ProductCardSkeleton key={`skeleton-${index}`} variant={variant} />
+        ));
+    }, [count, variant]);
+
+    const style = useMemo(() => {
+        return columns ? { '--columns': columns } as React.CSSProperties : undefined;
+    }, [columns]);
+
     return (
         <div 
             className={cx('skeleton-product-list')}
-            style={columns ? { '--columns': columns } as React.CSSProperties : undefined}
+            style={style}
         >
-            {[...Array(count)].map((_, index) => (
-                <ProductCardSkeleton key={index} variant={variant} />
-            ))}
+            {skeletonItems}
         </div>
     );
 };
 
-export default ProductListSkeleton;
+export default React.memo(ProductListSkeleton);
 

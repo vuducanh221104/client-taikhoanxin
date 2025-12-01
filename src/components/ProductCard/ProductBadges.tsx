@@ -14,6 +14,7 @@ export interface ProductBadgesProps {
     warranty?: string; // e.g., "12 tháng", "Trọn đời"
     soldCount?: number; // Số lượng đã bán
     isHot?: boolean; // Sản phẩm hot
+    discountPercent?: number; // Phần trăm giảm giá
 }
 
 const ProductBadges: React.FC<ProductBadgesProps> = ({
@@ -23,10 +24,18 @@ const ProductBadges: React.FC<ProductBadgesProps> = ({
     warranty,
     soldCount,
     isHot,
+    discountPercent,
 }) => {
     return (
         <div className={cx('badges-container')}>
-            {/* Stock Badge */}
+            {/* Discount Badge - Priority on top */}
+            {discountPercent && discountPercent > 0 && (
+                <div className={cx('badge', 'badge-discount-top')}>
+                    <span>-{discountPercent}%</span>
+                </div>
+            )}
+            
+            {/* Stock Badge - Show below discount badge */}
             {stock === 'out-of-stock' && (
                 <div className={cx('badge', 'badge-out-of-stock')}>
                     <span>HẾT HÀNG</span>

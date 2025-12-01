@@ -55,6 +55,11 @@ type ApiError = {
 };
 
 const formatCurrency = (value: number) => value.toLocaleString('vi-VN');
+const parseCurrency = (value: string): number => {
+    // Remove all non-digit characters
+    const cleaned = value.replace(/[^\d]/g, '');
+    return cleaned ? parseInt(cleaned, 10) : 0;
+};
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 export default function CategoryDetailPage() {
@@ -65,6 +70,11 @@ export default function CategoryDetailPage() {
     const [sortBy, setSortBy] = useState('default');
     const [priceRange, setPriceRange] = useState<[number, number]>(DEFAULT_PRICE_RANGE);
     const [pendingPriceRange, setPendingPriceRange] = useState<[number, number]>(DEFAULT_PRICE_RANGE);
+    const [priceInputValues, setPriceInputValues] = useState<[string, string]>([
+        formatCurrency(DEFAULT_PRICE_RANGE[0]),
+        formatCurrency(DEFAULT_PRICE_RANGE[1])
+    ]);
+    const [focusedInput, setFocusedInput] = useState<0 | 1 | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [loadedProducts, setLoadedProducts] = useState<FeaturedProduct[]>([]);
     const itemsPerPage = 30;
@@ -126,13 +136,52 @@ export default function CategoryDetailPage() {
         setLoadedProducts([]);
     };
 
-    const handlePriceInputChange = (index: 0 | 1, rawValue: number) => {
-        const nextValue = clamp(rawValue, DEFAULT_PRICE_RANGE[0], DEFAULT_PRICE_RANGE[1]);
+    // Update input display values when pendingPriceRange changes (from slider)
+    useEffect(() => {
+        if (focusedInput === null) {
+            setPriceInputValues([
+                formatCurrency(pendingPriceRange[0]),
+                formatCurrency(pendingPriceRange[1])
+            ]);
+        }
+    }, [pendingPriceRange, focusedInput]);
+
+    const handlePriceInputChange = (index: 0 | 1, value: string) => {
+        // Update display value
+        setPriceInputValues((prev) => {
+            const newValues: [string, string] = [...prev];
+            newValues[index] = value;
+            return newValues;
+        });
+
+        // Parse and update actual range
+        const parsedValue = parseCurrency(value);
+        const nextValue = clamp(parsedValue, DEFAULT_PRICE_RANGE[0], DEFAULT_PRICE_RANGE[1]);
         setPendingPriceRange((prev) => {
             if (index === 0) {
                 return [Math.min(nextValue, prev[1]), prev[1]];
             }
             return [prev[0], Math.max(nextValue, prev[0])];
+        });
+    };
+
+    const handlePriceInputFocus = (index: 0 | 1) => {
+        setFocusedInput(index);
+        // Show raw number when focused for easier editing
+        setPriceInputValues((prev) => {
+            const newValues: [string, string] = [...prev];
+            newValues[index] = pendingPriceRange[index].toString();
+            return newValues;
+        });
+    };
+
+    const handlePriceInputBlur = (index: 0 | 1) => {
+        setFocusedInput(null);
+        // Format the value when blur
+        setPriceInputValues((prev) => {
+            const newValues: [string, string] = [...prev];
+            newValues[index] = formatCurrency(pendingPriceRange[index]);
+            return newValues;
         });
     };
 
@@ -157,6 +206,10 @@ export default function CategoryDetailPage() {
     const clearFilters = () => {
         setPendingPriceRange(DEFAULT_PRICE_RANGE);
         setPriceRange(DEFAULT_PRICE_RANGE);
+        setPriceInputValues([
+            formatCurrency(DEFAULT_PRICE_RANGE[0]),
+            formatCurrency(DEFAULT_PRICE_RANGE[1])
+        ]);
         handleSortChange('default');
         setLoadedProducts([]);
     };
@@ -381,27 +434,29 @@ export default function CategoryDetailPage() {
                             <h3 className={cx('filter-title')}>Khoảng giá</h3>
                             <div className={cx('price-input-row')}>
                                 <div className={cx('price-input-group')}>
-                                    <label>Tối thiểu</label>
+                                    <label>TỐI THIỂU</label>
                                     <input
-                                        type="number"
-                                        min={DEFAULT_PRICE_RANGE[0]}
-                                        max={DEFAULT_PRICE_RANGE[1]}
-                                        value={pendingPriceRange[0]}
-                                        onChange={(e) => handlePriceInputChange(0, Number(e.target.value) || 0)}
+                                        type="text"
+                                        value={priceInputValues[0]}
+                                        onChange={(e) => handlePriceInputChange(0, e.target.value)}
+                                        onFocus={() => handlePriceInputFocus(0)}
+                                        onBlur={() => handlePriceInputBlur(0)}
                                         className={cx('price-input')}
                                         placeholder="0"
+                                        inputMode="numeric"
                                     />
                                 </div>
                                 <div className={cx('price-input-group')}>
-                                    <label>Tối đa</label>
+                                    <label>TỐI ĐA</label>
                                     <input
-                                        type="number"
-                                        min={DEFAULT_PRICE_RANGE[0]}
-                                        max={DEFAULT_PRICE_RANGE[1]}
-                                        value={pendingPriceRange[1]}
-                                        onChange={(e) => handlePriceInputChange(1, Number(e.target.value) || 0)}
+                                        type="text"
+                                        value={priceInputValues[1]}
+                                        onChange={(e) => handlePriceInputChange(1, e.target.value)}
+                                        onFocus={() => handlePriceInputFocus(1)}
+                                        onBlur={() => handlePriceInputBlur(1)}
                                         className={cx('price-input')}
                                         placeholder="10.000.000"
+                                        inputMode="numeric"
                                     />
                                 </div>
                             </div>
@@ -444,7 +499,13 @@ export default function CategoryDetailPage() {
                                         className={cx('quick-price-button', {
                                             'is-active': presetIsActive(preset.range),
                                         })}
-                                        onClick={() => setPendingPriceRange(preset.range)}
+                                        onClick={() => {
+                                            setPendingPriceRange(preset.range);
+                                            setPriceInputValues([
+                                                formatCurrency(preset.range[0]),
+                                                formatCurrency(preset.range[1])
+                                            ]);
+                                        }}
                                         type="button"
                                     >
                                         {preset.label}

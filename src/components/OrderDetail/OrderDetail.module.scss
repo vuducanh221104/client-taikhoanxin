@@ -29,6 +29,7 @@
 
 .header-actions {
     display: flex;
+    flex-direction: column;
     gap: 0.75rem;
     flex-shrink: 0;
 }
@@ -38,6 +39,7 @@
     font-weight: 700;
     color: #111827;
     margin: 0 0 0.5rem 0;
+    white-space: nowrap;
 }
 
 .order-subtitle {
@@ -533,7 +535,6 @@
     }
 
     .header-actions {
-        flex-direction: column;
         width: 100%;
     }
 

@@ -373,10 +373,9 @@ export default function ForgotPasswordPage() {
                 <section className={cx('insight-panel')}>
                     <div className={cx('brand-pill')}>Tài Khoản Xịn</div>
                     <h2 className={cx('insight-title')}>Khôi phục tài khoản an toàn trong vài bước</h2>
-                    <p className={cx('insight-text')}>
-                        Chúng tôi sử dụng xác thực hai lớp và Turnstile của Cloudflare để bảo vệ tài khoản của bạn trong toàn
-                        bộ quá trình đặt lại mật khẩu.
-                    </p>
+                    {/* <p className={cx('insight-text')}>
+                        Chúng tôi sử dụng mã OTP trong quá trình đặt lại mật khẩu.
+                    </p> */}
                     <ul className={cx('insight-steps')}>
                         {journeySteps.map((item, index) => (
                             <li key={item.key} className={cx('insight-step')}>
@@ -393,8 +392,8 @@ export default function ForgotPasswordPage() {
                             <p className={cx('support-title')}>Cần trợ giúp ngay?</p>
                             <span className={cx('support-text')}>Đội ngũ CSKH phản hồi trong 5 phút.</span>
                         </div>
-                        <Link href="mailto:support@taikhoanxin.vn" className={cx('support-link')}>
-                            support@taikhoanxin.vn
+                        <Link href="mailto:support@taikhoanxin.com" className={cx('support-link')}>
+                            support@taikhoanxin.com
                         </Link>
                     </div>
                     <div className={cx('security-badge')}>

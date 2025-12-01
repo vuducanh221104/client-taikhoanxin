@@ -310,13 +310,13 @@ Email: support@taikhoanxin.com
                 </div>
                 {!isGuestMode && (
                     <div className={cx('header-actions')}>
-                        <button className={cx('export-button')} onClick={handleExportReceipt}>
-                            <DownloadIcon size={18} />
-                            Xuất biên lai
-                        </button>
                         <button className={cx('reorder-button')} onClick={handleReorder}>
                             <ShoppingCartIcon size={18} />
                             Mua lại đơn hàng
+                        </button>
+                        <button className={cx('export-button')} onClick={handleExportReceipt}>
+                            <DownloadIcon size={18} />
+                            Xuất biên lai
                         </button>
                     </div>
                 )}

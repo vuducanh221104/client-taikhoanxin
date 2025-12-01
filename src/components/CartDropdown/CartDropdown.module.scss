@@ -313,11 +313,11 @@
     flex-shrink: 0;
     border-radius: 8px;
     overflow: hidden;
-    background: #f8f9fa;
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 6px;
+    padding: 0;
     box-sizing: border-box;
 }
 
@@ -340,20 +340,26 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 
 .cart-item-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
+    justify-content: space-between;
     gap: 8px;
-    min-height: 36px;
+    min-height: auto;
+    position: relative;
+    margin-bottom: 2px;
+    padding: 0;
 }
 
 .cart-item-name-link {
     display: inline-flex;
-    max-width: 100%;
+    flex: 1;
+    max-width: calc(100% - 36px);
     text-decoration: none;
+    min-width: 0;
 }
 
 .cart-item-name {
@@ -361,14 +367,16 @@
     font-size: 14px;
     font-weight: 600;
     color: var(--text-color);
-    line-height: 1.4;
+    line-height: 1.2;
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
     -webkit-box-orient: vertical;
     font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 0;
     
     &:hover {
         color: var(--primary-color);
@@ -416,10 +424,10 @@
 }
 
 .cart-item-remove {
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-    min-height: 32px;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -433,6 +441,9 @@
     transform: translateZ(0);
     backface-visibility: hidden;
     touch-action: manipulation;
+    position: absolute;
+    top: -4px;
+    right: -4px;
     
     &:hover {
         background: var(--bg-color-secondary);
@@ -660,14 +671,15 @@
     }
 
     .cart-item-header {
-        min-height: 44px;
-        gap: 10px;
+        min-height: auto;
+        gap: 8px;
+        margin-bottom: 2px;
     }
 
     .cart-item-name {
         font-size: 14px;
         font-weight: 600;
-        line-height: 1.5;
+        line-height: 1.2;
         flex: 1;
         min-width: 0;
     }

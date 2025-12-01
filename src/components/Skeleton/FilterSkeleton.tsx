@@ -8,13 +8,13 @@ const cx = classNames.bind(styles);
 
 const FilterSkeleton: React.FC = () => {
     return (
-        <div className={cx('skeleton-filter')}>
-            <div className={cx('skeleton-filter-row')}>
+        <div className={cx('skeleton-filter')} aria-label="Đang tải bộ lọc">
+            <div className={cx('skeleton-filter-row')} aria-hidden="true">
                 <div className={cx('skeleton-line', 'skeleton-filter-dropdown')} />
                 <div className={cx('skeleton-line', 'skeleton-filter-dropdown')} />
                 <div className={cx('skeleton-line', 'skeleton-filter-input')} />
             </div>
-            <div className={cx('skeleton-filter-row')}>
+            <div className={cx('skeleton-filter-row')} aria-hidden="true">
                 <div className={cx('skeleton-line', 'skeleton-filter-input')} />
                 <div className={cx('skeleton-line', 'skeleton-filter-input')} />
                 <div className={cx('skeleton-line', 'skeleton-filter-button')} />
@@ -23,5 +23,5 @@ const FilterSkeleton: React.FC = () => {
     );
 };
 
-export default FilterSkeleton;
+export default React.memo(FilterSkeleton);
 

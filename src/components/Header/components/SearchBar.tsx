@@ -117,49 +117,62 @@ const SearchBar: React.FC<SearchBarProps> = ({
                     }}
                 >
                     {hasSearchResults ? (
-                        <ul className={cx('search-results-list')}>
-                            {searchResults.map((product) => (
-                                <li key={product.id} className={cx('search-result-item')}>
-                                    <Link 
-                                        href={product.href || '#'} 
-                                        className={cx('search-result-link')}
-                                        onClick={() => {
-                                            setIsSearchBarFocused(false);
-                                            setSearchValue('');
-                                        }}
-                                    >
-                                        <div className={cx('search-result-thumbnail')}>
-                                            {product.imageSrc ? (
-                                                <Image
-                                                    src={product.imageSrc}
-                                                    alt={product.imageAlt || product.productName}
-                                                    width={60}
-                                                    height={60}
-                                                    className={cx('search-result-image')}
-                                                />
-                                            ) : (
-                                                <div className={cx('search-result-placeholder')} />
-                                            )}
-                                        </div>
-                                        <div className={cx('search-result-content')}>
-                                            <h4 className={cx('search-result-name')}>
-                                                {product.productName}
-                                            </h4>
-                                            <div className={cx('search-result-prices')}>
-                                                {product.oldPrice && (
-                                                    <span className={cx('search-result-old-price')}>
-                                                        {product.oldPrice.toLocaleString('vi-VN')} ₫
-                                                    </span>
+                        <>
+                            <ul className={cx('search-results-list')}>
+                                {searchResults.map((product) => (
+                                    <li key={product.id} className={cx('search-result-item')}>
+                                        <Link 
+                                            href={product.href || '#'} 
+                                            className={cx('search-result-link')}
+                                            onClick={() => {
+                                                setIsSearchBarFocused(false);
+                                                setSearchValue('');
+                                            }}
+                                        >
+                                            <div className={cx('search-result-thumbnail')}>
+                                                {product.imageSrc ? (
+                                                    <Image
+                                                        src={product.imageSrc}
+                                                        alt={product.imageAlt || product.productName}
+                                                        width={60}
+                                                        height={60}
+                                                        className={cx('search-result-image')}
+                                                    />
+                                                ) : (
+                                                    <div className={cx('search-result-placeholder')} />
                                                 )}
-                                                <span className={cx('search-result-price')}>
-                                                    {product.price.toLocaleString('vi-VN')} ₫
-                                                </span>
                                             </div>
-                                        </div>
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
+                                            <div className={cx('search-result-content')}>
+                                                <h4 className={cx('search-result-name')}>
+                                                    {product.productName}
+                                                </h4>
+                                                <div className={cx('search-result-prices')}>
+                                                    {product.oldPrice && (
+                                                        <span className={cx('search-result-old-price')}>
+                                                            {product.oldPrice.toLocaleString('vi-VN')} ₫
+                                                        </span>
+                                                    )}
+                                                    <span className={cx('search-result-price')}>
+                                                        {product.price.toLocaleString('vi-VN')} ₫
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                            <div className={cx('search-view-all')}>
+                                <Link
+                                    href={`/search?q=${encodeURIComponent(searchValue)}`}
+                                    className={cx('search-view-all-button')}
+                                    onClick={() => {
+                                        setIsSearchBarFocused(false);
+                                    }}
+                                >
+                                    Xem tất cả
+                                </Link>
+                            </div>
+                        </>
                     ) : searchValue.trim() === '' ? (
                         <div className={cx('search-suggestions-section')}>
                             {/* Recent Searches */}

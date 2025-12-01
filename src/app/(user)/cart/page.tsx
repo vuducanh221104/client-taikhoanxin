@@ -774,14 +774,6 @@ const CartPage: React.FC = () => {
                                             return (
                                                 <div className={cx('tr')} key={p.id}>
                                                     <div className={cx('td', 'product')}>
-                                                        <button
-                                                            className={cx('remove')}
-                                                            onClick={() => handleRemove(p.id)}
-                                                            aria-label="Xóa sản phẩm"
-                                                            type="button"
-                                                        >
-                                                            <XIcon size={18} />
-                                                        </button>
                                                         {p.imageSrc ? (
                                                             <div className={cx('thumb')}>
                                                                 <Link href={p.href || '#'}>
@@ -835,7 +827,17 @@ const CartPage: React.FC = () => {
                                                         </button>
                                                     </div>
                                                     <div className={cx('td', 'price')}>
-                                                        {formatPrice(subtotal)}₫
+                                                        <div className={cx('price-content')}>
+                                                            <span>{formatPrice(subtotal)}₫</span>
+                                                            <button
+                                                                className={cx('remove')}
+                                                                onClick={() => handleRemove(p.id)}
+                                                                aria-label="Xóa sản phẩm"
+                                                                type="button"
+                                                            >
+                                                                <TrashIcon size={18} />
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             );
@@ -1029,6 +1031,7 @@ const CartPage: React.FC = () => {
                             {/* Coupon Section */}
                             {cart.products.length > 0 && (
                                 <div className={cx('coupon-section')}>
+                                    <label className={cx('input-label')}>Mã giảm giá</label>
                                     {!cart.couponCode ? (
                                         <>
                                             <div className={cx('coupon-input-wrapper')}>
@@ -1103,34 +1106,19 @@ const CartPage: React.FC = () => {
                                 <strong className={cx('total-amount')}>{formatPrice(total)}₫</strong>
                             </div>
                             
-                            {/* Checkout / Login Button */}
-                            {currentUser ? (
-                                <Link
-                                    href="/checkout"
-                                    className={cx('checkout-btn', { disabled: cart.products.length === 0 })}
-                                    aria-disabled={cart.products.length === 0}
-                                    onClick={(e) => {
-                                        if (cart.products.length === 0) {
-                                            e.preventDefault();
-                                        }
-                                    }}
-                                >
-                                    Tiến hành thanh toán
-                                </Link>
-                            ) : (
-                                <Link
-                                    href={`/auth/login?redirect=${encodeURIComponent('/checkout')}`}
-                                    className={cx('checkout-btn', 'login-to-checkout', { disabled: cart.products.length === 0 })}
-                                    aria-disabled={cart.products.length === 0}
-                                    onClick={(e) => {
-                                        if (cart.products.length === 0) {
-                                            e.preventDefault();
-                                        }
-                                    }}
-                                >
-                                    Đăng nhập để thanh toán
-                                </Link>
-                            )}
+                            {/* Checkout Button */}
+                            <Link
+                                href="/checkout"
+                                className={cx('checkout-btn', { disabled: cart.products.length === 0 })}
+                                aria-disabled={cart.products.length === 0}
+                                onClick={(e) => {
+                                    if (cart.products.length === 0) {
+                                        e.preventDefault();
+                                    }
+                                }}
+                            >
+                                Tiến hành thanh toán
+                            </Link>
                         </div>
                     </div>
                 </div>

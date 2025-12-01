@@ -134,12 +134,6 @@ const PurchaseToastListener: React.FC = () => {
                             <span className={cx('brand-text')}>{brand}</span>
                         </div>
                     )}
-                    <div className={cx('package-label-overlay')}>{packageType}</div>
-                    {duration && (
-                        <div className={cx('duration-badge')}>
-                            {duration}
-                        </div>
-                    )}
                     <div className={cx('image-overlay')} />
                 </div>
                 <div className={cx('purchase-toast-content')}>

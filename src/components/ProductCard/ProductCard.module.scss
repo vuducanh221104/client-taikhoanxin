@@ -13,7 +13,7 @@
     align-items: stretch;
     justify-content: flex-start;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow: hidden;
+    overflow: visible; // Changed from hidden to visible to show remove button
     box-shadow: 0 2px 8px var(--shadow-color-light);
     transform: translateZ(0);
     backface-visibility: hidden;
@@ -30,6 +30,22 @@
     &:active {
         transform: translateY(-4px) scale(1);
         transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    // Out of stock styling - only dim the image
+    &.out-of-stock {
+        pointer-events: auto; // Still allow clicking to view product
+        
+        .product-banner {
+            opacity: 0.5;
+            filter: grayscale(0.4);
+            transition: opacity 0.3s ease, filter 0.3s ease;
+        }
+
+        &:hover .product-banner {
+            opacity: 0.6;
+            filter: grayscale(0.3);
+        }
     }
 
     // Dark variant for dark backgrounds
@@ -268,6 +284,28 @@
 
     span {
         line-height: 1;
+    }
+}
+
+// Discount Badge (Top position)
+.badge-discount-top {
+    background: linear-gradient(135deg, #ff4757 0%, #ff3838 100%);
+    color: var(--text-color-white);
+    box-shadow: 0 4px 12px rgba(255, 71, 87, 0.4);
+    font-size: 13px;
+    font-weight: 800;
+    padding: 6px 12px;
+    animation: discount-pulse 2s ease-in-out infinite;
+}
+
+@keyframes discount-pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 12px rgba(255, 71, 87, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 16px rgba(255, 71, 87, 0.6);
     }
 }
 
@@ -553,6 +591,7 @@
     margin-top: auto;
     padding-top: 8px; // Reduced from 12px
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: visible; // Allow remove button to show
 }
 
 .product-card:hover .price-section {
@@ -592,6 +631,58 @@
 
 .product-card:hover .old-price {
     opacity: 0.7;
+}
+
+// Remove Button
+.remove-button {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--error-color);
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    width: 100%;
+    position: relative;
+    z-index: 20;
+    opacity: 1 !important;
+    visibility: visible !important;
+    flex-shrink: 0;
+
+    &:hover {
+        background: var(--error-color-light);
+        border-color: var(--error-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 71, 87, 0.2);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+
+    svg {
+        flex-shrink: 0;
+    }
+
+    @media (max-width: 768px) {
+        padding: 8px 14px;
+        font-size: 13px;
+        margin-top: 10px;
+    }
+
+    @media (max-width: 480px) {
+        padding: 8px 12px;
+        font-size: 12px;
+        margin-top: 8px;
+    }
 }
 
 .discount-badge {

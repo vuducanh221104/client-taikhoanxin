@@ -167,6 +167,15 @@ const MobileSearchDropdown: React.FC<MobileSearchDropdownProps> = ({
                                     </li>
                                 ))}
                             </ul>
+                            <div className={cx('search-view-all')}>
+                                <Link
+                                    href={`/search?q=${encodeURIComponent(searchValue)}`}
+                                    className={cx('search-view-all-button')}
+                                    onClick={closeSearch}
+                                >
+                                    Xem tất cả
+                                </Link>
+                            </div>
                         </div>
                     ) : searchValue.trim() === '' ? (
                         <div className={cx('search-suggestions-section')}>
