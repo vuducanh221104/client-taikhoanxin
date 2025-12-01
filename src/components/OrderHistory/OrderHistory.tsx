@@ -706,33 +706,36 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
                         />
                     </div>
                 ) : (
-                    <table className={cx('orders-table')}>
-                        <thead>
-                            <tr>
-                                <th>Thời gian</th>
-                                <th>Mã đơn hàng</th>
-                                <th>Sản phẩm</th>
-                                <th>Tổng tiền</th>
-                                <th>Trạng thái</th>
-                                <th>Hành động</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                    <div className={cx('orders-board')}>
+                        <div className={cx('orders-board-head')}>
+                            <span>Thời gian</span>
+                            <span>Mã đơn hàng</span>
+                            <span>Sản phẩm</span>
+                            <span>Tổng tiền</span>
+                            <span>Trạng thái</span>
+                            <span>Hành động</span>
+                        </div>
+                        <div className={cx('orders-board-body')}>
                             {filteredOrders.map((order) => {
                                 const showCancelButton = canCancelOrder(order.status as Order['orderStatus']);
                                 const isCancelling = cancellingOrderId === order.id;
 
                                 return (
-                                    <tr key={order.id}>
-                                        <td className={cx('order-time')}>
-                                            {formatDateTime(order.orderDate)}
-                                        </td>
-                                        <td className={cx('order-code')}>
+                                    <div className={cx('orders-board-row')} key={order.id}>
+                                        <div className={cx('order-cell', 'order-time')}>
+                                            <span className={cx('cell-label')}>Thời gian</span>
+                                            <span className={cx('cell-value')}>
+                                                {formatDateTime(order.orderDate)}
+                                            </span>
+                                        </div>
+                                        <div className={cx('order-cell', 'order-code')}>
+                                            <span className={cx('cell-label')}>Mã đơn hàng</span>
                                             <Link href={`/account/orders/${order.orderCode}`}>
                                                 {order.orderCode}
                                             </Link>
-                                        </td>
-                                        <td className={cx('order-products')}>
+                                        </div>
+                                        <div className={cx('order-cell', 'order-products')}>
+                                            <span className={cx('cell-label')}>Sản phẩm</span>
                                             <div className={cx('products-list')}>
                                                 {order.products.slice(0, 3).map((product) => (
                                                     <div key={product.id} className={cx('product-item')}>
@@ -747,16 +750,21 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
                                                     </span>
                                                 )}
                                             </div>
-                                        </td>
-                                        <td className={cx('order-amount')}>
-                                            {formatPrice(order.totalAmount)}
-                                        </td>
-                                        <td className={cx('order-status')}>
+                                        </div>
+                                        <div className={cx('order-cell', 'order-amount')}>
+                                            <span className={cx('cell-label')}>Tổng tiền</span>
+                                            <span className={cx('cell-value')}>
+                                                {formatPrice(order.totalAmount)}
+                                            </span>
+                                        </div>
+                                        <div className={cx('order-cell', 'order-status')}>
+                                            <span className={cx('cell-label')}>Trạng thái</span>
                                             <span className={cx('status-badge', getStatusColor(order.status as string))}>
                                                 {getStatusLabel(order.status as string)}
                                             </span>
-                                        </td>
-                                        <td className={cx('order-actions')}>
+                                        </div>
+                                        <div className={cx('order-cell', 'order-actions')}>
+                                            <span className={cx('cell-label')}>Hành động</span>
                                             <div className={cx('action-buttons')}>
                                                 <button
                                                     type="button"
@@ -776,12 +784,12 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
                                                     </button>
                                                 )}
                                             </div>
-                                        </td>
-                                    </tr>
+                                        </div>
+                                    </div>
                                 );
                             })}
-                        </tbody>
-                    </table>
+                        </div>
+                    </div>
                 )}
             </div>
         </div>
