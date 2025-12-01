@@ -161,6 +161,10 @@ const Footer: React.FC = () => {
                     <p className={cx('footer-copyright')}>
                         © {new Date().getFullYear()} Tài Khoản Xịn. Tất cả quyền được bảo lưu.
                     </p>
+                    <div className={cx('footer-bottom-links')}>
+                        <Link href="/help/policies/privacy">Privacy</Link>
+                        <Link href="/help/policies/terms">Terms</Link>
+                    </div>
                 </div>
             </div>
         </footer>

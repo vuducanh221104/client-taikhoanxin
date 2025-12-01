@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import classNames from 'classnames/bind';
 import styles from '../Header.module.scss';
-import { EyeIcon, FlameIcon, PercentIcon, ToolIcon } from '@/components/Icons';
+import { EyeIcon, FlameIcon, PercentIcon, ToolIcon, HistoryIcon } from '@/components/Icons';
 import CategoryDropdown from '@/components/CategoryDropdown/CategoryDropdown';
 
 const cx = classNames.bind(styles);
@@ -53,6 +53,14 @@ const HeaderMiddleBar: React.FC<HeaderMiddleBarProps> = ({ setIsHeaderHoverOverl
                     >
                         <ToolIcon className={cx('quick-link-icon')} />
                         <span>Tools</span>
+                    </Link>
+                    <Link 
+                        href="/orders/lookup" 
+                        className={cx('quick-link')}
+                        aria-label="Tra cứu đơn hàng"
+                    >
+                        <HistoryIcon className={cx('quick-link-icon')} />
+                        <span>Tra cứu đơn hàng</span>
                     </Link>
                 </div>
             </div>

@@ -1,35 +1,10 @@
 @import '@/styles/mixins';
 
 .footer-wrapper {
-    background: linear-gradient(135deg, var(--bg-color-dark) 0%, rgba(25, 30, 45, 0.98) 50%, var(--bg-color-dark) 100%);
+    background: #0f0c18;
     color: var(--text-color-white);
     margin-top: 60px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1); // Keep for subtle border
-    position: relative;
-    
-    // Thêm overlay gradient để tạo độ sâu
-    &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(
-            180deg,
-            rgba(91, 124, 255, 0.03) 0%,
-            transparent 30%,
-            transparent 70%,
-            rgba(91, 124, 255, 0.05) 100%
-        );
-        pointer-events: none;
-        z-index: 0;
-    }
-    
-    > * {
-        position: relative;
-        z-index: 1;
-    }
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .footer-container {
@@ -44,20 +19,21 @@
 }
 
 .footer-content {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1.5fr;
-    gap: 40px;
-    padding: 60px 0 40px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1); // Keep for subtle border
+    display: flex;
+    flex-wrap: wrap;
+    gap: 48px;
+    padding: 64px 0 48px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .footer-column {
     display: flex;
     flex-direction: column;
+    gap: 16px;
 }
 
 .footer-about {
-    max-width: 350px;
+    max-width: 320px;
 }
 
 .footer-logo {
@@ -80,42 +56,32 @@
 .footer-description {
     font-size: 14px;
     line-height: 1.6;
-    color: var(--text-color-dark);
-    margin-bottom: 24px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0;
 }
 
 .footer-social {
     display: flex;
-    gap: 12px;
+    gap: 16px;
     align-items: center;
-}
 
-.social-link {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--bg-color-dark-light);
-    color: var(--text-color-dark);
-    transition: all 0.3s ease;
-    text-decoration: none;
+    .social-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.7);
+        text-decoration: none;
+        transition: color 0.2s ease;
 
-    &:hover {
-        background: var(--primary-color);
-        color: var(--text-color-white);
-        transform: translateY(-2px);
-    }
+        &:hover {
+            color: #ffffff;
+        }
 
-    // Telegram specific hover color
-    &[aria-label="Telegram"]:hover {
-        background: var(--telegram-color);
-    }
-
-    svg {
-        width: 20px;
-        height: 20px;
+        svg {
+            width: 18px;
+            height: 18px;
+        }
     }
 }
 
@@ -134,19 +100,18 @@
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 
     li {
         a {
             font-size: 14px;
-            color: var(--text-color-dark);
+            color: rgba(255, 255, 255, 0.65);
             text-decoration: none;
             transition: all 0.3s ease;
             display: inline-block;
 
             &:hover {
-                color: var(--primary-color);
-                transform: translateX(4px);
+                color: #ffffff;
             }
         }
     }
@@ -165,13 +130,8 @@
         align-items: center;
         gap: 14px;
         font-size: 14px;
-        color: var(--text-color-dark-light);
+        color: rgba(255, 255, 255, 0.65);
         line-height: 1.7;
-        transition: color 0.3s ease;
-
-        &:hover {
-            color: var(--text-color-dark-lighter);
-        }
 
         .contact-icon {
             display: flex;
@@ -180,7 +140,7 @@
             flex-shrink: 0;
             width: 24px;
             height: 24px;
-            color: var(--primary-color);
+            color: rgba(255, 255, 255, 0.75);
             margin-top: 0;
 
             &.email {
@@ -209,26 +169,52 @@
 }
 
 .footer-bottom {
-    padding: 24px 0;
-    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+        gap: 12px;
+    }
 }
 
 .footer-copyright {
-    font-size: 14px;
-    color: var(--text-color-dark-lightest);
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
     margin: 0;
+}
+
+.footer-bottom-links {
+    display: flex;
+    gap: 20px;
+
+    a {
+        color: rgba(255, 255, 255, 0.7);
+        text-decoration: none;
+        font-weight: 500;
+
+        &:hover {
+            color: #ffffff;
+        }
+    }
 }
 
 // Responsive
 @media (max-width: 1024px) {
     .footer-content {
-        grid-template-columns: 1fr 1fr;
-        gap: 40px;
+        gap: 32px;
+    }
+
+    .footer-column {
+        flex: 1 1 45%;
     }
 
     .footer-about {
-        max-width: 100%;
-        grid-column: 1 / -1;
+        flex-basis: 100%;
     }
 }
 
@@ -242,13 +228,9 @@
     }
 
     .footer-content {
-        grid-template-columns: 1fr;
+        flex-direction: column;
         gap: 32px;
         padding: 40px 0 32px;
-    }
-
-    .footer-about {
-        grid-column: 1;
     }
 
     .footer-logo {
@@ -280,14 +262,6 @@
             font-size: 13px;
         }
     }
-
-    .footer-bottom {
-        padding: 20px 0;
-    }
-
-    .footer-copyright {
-        font-size: 12px;
-    }
 }
 
 @media (max-width: 480px) {
@@ -296,13 +270,7 @@
         padding: 32px 0 24px;
     }
 
-    .social-link {
-        width: 36px;
-        height: 36px;
-
-        svg {
-            width: 18px;
-            height: 18px;
-        }
+    .footer-logo {
+        margin-bottom: 12px;
     }
 }
