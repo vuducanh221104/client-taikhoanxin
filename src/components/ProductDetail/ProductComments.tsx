@@ -5,7 +5,15 @@ import Image from 'next/image';
 import classNames from 'classnames/bind';
 import { useSelector } from 'react-redux';
 import styles from './ProductComments.module.scss';
-import { SendIcon, CheckCircleIcon, DiamondIcon, MessageCircleIcon, StarIcon } from '@/components/Icons';
+import {
+    SendIcon,
+    CheckCircleIcon,
+    DiamondIcon,
+    MessageCircleIcon,
+    StarIcon,
+    ShieldCheckIcon,
+    ClockIcon,
+} from '@/components/Icons';
 import { useProductReviews, createReview, replyReview, type Review } from '@/services/reviewService';
 import { RootState } from '@/redux/store';
 import { useToast } from '@/hooks/useToast';
@@ -377,22 +385,37 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
                         </div>
                         <div className={cx('hero-metrics-wrapper')}>
                             <div className={cx('hero-metrics')}>
-                                <div className={cx('metric-card')}>
-                                    <span className={cx('metric-label')}>Điểm đánh giá</span>
-                                    <strong className={cx('metric-value')}>
-                                        {averageRating ? averageRating.toFixed(1) : '5.0'}
-                                    </strong>
-                                    <p>{totalReviews} lượt đánh giá</p>
+                                <div className={cx('metric-card', 'metric-rating')}>
+                                    <div className={cx('metric-icon')}>
+                                        <StarIcon size={18} />
+                                    </div>
+                                    <div className={cx('metric-content')}>
+                                        <span className={cx('metric-label')}>Điểm đánh giá</span>
+                                        <strong className={cx('metric-value')}>
+                                            {averageRating ? averageRating.toFixed(1) : '5.0'}
+                                        </strong>
+                                        <p>{totalReviews} lượt đánh giá</p>
+                                    </div>
                                 </div>
-                                <div className={cx('metric-card')}>
-                                    <span className={cx('metric-label')}>Khách mua xác nhận</span>
-                                    <strong className={cx('metric-value')}>{verifiedPurchaseCount}</strong>
-                                    <p>Đánh giá đã mua hàng</p>
+                                <div className={cx('metric-card', 'metric-verified')}>
+                                    <div className={cx('metric-icon')}>
+                                        <ShieldCheckIcon size={18} />
+                                    </div>
+                                    <div className={cx('metric-content')}>
+                                        <span className={cx('metric-label')}>Khách mua xác nhận</span>
+                                        <strong className={cx('metric-value')}>{verifiedPurchaseCount}</strong>
+                                        <p>Đánh giá đã mua hàng</p>
+                                    </div>
                                 </div>
-                                <div className={cx('metric-card')}>
-                                    <span className={cx('metric-label')}>Phản hồi hỗ trợ</span>
-                                    <strong className={cx('metric-value')}>~5 phút</strong>
-                                    <p>Trung bình phản hồi</p>
+                                <div className={cx('metric-card', 'metric-response')}>
+                                    <div className={cx('metric-icon')}>
+                                        <ClockIcon size={18} />
+                                    </div>
+                                    <div className={cx('metric-content')}>
+                                        <span className={cx('metric-label')}>Phản hồi hỗ trợ</span>
+                                        <strong className={cx('metric-value')}>~5 phút</strong>
+                                        <p>Trung bình phản hồi</p>
+                                    </div>
                                 </div>
                             </div>
                             <p className={cx('composer-info')}>{commentsInfo}</p>

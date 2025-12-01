@@ -121,7 +121,8 @@
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
     flex: 1;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    gap: 12px;
 
     @media (max-width: 999px) {
         min-width: 0;
@@ -136,6 +137,24 @@
     @media (max-width: 480px) {
         flex: 1 1 100%;
         padding: 12px 14px;
+    }
+
+    .metric-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-color);
+        background: rgba(59, 130, 246, 0.12);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+
+    .metric-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
     }
 
     .metric-label {
@@ -175,6 +194,27 @@
 
         @media (max-width: 480px) {
             font-size: 11px;
+        }
+    }
+
+    &.metric-rating {
+        .metric-icon {
+            color: var(--warning-color);
+            background: rgba(251, 146, 60, 0.18);
+        }
+    }
+
+    &.metric-verified {
+        .metric-icon {
+            color: var(--success-color);
+            background: rgba(52, 211, 153, 0.16);
+        }
+    }
+
+    &.metric-response {
+        .metric-icon {
+            color: var(--info-color);
+            background: rgba(96, 165, 250, 0.18);
         }
     }
 }
