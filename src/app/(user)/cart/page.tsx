@@ -780,8 +780,8 @@ const CartPage: React.FC = () => {
                                                                     <Image
                                                                         src={p.imageSrc}
                                                                         alt={p.imageAlt || p.productName}
-                                                                        width={160}
-                                                                        height={120}
+                                                                        width={240}
+                                                                        height={180}
                                                                         className={cx('thumb-image')}
                                                                     />
                                                                 </Link>
