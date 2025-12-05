@@ -1,7 +1,54 @@
-.scroll-to-top {
+.floating-buttons {
     position: fixed;
     bottom: 32px;
     right: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 999;
+    align-items: flex-end;
+}
+
+.zalo-chat-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: var(--primary-color);
+    color: var(--text-color-white);
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(47, 120, 255, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    white-space: nowrap;
+
+    svg,
+    .zalo-icon {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+    }
+    
+    .zalo-icon {
+        object-fit: contain;
+    }
+
+    &:hover {
+        background: var(--primary-color-hover);
+        box-shadow: 0 6px 20px rgba(47, 120, 255, 0.5);
+        transform: translateY(-2px);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+}
+
+.scroll-to-top {
     width: 48px;
     height: 48px;
     background: var(--primary-color);
@@ -17,7 +64,6 @@
     opacity: 0;
     visibility: hidden;
     transform: translateY(20px) scale(0.8);
-    z-index: 999;
     font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
     svg {
@@ -49,9 +95,24 @@
 
 // Responsive
 @media (max-width: 768px) {
-    .scroll-to-top {
+    .floating-buttons {
         bottom: 24px;
         right: 24px;
+        gap: 10px;
+    }
+
+    .zalo-chat-button {
+        padding: 10px 16px;
+        font-size: 13px;
+
+        svg,
+        .zalo-icon {
+            width: 18px;
+            height: 18px;
+        }
+    }
+
+    .scroll-to-top {
         width: 44px;
         height: 44px;
 
@@ -64,10 +125,25 @@
 
 // Mobile with bottom navigation (< 999px)
 @media (max-width: 999px) {
-    .scroll-to-top {
+    .floating-buttons {
         // Position above bottom navigation (60px height + 16px spacing)
         bottom: 76px;
         right: 20px;
+        gap: 10px;
+    }
+
+    .zalo-chat-button {
+        padding: 10px 16px;
+        font-size: 13px;
+
+        svg,
+        .zalo-icon {
+            width: 18px;
+            height: 18px;
+        }
+    }
+
+    .scroll-to-top {
         width: 44px;
         height: 44px;
 
@@ -79,14 +155,34 @@
 }
 
 @media (max-width: 480px) {
-    .scroll-to-top {
+    .floating-buttons {
         // Keep above bottom navigation
         bottom: 76px;
         right: 16px;
+        gap: 8px;
+    }
+
+    .zalo-chat-button {
+        padding: 8px 14px;
+        font-size: 12px;
+
+        svg,
+        .zalo-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        span {
+            display: none; // Ẩn text trên mobile nhỏ, chỉ hiển thị icon
+        }
+    }
+
+    .scroll-to-top {
         width: 40px;
         height: 40px;
 
-        svg {
+        svg,
+        .zalo-icon {
             width: 18px;
             height: 18px;
         }

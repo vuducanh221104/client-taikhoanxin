@@ -1034,25 +1034,25 @@
         min-width: 0; // Cho phép shrink với grid
     }
 
-    // PC Medium (min-width: 1000px and max-width: 1199px) - 3 cột
-    @media (min-width: 1000px) and (max-width: 1199px) {
+    // PC Medium (min-width: 1000px) - 3 cột
+    @media (min-width: 1000px) {
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        row-gap: 16px;
-        column-gap: 10px;
-    }
-
-    // PC Large (min-width: 1200px) - 4 cột
-    @media (min-width: 1200px) {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        row-gap: 16px;
-        column-gap: 12px;
-    }
-
-    // PC Extra Large (min-width: 1600px) - 4 cột với gap lớn hơn
-    @media (min-width: 1600px) {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
         row-gap: 20px;
-        column-gap: 12px;
+        column-gap: 24px;
+    }
+
+    // PC Large (min-width: 1200px) - 3 cột với gap lớn hơn
+    @media (min-width: 1200px) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        row-gap: 24px;
+        column-gap: 24px;
+    }
+
+    // PC Extra Large (min-width: 1600px) - 3 cột với gap lớn hơn
+    @media (min-width: 1600px) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        row-gap: 24px;
+        column-gap: 32px;
     }
 
     // Tablet (max-width: 999px) - 2 cột

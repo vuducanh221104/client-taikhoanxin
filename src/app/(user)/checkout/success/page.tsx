@@ -513,152 +513,161 @@ useEffect(() => {
                                 </div>
                             )}
 
-                            {/* QR Code Section */}
-                            <div className={cx('bill-qr-section')}>
-                                <h3 className={cx('bill-section-title')}>Quét mã QR để thanh toán</h3>
-                                <div className={cx('bill-qr-wrapper')}>
-                                    <div
-                                        className={cx('bill-qr-code')}
-                                        onClick={() => setIsQrModalOpen(true)}
-                                        role="button"
-                                        tabIndex={0}
-                                    >
-                                        <Image
-                                            src={displayOrder.vietQR?.image || '/payment/my-QR.png'}
-                                            alt="QR Code thanh toán"
-                                            width={250}
-                                            height={250}
-                                            className={cx('bill-qr-image')}
-                                            priority
-                                        />
-                                        <div className={cx('bill-qr-scan-line')}></div>
-                                    </div>
-                                    <p className={cx('bill-qr-hint')}>Nhấn vào QR để phóng to</p>
-                                </div>
-                            </div>
-
-                            {/* Bank Transfer Information */}
-                            <div className={cx('bill-bank-info')}>
-                                <h3 className={cx('bill-section-title')}>Thông tin chuyển khoản ngân hàng</h3>
-                                <ul className={cx('bill-bank-list')}>
-                                    <li>
-                                        <strong>Chủ tài khoản:</strong> {BANK_INFO.accountHolder}
-                                    </li>
-                                    <li>
-                                        <strong>Ngân hàng:</strong> {BANK_INFO.bankName} ({BANK_INFO.bankCode})
-                                    </li>
-                                    <li>
-                                        <strong>Số tài khoản:</strong> {BANK_INFO.accountNumber}
-                                    </li>
-                                    <li>
-                                        <strong>Nội dung:</strong> {displayOrder.code}
-                                    </li>
-                                </ul>
-                                <p className={cx('bill-note')}>
-                                    <strong>Lưu ý:</strong> Khi chuyển khoản, vui lòng ghi rõ{' '}
-                                    <strong>MÃ ĐƠN HÀNG (#{displayOrder.code})</strong> trong phần nội dung chuyển khoản để chúng tôi
-                                    có thể xác nhận thanh toán chính xác.
-                                </p>
-                                <div className={cx('bill-note-critical')}>
-                                    Thanh toán xong vui lòng <strong>không tắt trình duyệt</strong> cho tới khi đơn hàng được xác nhận.
-                                </div>
-                                <p className={cx('bill-note-small')}>
-                                    Sau khi thanh toán được xác nhận, đơn hàng sẽ được gửi qua email cho bạn trong thời gian sớm
-                                    nhất.
-                                </p>
-                            </div>
-
-                            {/* Order Summary */}
-                            <div className={cx('bill-order-summary')}>
-                                <h3 className={cx('bill-section-title')}>Tóm tắt đơn hàng</h3>
-                                <div className={cx('bill-order-meta')}>
-                                    <p>
-                                        Đơn hàng <strong>#{displayOrder.code}</strong> ({formatDate(displayOrder.createdAt)})
-                                    </p>
-                                    {!isExpired && remainingSeconds > 0 && (
-                                        <span className={cx('bill-note-small')}>
-                                            Còn khoảng {Math.ceil(remainingSeconds / 60)} phút để hoàn tất thanh toán
-                                        </span>
-                                    )}
-                                </div>
-
-                                {/* Order Items */}
-                                <div className={cx('bill-items')}>
-                                    {displayOrder.items.map((item: any, index: number) => (
-                                        <div className={cx('bill-item')} key={item.id || index}>
-                                            <div className={cx('bill-item-media')}>
+                            {/* Two Column Layout */}
+                            <div className={cx('bill-two-columns')}>
+                                {/* Left Column */}
+                                <div className={cx('bill-left-column')}>
+                                    {/* QR Code Section */}
+                                    <div className={cx('bill-qr-section')}>
+                                        <h3 className={cx('bill-section-title')}>QUÉT MÃ QR ĐỂ THANH TOÁN</h3>
+                                        <div className={cx('bill-qr-wrapper')}>
+                                            <div
+                                                className={cx('bill-qr-code')}
+                                                onClick={() => setIsQrModalOpen(true)}
+                                                role="button"
+                                                tabIndex={0}
+                                            >
                                                 <Image
-                                                    src={item.image || '/images/placeholder.png'}
-                                                    alt={item.productName}
-                                                    width={72}
-                                                    height={72}
-                                                    className={cx('bill-item-image')}
-                                                    loading="lazy"
+                                                    src={displayOrder.vietQR?.image || '/payment/my-QR.png'}
+                                                    alt="QR Code thanh toán"
+                                                    width={250}
+                                                    height={250}
+                                                    className={cx('bill-qr-image')}
+                                                    priority
                                                 />
+                                                <div className={cx('bill-qr-scan-line')}></div>
                                             </div>
-                                            <div className={cx('bill-item-info')}>
-                                                <span className={cx('bill-item-name')}>{item.productName}</span>
-                                                <span className={cx('bill-item-qty')}>x{item.quantity}</span>
+                                            <p className={cx('bill-qr-hint')}>Nhấn vào QR để phóng to</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Bank Transfer Information */}
+                                    <div className={cx('bill-bank-info')}>
+                                        <h3 className={cx('bill-section-title')}>THÔNG TIN CHUYỂN KHOẢN NGÂN HÀNG</h3>
+                                        <ul className={cx('bill-bank-list')}>
+                                            <li>
+                                                <strong>Chủ tài khoản:</strong> {BANK_INFO.accountHolder}
+                                            </li>
+                                            <li>
+                                                <strong>Ngân hàng:</strong> {BANK_INFO.bankName} ({BANK_INFO.bankCode})
+                                            </li>
+                                            <li>
+                                                <strong>Số tài khoản:</strong> {BANK_INFO.accountNumber}
+                                            </li>
+                                            <li>
+                                                <strong>Nội dung:</strong> {displayOrder.code}
+                                            </li>
+                                        </ul>
+                                        <p className={cx('bill-note')}>
+                                            <strong>Lưu ý:</strong> Khi chuyển khoản, vui lòng ghi rõ{' '}
+                                            <strong>MÃ ĐƠN HÀNG (#{displayOrder.code})</strong> trong phần nội dung chuyển khoản để chúng tôi
+                                            có thể xác nhận thanh toán chính xác.
+                                        </p>
+                                        <div className={cx('bill-note-critical')}>
+                                            Thanh toán xong vui lòng <strong>không tắt trình duyệt</strong> cho tới khi đơn hàng được xác nhận.
+                                        </div>
+                                        <p className={cx('bill-note-small')}>
+                                            Sau khi thanh toán được xác nhận, đơn hàng sẽ được gửi qua email cho bạn trong thời gian sớm
+                                            nhất.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Right Column */}
+                                <div className={cx('bill-right-column')}>
+                                    {/* Order Summary */}
+                                    <div className={cx('bill-order-summary')}>
+                                        <h3 className={cx('bill-section-title')}>Tóm tắt đơn hàng</h3>
+                                        <div className={cx('bill-order-meta')}>
+                                            <p>
+                                                Đơn hàng <strong>#{displayOrder.code}</strong> ({formatDate(displayOrder.createdAt)})
+                                            </p>
+                                            {!isExpired && remainingSeconds > 0 && (
+                                                <span className={cx('bill-note-small')}>
+                                                    Còn khoảng {Math.ceil(remainingSeconds / 60)} phút để hoàn tất thanh toán
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Order Items */}
+                                        <div className={cx('bill-items')}>
+                                            {displayOrder.items.map((item: any, index: number) => (
+                                                <div className={cx('bill-item')} key={item.id || index}>
+                                                    <div className={cx('bill-item-media')}>
+                                                        <Image
+                                                            src={item.image || '/images/placeholder.png'}
+                                                            alt={item.productName}
+                                                            width={72}
+                                                            height={72}
+                                                            className={cx('bill-item-image')}
+                                                            loading="lazy"
+                                                        />
+                                                    </div>
+                                                    <div className={cx('bill-item-info')}>
+                                                        <span className={cx('bill-item-name')}>{item.productName}</span>
+                                                        <span className={cx('bill-item-qty')}>x{item.quantity}</span>
+                                                    </div>
+                                                    <div className={cx('bill-item-price')}>
+                                                        {formatPrice(item.price * item.quantity)}₫
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Totals */}
+                                        <div className={cx('bill-totals')}>
+                                            <div className={cx('bill-total-row')}>
+                                                <span>Tạm tính:</span>
+                                                <span>{formatPrice(displayOrder.subtotal || displayOrder.total)}₫</span>
                                             </div>
-                                            <div className={cx('bill-item-price')}>
-                                                {formatPrice(item.price * item.quantity)}₫
+                                            
+                                            {/* Coupon Discount */}
+                                            {displayOrder.coupon && displayOrder.coupon.discount > 0 && (
+                                                <div className={cx('bill-total-row', 'bill-discount-row')}>
+                                                    <span>
+                                                        Mã giảm giá
+                                                        <span className={cx('bill-coupon-badge')}>{displayOrder.coupon.code}</span>
+                                                    </span>
+                                                    <span className={cx('bill-discount-amount')}>
+                                                        -{formatPrice(displayOrder.coupon.discount)}₫
+                                                    </span>
+                                                </div>
+                                            )}
+                                            
+                                            <div className={cx('bill-total-row', 'bill-total-final')}>
+                                                <span>Tổng cộng:</span>
+                                                <span>{formatPrice(displayOrder.total)}₫</span>
+                                            </div>
+                                            <div className={cx('bill-total-row', 'bill-payment-method')}>
+                                                <span>Phương thức thanh toán:</span>
+                                                <span>{displayOrder.paymentMethodLabel}</span>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-
-                                {/* Totals */}
-                                <div className={cx('bill-totals')}>
-                                    <div className={cx('bill-total-row')}>
-                                        <span>Tạm tính:</span>
-                                        <span>{formatPrice(displayOrder.subtotal || displayOrder.total)}₫</span>
                                     </div>
-                                    
-                                    {/* Coupon Discount */}
-                                    {displayOrder.coupon && displayOrder.coupon.discount > 0 && (
-                                        <div className={cx('bill-total-row', 'bill-discount-row')}>
-                                            <span>
-                                                Mã giảm giá
-                                                <span className={cx('bill-coupon-badge')}>{displayOrder.coupon.code}</span>
-                                            </span>
-                                            <span className={cx('bill-discount-amount')}>
-                                                -{formatPrice(displayOrder.coupon.discount)}₫
-                                            </span>
+
+                                    {/* Customer Information */}
+                                    <div className={cx('bill-customer-info')}>
+                                        <h3 className={cx('bill-section-title')}>Thông tin thanh toán</h3>
+                                        <div className={cx('bill-customer-details')}>
+                                            <p>{displayOrder.customerName}</p>
+                                            <p>Việt Nam</p>
+                                            <p>{displayOrder.customerPhone}</p>
+                                            <p>{displayOrder.customerEmail}</p>
                                         </div>
-                                    )}
-                                    
-                                    <div className={cx('bill-total-row', 'bill-total-final')}>
-                                        <span>Tổng cộng:</span>
-                                        <span>{formatPrice(displayOrder.total)}₫</span>
                                     </div>
-                                    <div className={cx('bill-total-row', 'bill-payment-method')}>
-                                        <span>Phương thức thanh toán:</span>
-                                        <span>{displayOrder.paymentMethodLabel}</span>
+
+                                    {/* Footer */}
+                                    <div className={cx('bill-footer')}>
+                                        <p>
+                                            Cảm ơn bạn một lần nữa! Nếu cần hỗ trợ về đơn hàng, vui lòng liên hệ với chúng tôi qua
+                                            email{' '}
+                                            <a href="mailto:support@taikhoanxin.com" className={cx('bill-email-link')}>
+                                                support@taikhoanxin.com
+                                            </a>
+                                            .
+                                        </p>
                                     </div>
                                 </div>
-                            </div>
-
-                            {/* Customer Information */}
-                            <div className={cx('bill-customer-info')}>
-                                <h3 className={cx('bill-section-title')}>Thông tin thanh toán</h3>
-                                <div className={cx('bill-customer-details')}>
-                                    <p>{displayOrder.customerName}</p>
-                                    <p>Việt Nam</p>
-                                    <p>{displayOrder.customerPhone}</p>
-                                    <p>{displayOrder.customerEmail}</p>
-                                </div>
-                            </div>
-
-                            {/* Footer */}
-                            <div className={cx('bill-footer')}>
-                                <p>
-                                    Cảm ơn bạn một lần nữa! Nếu cần hỗ trợ về đơn hàng, vui lòng liên hệ với chúng tôi qua
-                                    email{' '}
-                                    <a href="mailto:support@taikhoanxin.com" className={cx('bill-email-link')}>
-                                        support@taikhoanxin.com
-                                    </a>
-                                    .
-                                </p>
                             </div>
                         </div>
 
@@ -709,7 +718,7 @@ useEffect(() => {
                                 </div>
                                 <div className={cx('qr-modal-info-item')}>
                                     <span className={cx('qr-modal-label')}>Nội dung CK:</span>
-                                    <span className={cx('qr-modal-value')}>CK {displayOrder.code}</span>
+                                    <span className={cx('qr-modal-value')}>{displayOrder.code}</span>
                                 </div>
                                 <div className={cx('qr-modal-info-item')}>
                                     <span className={cx('qr-modal-label')}>Tên chủ TK:</span>

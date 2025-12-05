@@ -1,37 +1,125 @@
-.related-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
+.related-slider-wrapper {
+    position: relative;
     width: 100%;
-    max-width: 100%;
-    justify-items: stretch;
-    align-items: start;
+    overflow: hidden;
+}
 
-    // Ensure cards don't exceed their max-width and fit properly in grid
-    & > * {
-        max-width: 100%;
-        width: 100%;
-        min-width: 0; // Cho phép shrink với grid
-    }
+.related-slider {
+    display: flex;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+}
 
-    // Override ProductCard max-width to fit grid properly
-    :global(.product-card) {
-        max-width: 100% !important;
-    }
+.slider-slide {
+    display: flex;
+    flex: 0 0 100%;
+    width: 100%;
+    gap: 24px;
 
     @media (max-width: 1200px) {
-        grid-template-columns: repeat(3, 1fr);
         gap: 20px;
     }
 
     @media (max-width: 999px) {
-        grid-template-columns: repeat(2, 1fr);
         gap: 20px;
     }
 
     @media (max-width: 480px) {
-        grid-template-columns: repeat(2, 1fr);
         gap: 16px;
+    }
+}
+
+.slider-item {
+    flex: 0 0 auto;
+    width: calc((100% - 72px) / 4); // 4 items với 3 gaps (24px * 3)
+    min-width: 0;
+
+    @media (max-width: 1200px) {
+        width: calc((100% - 40px) / 4); // Still 4 items on large tablets
+    }
+
+    @media (max-width: 999px) {
+        width: calc((100% - 20px) / 2); // 2 items với 1 gap
+    }
+
+    @media (max-width: 480px) {
+        width: calc((100% - 16px) / 2); // 2 items với 1 gap
+    }
+
+    // Override ProductCard max-width to fit slider properly
+    :global(.product-card) {
+        max-width: 100% !important;
+        width: 100%;
+    }
+}
+
+.slider-navigation {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 32px;
+    align-items: center;
+
+    @media (max-width: 999px) {
+        margin-top: 24px;
+    }
+}
+
+.nav-button {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: var(--bg-color);
+    color: var(--text-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+
+    &:hover:not(.disabled) {
+        background: var(--primary-color);
+        color: var(--text-color-white);
+        border-color: var(--primary-color);
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(47, 120, 255, 0.3);
+    }
+
+    &:active:not(.disabled) {
+        transform: scale(0.95);
+    }
+
+    &.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    @media (max-width: 999px) {
+        width: 44px;
+        height: 44px;
+
+        svg {
+            width: 18px;
+            height: 18px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        width: 40px;
+        height: 40px;
+
+        svg {
+            width: 16px;
+            height: 16px;
+        }
     }
 }
 

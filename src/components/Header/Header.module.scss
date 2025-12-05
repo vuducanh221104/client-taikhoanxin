@@ -294,7 +294,10 @@
             }
 
             .search-view-all-button {
-                display: inline-block;
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 padding: 10px 24px;
                 background: linear-gradient(135deg, var(--info-color), var(--price-color));
                 color: var(--text-color-white);
@@ -1371,7 +1374,10 @@
     }
 
     .search-view-all-button {
-        display: inline-block;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         padding: 10px 24px;
         background: linear-gradient(135deg, var(--info-color), var(--price-color));
         color: var(--text-color-white);

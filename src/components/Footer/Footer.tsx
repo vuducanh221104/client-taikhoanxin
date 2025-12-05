@@ -156,14 +156,88 @@ const Footer: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Copyright */}
+                {/* Bottom Bar with Copyright and Payment Methods */}
                 <div className={cx('footer-bottom')}>
-                    <p className={cx('footer-copyright')}>
-                        © {new Date().getFullYear()} Tài Khoản Xịn. Tất cả quyền được bảo lưu.
-                    </p>
-                    <div className={cx('footer-bottom-links')}>
-                        <Link href="/help/policies/privacy">Privacy</Link>
-                        <Link href="/help/policies/terms">Terms</Link>
+                    <div className={cx('footer-bottom-left')}>
+                        <p className={cx('footer-copyright')}>
+                            © {new Date().getFullYear()} Tài Khoản Xịn. Tất cả quyền được bảo lưu.
+                        </p>
+                    </div>
+                    <div className={cx('footer-payment-section')}>
+                        <div className={cx('payment-methods')}>
+                            <div className={cx('payment-method')} title="VNPay">
+                                <Image 
+                                    src="/payment/vnpay.png" 
+                                    alt="VNPay" 
+                                    width={48} 
+                                    height={32}
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                        (e.target as HTMLImageElement).parentElement!.innerHTML = '<span style="font-size: 10px; color: #000;">VNPay</span>';
+                                    }}
+                                />
+                            </div>
+                            <div className={cx('payment-method')} title="Momo">
+                                <Image 
+                                    src="/payment/momo.png" 
+                                    alt="Momo" 
+                                    width={48} 
+                                    height={32}
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                        (e.target as HTMLImageElement).parentElement!.innerHTML = '<span style="font-size: 10px; color: #000;">Momo</span>';
+                                    }}
+                                />
+                            </div>
+                            <div className={cx('payment-method')} title="ZaloPay">
+                                <Image 
+                                    src="/payment/zalopay.png" 
+                                    alt="ZaloPay" 
+                                    width={48} 
+                                    height={32}
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                        (e.target as HTMLImageElement).parentElement!.innerHTML = '<span style="font-size: 10px; color: #000;">ZaloPay</span>';
+                                    }}
+                                />
+                            </div>
+                            <div className={cx('payment-method')} title="Visa">
+                                <Image 
+                                    src="/payment/visa.png" 
+                                    alt="Visa" 
+                                    width={48} 
+                                    height={32}
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                        (e.target as HTMLImageElement).parentElement!.innerHTML = '<span style="font-size: 10px; color: #000;">Visa</span>';
+                                    }}
+                                />
+                            </div>
+                            <div className={cx('payment-method')} title="Mastercard">
+                                <Image 
+                                    src="/payment/mastercard.png" 
+                                    alt="Mastercard" 
+                                    width={48} 
+                                    height={32}
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                        (e.target as HTMLImageElement).parentElement!.innerHTML = '<span style="font-size: 10px; color: #000;">MC</span>';
+                                    }}
+                                />
+                            </div>
+                            <div className={cx('payment-method')} title="JCB">
+                                <Image 
+                                    src="/payment/jcb.png" 
+                                    alt="JCB" 
+                                    width={48} 
+                                    height={32}
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                        (e.target as HTMLImageElement).parentElement!.innerHTML = '<span style="font-size: 10px; color: #000;">JCB</span>';
+                                    }}
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

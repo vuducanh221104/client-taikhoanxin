@@ -229,7 +229,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
                     user_name: userData.fullName || userData.email?.split('@')[0],
                     phone_number: userData.phone,
                     role: userData.role,
-                    type: userData.typeLogin === '0' ? 'WEBSITE' : (userData.typeLogin === '1' ? 'GOOGLE' : 'WEBSITE'),
+                    type: (userData.typeLogin === '0' ? 'WEBSITE' : (userData.typeLogin === '1' ? 'GOOGLE' : 'WEBSITE')) as 'WEBSITE' | 'GOOGLE',
                     is_verified: userData.isVerified || false,
                     accessToken: response.data.accessToken,
                     refreshToken: response.data.refreshToken,
@@ -248,12 +248,13 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
             } else {
                 throw new Error('Đăng nhập thất bại. Vui lòng thử lại!');
             }
-        } catch (error: any) {
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { message?: string } }; message?: string };
             const errorMessage = error?.response?.data?.message || error?.message || 'Đăng nhập thất bại. Vui lòng thử lại!';
             setError(errorMessage);
             showError(errorMessage);
             dispatch(loginFailed());
-            console.error('Login failed:', error);
+            console.error('Login failed:', err);
             resetTurnstile();
         } finally {
             setLoading(false);
@@ -262,12 +263,14 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
 
     // Cleanup timeouts
     useEffect(() => {
+        const closeTimeout = closeTimeoutRef.current;
+        const openTimeout = openTimeoutRef.current;
         return () => {
-            if (closeTimeoutRef.current) {
-                clearTimeout(closeTimeoutRef.current);
+            if (closeTimeout) {
+                clearTimeout(closeTimeout);
             }
-            if (openTimeoutRef.current) {
-                clearTimeout(openTimeoutRef.current);
+            if (openTimeout) {
+                clearTimeout(openTimeout);
             }
         };
     }, []);
@@ -291,7 +294,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
             clearTimeout(timeout);
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [isOpen, isMobile, onOverlayChange, mounted]);
+    }, [isOpen, isMobile, onOverlayChange, mounted, setIsOpen]);
 
     // A11y: ESC to close
     useEffect(() => {
@@ -306,7 +309,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
         };
         document.addEventListener('keydown', handleKey);
         return () => document.removeEventListener('keydown', handleKey);
-    }, [isOpen, onOverlayChange, mounted]);
+    }, [isOpen, onOverlayChange, mounted, setIsOpen]);
 
     return (
         <div

@@ -30,6 +30,7 @@ interface DisplayComment {
     avatar: string;
     timestamp: string;
     text: string;
+    rating?: number;
     isCustomerService?: boolean;
     isVerified?: boolean;
     hasPurchased?: boolean;
@@ -46,7 +47,17 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
     const [replyTarget, setReplyTarget] = useState<{ id: string; username: string; rootId: string } | null>(null);
     const [replyDraft, setReplyDraft] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [activeTab, setActiveTab] = useState<'comments' | 'reviews'>('comments');
     const { showSuccess, showError } = useToast();
+
+    // Reset form when switching tabs
+    React.useEffect(() => {
+        if (activeTab === 'comments') {
+            setSelectedRating(0);
+        } else {
+            setSelectedRating(5);
+        }
+    }, [activeTab]);
 
     const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
     const isAdmin = Boolean(currentUser && currentUser.role !== undefined && currentUser.role >= 2);
@@ -114,6 +125,7 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
             avatar: userInfo.avatar,
             timestamp: review.createdAt,
             text: review.comment,
+            rating: review.rating,
             isVerified: userInfo.isVerified,
             hasPurchased: review.verifiedPurchase,
             isCustomerService: userInfo.isCustomerService,
@@ -139,12 +151,32 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
         };
     };
 
-    const comments = useMemo<DisplayComment[]>(() => {
+    const allComments = useMemo<DisplayComment[]>(() => {
         if (!productReviews?.data?.reviews) {
             return [];
         }
         return productReviews.data.reviews.map(mapReviewToComment);
     }, [productReviews]);
+
+    // Filter comments based on active tab
+    const comments = useMemo<DisplayComment[]>(() => {
+        if (activeTab === 'reviews') {
+            // Tab "Đánh giá": chỉ hiển thị các review gốc có rating > 0
+            return allComments.filter(comment => comment.isRoot && comment.rating && comment.rating > 0);
+        } else {
+            // Tab "Bình luận": chỉ hiển thị các comment không có rating (rating = 0 hoặc undefined)
+            return allComments.filter(comment => !comment.rating || comment.rating === 0);
+        }
+    }, [allComments, activeTab]);
+
+    // Count comments and reviews separately
+    const commentsCount = useMemo(() => {
+        return allComments.filter(comment => !comment.rating || comment.rating === 0).length;
+    }, [allComments]);
+
+    const reviewsCount = useMemo(() => {
+        return allComments.filter(comment => comment.isRoot && comment.rating && comment.rating > 0).length;
+    }, [allComments]);
 
     const handleReplyClick = (review: DisplayComment) => {
         if (!canInteract) {
@@ -185,17 +217,21 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
             return;
         }
 
-        if (!replyTarget && (!selectedRating || selectedRating < 1)) {
+        // Chỉ yêu cầu rating khi đang ở tab "Đánh giá"
+        if (activeTab === 'reviews' && !replyTarget && (!selectedRating || selectedRating < 1)) {
             showError('Vui lòng chọn số sao đánh giá.');
             return;
         }
+        
+        // Tab "Bình luận" không cần rating, set về 0
+        const finalRating = activeTab === 'comments' ? 0 : selectedRating;
 
         setSubmitting(true);
         try {
         await createReview({
             productId,
             comment: comment.trim(),
-            rating: selectedRating,
+            rating: finalRating,
         });
         showSuccess('Đã gửi đánh giá. Bình luận sẽ hiển thị sau khi được duyệt.');
         resetFormState();
@@ -278,6 +314,19 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
                                     <DiamondIcon size={12} />
                                     <span>Đã mua sản phẩm</span>
                                 </span>
+                            )}
+                            {activeTab === 'reviews' && commentItem.rating && commentItem.rating > 0 && (
+                                <div className={cx('comment-rating')}>
+                                    {Array.from({ length: 5 }).map((_, index) => (
+                                        <StarIcon
+                                            key={index}
+                                            size={14}
+                                            className={cx('rating-star', {
+                                                'is-filled': index < commentItem.rating!,
+                                            })}
+                                        />
+                                    ))}
+                                </div>
                             )}
                         </div>
                         <span className={cx('comment-timestamp')}>{formatTimestamp(commentItem.timestamp)}</span>
@@ -431,28 +480,33 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
                             </div>
                         ) : (
                             <>
-                                <div className={cx('rating-selector')}>
-                                    <span className={cx('rating-label')}>Đánh giá của bạn</span>
-                                    <div className={cx('rating-options')}>
-                                        {ratingOptions.map((value) => (
-                                            <button
-                                                key={value}
-                                                type="button"
-                                                className={cx('rating-option', { 'is-active': selectedRating === value })}
-                                                onClick={() => setSelectedRating(value)}
-                                            >
-                                                <StarIcon size={14} />
-                                                <span>{value} sao</span>
-                                            </button>
-                                        ))}
+                                {/* Chỉ hiển thị rating selector khi ở tab "Đánh giá" */}
+                                {activeTab === 'reviews' && (
+                                    <div className={cx('rating-selector')}>
+                                        <span className={cx('rating-label')}>Đánh giá của bạn</span>
+                                        <div className={cx('rating-options')}>
+                                            {ratingOptions.map((value) => (
+                                                <button
+                                                    key={value}
+                                                    type="button"
+                                                    className={cx('rating-option', { 'is-active': selectedRating === value })}
+                                                    onClick={() => setSelectedRating(value)}
+                                                >
+                                                    <StarIcon size={14} />
+                                                    <span>{value} sao</span>
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
                                 <textarea
                                     className={cx('comments-input')}
                                     placeholder={
                                         canInteract
-                                            ? 'Chia sẻ trải nghiệm của bạn về sản phẩm này'
+                                            ? activeTab === 'reviews'
+                                                ? 'Chia sẻ trải nghiệm và đánh giá của bạn về sản phẩm này'
+                                                : 'Chia sẻ ý kiến và thảo luận về sản phẩm này'
                                             : 'Vui lòng đăng nhập để gửi bình luận'
                                     }
                                     value={comment}
@@ -474,7 +528,7 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
                                     ) : (
                                         <>
                                             <SendIcon size={18} />
-                                            <span>Gửi bình luận</span>
+                                            <span>{activeTab === 'reviews' ? 'Gửi đánh giá' : 'Gửi bình luận'}</span>
                                         </>
                                     )}
                                 </button>
@@ -490,6 +544,27 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
                     <h3 className={cx('section-title')}>Bình luận</h3>
                     <p className={cx('section-info')}>Thảo luận và trao đổi về sản phẩm</p>
                 </div>
+                
+                {/* Tabs */}
+                <div className={cx('comments-tabs')}>
+                    <button
+                        type="button"
+                        className={cx('tab-button', { 'is-active': activeTab === 'comments' })}
+                        onClick={() => setActiveTab('comments')}
+                    >
+                        <MessageCircleIcon size={18} />
+                        <span>Bình luận ({commentsCount})</span>
+                    </button>
+                    <button
+                        type="button"
+                        className={cx('tab-button', { 'is-active': activeTab === 'reviews' })}
+                        onClick={() => setActiveTab('reviews')}
+                    >
+                        <StarIcon size={18} />
+                        <span>Đánh giá ({reviewsCount})</span>
+                    </button>
+                </div>
+
                 <div className={cx('thread-panel')}>
                     <div className={cx('thread-timeline')}>{renderCommentsList()}</div>
                 </div>
