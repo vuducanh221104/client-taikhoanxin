@@ -87,6 +87,8 @@ const CheckoutPage: React.FC = () => {
 
     useEffect(() => {
         setMounted(true);
+        // Scroll to top when page loads
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }, []);
 
     // Auto-fill form with user data when logged in

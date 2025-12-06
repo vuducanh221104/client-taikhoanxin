@@ -138,6 +138,12 @@ a {
     // Touch target
     --touch-target-size: 44px;
     
+    // Safe area insets for notch devices (iPhone X+)
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-left: env(safe-area-inset-left, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
+    
     // ============================================
     // BREAKPOINTS
     // ============================================
@@ -337,7 +343,20 @@ html, body {
 // Add padding to body when bottom nav is visible on mobile
 @media (max-width: 999px) {
     body {
-        padding-bottom: 60px;
+        padding-bottom: calc(60px + var(--safe-area-bottom)); // Account for safe area
+    }
+}
+
+// ============================================
+// iOS INPUT ZOOM FIX - Prevent auto-zoom on focus
+// ============================================
+@media (max-width: 768px) {
+    input, 
+    select, 
+    textarea,
+    button[type="button"],
+    button[type="submit"] {
+        font-size: 16px !important; // iOS won't zoom if font-size >= 16px
     }
 }
 

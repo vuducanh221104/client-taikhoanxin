@@ -801,11 +801,13 @@
           }
 
           .action-button {
-              padding: 5px;
+              padding: 8px; // Increased from 5px for better touch target
+              min-width: 44px; // WCAG minimum touch target
+              min-height: 44px;
 
               .action-icon {
-                  width: 16px;
-                  height: 16px;
+                  width: 18px; // Slightly larger for better visibility
+                  height: 18px;
               }
           }
       }
@@ -878,7 +880,25 @@
     }
 
     .discount-badge {
-        font-size: 12px;
-        padding: 3px 8px;
+        font-size: 12px; // Minimum 12px for readability
+        padding: 4px 10px; // Slightly larger for better visibility
+    }
+    
+    // Disable heavy animations on small mobile devices for performance
+    .action-buttons {
+        backdrop-filter: none; // Remove blur for performance
+        background: var(--bg-color);
+    }
+    
+    .badge-discount-top {
+        animation: none; // Disable pulse animation
+    }
+    
+    .badge-low-stock {
+        animation: none;
+    }
+    
+    .badge-hot {
+        animation: none;
     }
 }

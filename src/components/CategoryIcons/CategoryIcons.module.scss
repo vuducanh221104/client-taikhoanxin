@@ -11,6 +11,11 @@
 // Header Section
 .header {
     margin-bottom: 48px;
+    padding: 0 20px;
+    
+    @media (max-width: 999px) {
+        padding: 0 16px;
+    }
 }
 
 .header-content {
@@ -42,9 +47,11 @@
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
+    padding: 0 20px;
 
     @media (max-width: 999px) {
         gap: 20px;
+        padding: 0 16px;
     }
 
     @media (max-width: 640px) {
@@ -60,15 +67,20 @@
         -webkit-overflow-scrolling: touch;
         scroll-snap-type: x mandatory;
         scroll-behavior: smooth;
-        scrollbar-width: none; // Firefox
-        -ms-overflow-style: none; // IE/Edge
+        scrollbar-width: none;
+        -ms-overflow-style: none;
         padding: 0 16px;
-        margin: 0 -16px;
+        margin: 0;
         gap: 12px;
 
         &::-webkit-scrollbar {
-            display: none; // Chrome/Safari
+            display: none;
         }
+    }
+    
+    @media (max-width: 480px) {
+        padding: 0 12px;
+        gap: 10px;
     }
 }
 
@@ -133,25 +145,72 @@
     }
 
     @media (max-width: 999px) {
-        flex: 0 1 120px;
-        padding: 20px 12px;
-        min-height: 120px;
+        flex: 0 1 130px;
+        padding: 18px 14px;
+        min-height: 130px;
+        max-width: 150px;
     }
 
-    // Slider mode trên mobile
+    // Slider mode trên mobile - ẩn border và shadow
     @media (max-width: 768px) {
-        flex: 0 0 140px; // Fixed width cho slider
-        min-width: 140px;
-        scroll-snap-align: start;
-        padding: 20px 16px;
-        min-height: 140px;
+        flex: 0 0 130px;
+        min-width: 130px;
+        max-width: 130px;
+        scroll-snap-align: center;
+        padding: 16px 12px;
+        min-height: 130px;
+        border-radius: 14px;
+        border: none;
+        box-shadow: none;
+        background: transparent;
+        
+        &:first-child {
+            margin-left: 4px;
+        }
+        
+        &:last-child {
+            margin-right: 4px;
+        }
+        
+        &:hover {
+            transform: scale(1.05);
+            box-shadow: none;
+            border: none;
+        }
+        
+        &:active {
+            transform: scale(0.98);
+        }
     }
 
     @media (max-width: 480px) {
-        flex: 0 0 120px;
-        min-width: 120px;
-        padding: 16px 12px;
-        min-height: 120px;
+        flex: 0 0 110px;
+        min-width: 110px;
+        max-width: 110px;
+        padding: 12px 8px;
+        min-height: 110px;
+        border-radius: 12px;
+        border: none;
+        box-shadow: none;
+        background: transparent;
+        
+        &:first-child {
+            margin-left: 4px;
+        }
+        
+        &:last-child {
+            margin-right: 4px;
+        }
+        
+        &:hover {
+            transform: scale(1.05);
+            box-shadow: none;
+            border: none;
+        }
+        
+        &:active {
+            transform: scale(0.98);
+        }
     }
 }
 
@@ -169,16 +228,23 @@
     z-index: 1;
 
     @media (max-width: 999px) {
-        width: 56px;
-        height: 56px;
-        border-radius: 14px;
+        width: 54px;
+        height: 54px;
+        border-radius: 13px;
         margin-bottom: 12px;
+    }
+    
+    @media (max-width: 768px) {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        margin-bottom: 10px;
     }
 
     @media (max-width: 480px) {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
+        width: 44px;
+        height: 44px;
+        border-radius: 11px;
         margin-bottom: 8px;
     }
 }
@@ -201,13 +267,18 @@
     }
 
     @media (max-width: 999px) {
-        width: 28px;
-        height: 28px;
+        width: 27px;
+        height: 27px;
+    }
+    
+    @media (max-width: 768px) {
+        width: 26px;
+        height: 26px;
     }
 
     @media (max-width: 480px) {
-        width: 24px;
-        height: 24px;
+        width: 22px;
+        height: 22px;
     }
 }
 

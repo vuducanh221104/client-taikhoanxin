@@ -99,6 +99,7 @@
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     outline: none;
     box-sizing: border-box;
+    min-height: 52px;
 
     &:focus {
         border-color: var(--primary-color);
@@ -122,6 +123,17 @@
 
     &.input-error {
         border-color: var(--error-color);
+    
+    @media (max-width: 999px) {
+        padding: 12px 14px;
+        font-size: 16px;
+        min-height: 48px;
+    }
+    
+    @media (max-width: 480px) {
+        padding: 11px 13px;
+        min-height: 44px;
+    }
 
         &:focus {
             border-color: var(--error-color);

@@ -18,8 +18,11 @@
     box-shadow: 0 10px 40px rgba(15, 23, 42, 0.06);
 
     @media (max-width: 999px) {
-        padding: 24px;
-        border-radius: 20px;
+        padding: 0; // Remove outer padding on mobile
+        border-radius: 16px;
+        background: transparent; // Remove gradient background
+        border: none; // Remove outer border
+        box-shadow: none; // Remove outer shadow
     }
 }
 
@@ -46,8 +49,11 @@
     box-shadow: 0 10px 40px rgba(15, 23, 42, 0.06);
 
     @media (max-width: 999px) {
-        padding: 24px;
-        border-radius: 20px;
+        padding: 0; // Remove outer padding on mobile
+        border-radius: 16px;
+        background: transparent; // Remove gradient background
+        border: none; // Remove outer border
+        box-shadow: none; // Remove outer shadow
     }
 }
 
@@ -58,6 +64,11 @@
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 24px;
+
+    @media (max-width: 999px) {
+        margin-bottom: 16px;
+        gap: 12px;
+    }
 }
 
 .section-title-wrapper {
@@ -79,6 +90,11 @@
     margin: 0 0 12px 0;
     color: var(--text-color);
     font-weight: 700;
+
+    @media (max-width: 999px) {
+        font-size: 22px;
+        margin: 0 0 8px 0;
+    }
 }
 
 .section-info {
@@ -86,6 +102,10 @@
     color: var(--text-color-secondary);
     line-height: 1.6;
     font-size: 15px;
+
+    @media (max-width: 999px) {
+        display: none; // Hide subtitle on mobile
+    }
 }
 
 .comments-tabs {
@@ -94,6 +114,11 @@
     margin-bottom: 24px;
     border-bottom: 2px solid var(--border-color-lighter);
     padding-bottom: 0;
+
+    @media (max-width: 999px) {
+        margin-bottom: 16px;
+        gap: 4px;
+    }
 }
 
 .tab-button {
@@ -111,6 +136,7 @@
     margin-bottom: -2px;
     transition: all 0.2s ease;
     font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 44px;
 
     &:hover {
         color: var(--text-color);
@@ -123,11 +149,24 @@
 
     svg {
         flex-shrink: 0;
+
+        @media (max-width: 999px) {
+            width: 16px;
+            height: 16px;
+        }
     }
 
+    @media (max-width: 999px) {
+        padding: 9px 14px;
+        font-size: 13px;
+        gap: 6px;
+        min-height: 40px;
+    }
+    
     @media (max-width: 480px) {
-        padding: 10px 16px;
-        font-size: 14px;
+        padding: 8px 12px;
+        font-size: 12px;
+        min-height: 38px;
     }
 }
 
@@ -152,6 +191,7 @@
 
     @media (max-width: 999px) {
         width: 100%;
+        gap: 8px;
     }
 }
 
@@ -169,17 +209,15 @@
 
     @media (max-width: 999px) {
         min-width: 0;
-        padding: 14px 16px;
-        flex: 1 1 calc(33.333% - 8px);
+        padding: 10px 12px; // Reduced padding
+        flex: 1 1 calc(33.333% - 6px);
+        gap: 8px;
+        border-radius: 12px;
     }
 
     @media (max-width: 600px) {
-        flex: 1 1 calc(50% - 6px);
-    }
-
-    @media (max-width: 480px) {
-        flex: 1 1 100%;
-        padding: 12px 14px;
+        flex: 1 1 100%; // Full width on small screens
+        padding: 10px 12px;
     }
 
     .metric-icon {
@@ -192,6 +230,12 @@
         color: var(--primary-color);
         background: rgba(59, 130, 246, 0.12);
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+
+        @media (max-width: 999px) {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+        }
     }
 
     .metric-content {
@@ -222,8 +266,9 @@
         color: var(--text-color);
         white-space: nowrap;
 
-        @media (max-width: 480px) {
+        @media (max-width: 999px) {
             font-size: 20px;
+            margin: 4px 0;
         }
     }
 
@@ -270,8 +315,9 @@
     position: relative;
     overflow: hidden;
 
-    @media (max-width: 480px) {
-        padding: 20px;
+    @media (max-width: 999px) {
+        padding: 16px; // Reduced padding on mobile
+        border-radius: 16px;
     }
 }
 
@@ -279,6 +325,10 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
+
+    @media (max-width: 999px) {
+        gap: 12px; // Reduced gap between comments on mobile
+    }
 }
 
 .comments-empty {
@@ -291,11 +341,16 @@
     grid-template-columns: auto 1fr;
     gap: 16px;
 
+    @media (max-width: 999px) {
+        grid-template-columns: 1fr; // Single column on mobile (no timeline)
+        gap: 0;
+    }
+
     &.is-reply {
         margin-left: 32px;
 
-        @media (max-width: 480px) {
-            margin-left: 0;
+        @media (max-width: 999px) {
+            margin-left: 16px; // Reduced indent for replies on mobile
         }
     }
 }
@@ -305,6 +360,10 @@
     display: flex;
     justify-content: center;
     position: relative;
+
+    @media (max-width: 999px) {
+        display: none; // Hide timeline on mobile for cleaner look
+    }
 }
 
 .timeline-dot {
@@ -340,8 +399,15 @@
     grid-template-columns: auto 1fr;
     gap: 16px;
 
+    @media (max-width: 999px) {
+        padding: 14px; // Reduced padding on mobile
+        border-radius: 16px;
+        gap: 12px;
+    }
+
     @media (max-width: 480px) {
         grid-template-columns: 1fr;
+        padding: 12px;
     }
 }
 
@@ -351,6 +417,13 @@
     border-radius: 16px;
     overflow: hidden;
     border: 2px solid rgba(74, 99, 217, 0.2);
+
+    @media (max-width: 999px) {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        border-width: 1px;
+    }
 }
 
 .avatar-image {
@@ -363,6 +436,10 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+
+    @media (max-width: 999px) {
+        gap: 8px;
+    }
 }
 
 .comment-header {
@@ -383,6 +460,10 @@
 .comment-username {
     font-weight: 600;
     color: var(--text-color);
+
+    @media (max-width: 999px) {
+        font-size: 14px;
+    }
 }
 
 .verified-badge {
@@ -410,17 +491,30 @@
     color: #059669;
     font-size: 12px;
     font-weight: 600;
+
+    @media (max-width: 999px) {
+        display: none; // Hide on mobile to save space
+    }
 }
 
 .comment-timestamp {
     font-size: 12px;
     color: var(--text-color-tertiary);
+
+    @media (max-width: 999px) {
+        font-size: 11px;
+    }
 }
 
 .comment-text {
     font-size: 15px;
     line-height: 1.6;
     color: var(--text-color);
+
+    @media (max-width: 999px) {
+        font-size: 14px;
+        line-height: 1.5;
+    }
 }
 
 .comment-rating {
@@ -457,6 +551,20 @@
     cursor: pointer;
     font-size: 13px;
     transition: all 0.2s ease;
+    min-height: 32px;
+
+    @media (max-width: 999px) {
+        padding: 5px 10px;
+        font-size: 12px;
+        gap: 4px;
+        min-height: 30px;
+    }
+    
+    @media (max-width: 480px) {
+        padding: 4px 9px;
+        font-size: 11px;
+        min-height: 28px;
+    }
 
     &:hover {
         border-color: var(--primary-color);
@@ -471,6 +579,12 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+
+    @media (max-width: 999px) {
+        margin-left: 0;
+        padding-left: 16px; // Reduced padding on mobile
+        border-left-width: 1px; // Thinner border on mobile
+    }
 }
 
 .inline-reply-form {
@@ -482,6 +596,13 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+
+    @media (max-width: 999px) {
+        padding: 10px;
+        border-radius: 12px;
+        gap: 8px;
+        margin-top: 10px;
+    }
 }
 
 .inline-reply-wrapper {
@@ -489,6 +610,10 @@
     align-items: flex-start;
     gap: 12px;
     width: 100%;
+
+    @media (max-width: 999px) {
+        gap: 8px;
+    }
 }
 
 .inline-reply-avatar {
@@ -498,6 +623,11 @@
     border-radius: 50%;
     overflow: hidden;
     background: transparent;
+
+    @media (max-width: 999px) {
+        width: 32px;
+        height: 32px;
+    }
     
     .avatar-image {
         width: 100%;
@@ -521,6 +651,13 @@
     line-height: 1.5;
     color: var(--text-color);
 
+    @media (max-width: 999px) {
+        padding: 10px;
+        min-height: 80px; // Reduced height on mobile
+        font-size: 14px;
+        border-radius: 10px;
+    }
+
     &:focus {
         outline: none;
         border-color: var(--primary-color);
@@ -536,6 +673,10 @@
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+
+    @media (max-width: 999px) {
+        gap: 8px;
+    }
 }
 
 .inline-reply-cancel,
@@ -545,6 +686,12 @@
     font-weight: 600;
     font-size: 14px;
     cursor: pointer;
+
+    @media (max-width: 999px) {
+        padding: 7px 12px;
+        font-size: 13px;
+        border-radius: 8px;
+    }
 
     &:disabled {
         opacity: 0.5;
@@ -575,8 +722,9 @@
     gap: 2px;
 
     @media (max-width: 999px) {
-        padding: 24px;
-        gap: 14px;
+        padding: 20px 16px; // Reduced padding on mobile
+        gap: 16px;
+        border-radius: 16px;
     }
 }
 
@@ -589,7 +737,7 @@
 
     @media (max-width: 999px) {
         grid-template-columns: 1fr;
-        gap: 20px;
+        gap: 16px;
         margin-bottom: 0;
     }
 }
@@ -603,9 +751,7 @@
     white-space: nowrap;
 
     @media (max-width: 999px) {
-        text-align: center;
-        font-size: 12px;
-        white-space: normal;
+        display: none; // Hide on mobile to save space
     }
 }
 
@@ -614,6 +760,11 @@
     font-size: 24px;
     font-weight: 700;
     color: var(--text-color);
+
+    @media (max-width: 999px) {
+        font-size: 18px;
+        margin: 0 0 4px 0;
+    }
 }
 
 .composer-header p {
@@ -621,6 +772,11 @@
     font-size: 15px;
     color: var(--text-color-secondary);
     line-height: 1.6;
+
+    @media (max-width: 999px) {
+        font-size: 13px;
+        line-height: 1.5;
+    }
 }
 
 .comments-form {
@@ -652,17 +808,29 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+
+    @media (max-width: 999px) {
+        gap: 6px;
+    }
 }
 
 .rating-label {
     font-weight: 600;
     color: var(--text-color);
+
+    @media (max-width: 999px) {
+        font-size: 14px;
+    }
 }
 
 .rating-options {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+
+    @media (max-width: 999px) {
+        gap: 6px;
+    }
 }
 
 .rating-option {
@@ -676,6 +844,12 @@
     font-size: 13px;
     color: var(--text-color-secondary);
     cursor: pointer;
+
+    @media (max-width: 999px) {
+        padding: 7px 12px;
+        font-size: 12px;
+        gap: 4px;
+    }
 
     &.is-active {
         border-color: transparent;
@@ -694,6 +868,13 @@
     font-size: 15px;
     line-height: 1.6;
     background: var(--bg-color);
+
+    @media (max-width: 999px) {
+        padding: 12px;
+        min-height: 100px; // Reduced height on mobile
+        font-size: 14px;
+        border-radius: 12px;
+    }
 
     &:focus {
         outline: none;
@@ -715,6 +896,14 @@
     color: var(--text-color-white);
     cursor: pointer;
     box-shadow: 0 12px 26px rgba(74, 99, 217, 0.3);
+
+    @media (max-width: 999px) {
+        padding: 12px 20px;
+        font-size: 14px;
+        border-radius: 14px;
+        width: 100%; // Full width on mobile
+        justify-content: center;
+    }
 
     &:disabled {
         opacity: 0.6;

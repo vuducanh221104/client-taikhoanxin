@@ -5,6 +5,7 @@
     top: 0;
     transition: all 0.3s ease;
     background: transparent; // Đảm bảo không che khuất dropdown
+    padding-top: var(--safe-area-top); // Safe area for notch devices
 
     &.scrolled {
         .top-bar {
@@ -780,16 +781,20 @@
                 right: -14px;
                 background: var(--error-color);
                 color: var(--text-color-white);
-                font-size: 11px;
+                font-size: 12px; // Increased from 11px for better readability
                 font-weight: 700;
-                padding: 2px 6px;
+                padding: 3px 7px; // Slightly larger
                 border-radius: 10px;
-                min-width: 20px;
+                min-width: 24px; // Increased from 20px for better touch target
+                min-height: 24px;
                 z-index: 10;
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
                 transform: translate(0, 0);
                 text-align: center;
                 line-height: 1.2;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
 
             // User Pill Button - Styled like a pill with lighter blue background
@@ -1821,7 +1826,7 @@
     position: fixed;
     top: 0;
     left: 0;
-    width: 280px;
+    width: min(280px, 85vw); // Responsive width - max 85% of viewport
     height: 100vh;
     background: var(--bg-color);
     z-index: 9999;
@@ -1830,6 +1835,7 @@
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     box-shadow: 2px 0 8px var(--shadow-color-medium);
+    padding-top: var(--safe-area-top); // Safe area for notch devices
 
     &.is-open {
         transform: translateX(0);

@@ -48,12 +48,13 @@
     line-height: 1;
     height: fit-content;
     font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    flex-shrink: 0; // Không cho shrink
-    white-space: nowrap; // Không wrap text
-    visibility: visible; // Đảm bảo luôn hiển thị
-    opacity: 1; // Đảm bảo không bị ẩn
-    pointer-events: auto; // Đảm bảo có thể click
+    flex-shrink: 0;
+    white-space: nowrap;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
     will-change: background-color, border-color, box-shadow;
+    min-height: 44px;
     
     // Ẩn button khi menu mở trên mobile
     &.is-hidden {
@@ -74,6 +75,18 @@
 
     &:active {
         transform: translateY(1px);
+    }
+    
+    @media (max-width: 999px) {
+        padding: 9px 18px;
+        gap: 10px;
+        min-height: 42px;
+    }
+    
+    @media (max-width: 480px) {
+        padding: 8px 14px;
+        gap: 8px;
+        min-height: 40px;
     }
 
     .menu-icon {

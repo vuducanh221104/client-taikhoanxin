@@ -30,3 +30,14 @@
         }
     }
 }
+
+// ============================================
+// TOUCH TARGET MIXIN
+// ============================================
+@mixin touch-target($size: 44px) {
+    min-width: $size;
+    min-height: $size;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
