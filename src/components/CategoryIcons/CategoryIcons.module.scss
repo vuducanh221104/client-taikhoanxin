@@ -51,8 +51,24 @@
         gap: 16px;
     }
 
-    @media (max-width: 480px) {
+    // Horizontal slider trên mobile
+    @media (max-width: 768px) {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        scrollbar-width: none; // Firefox
+        -ms-overflow-style: none; // IE/Edge
+        padding: 0 16px;
+        margin: 0 -16px;
         gap: 12px;
+
+        &::-webkit-scrollbar {
+            display: none; // Chrome/Safari
+        }
     }
 }
 
@@ -122,10 +138,20 @@
         min-height: 120px;
     }
 
+    // Slider mode trên mobile
+    @media (max-width: 768px) {
+        flex: 0 0 140px; // Fixed width cho slider
+        min-width: 140px;
+        scroll-snap-align: start;
+        padding: 20px 16px;
+        min-height: 140px;
+    }
+
     @media (max-width: 480px) {
-        flex: 0 1 calc(50% - 12px);
-        padding: 16px 8px;
-        min-height: 100px;
+        flex: 0 0 120px;
+        min-width: 120px;
+        padding: 16px 12px;
+        min-height: 120px;
     }
 }
 

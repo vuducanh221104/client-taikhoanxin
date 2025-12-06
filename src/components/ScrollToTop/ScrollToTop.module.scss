@@ -133,13 +133,21 @@
     }
 
     .zalo-chat-button {
-        padding: 12px 20px;
-        font-size: 14px;
+        // Chuyển thành hình tròn trên mobile
+        width: 56px;
+        height: 56px;
+        padding: 0;
+        border-radius: 50%;
+        justify-content: center;
 
         svg,
         .zalo-icon {
-            width: 24px;
-            height: 24px;
+            width: 32px;
+            height: 32px;
+        }
+
+        span {
+            display: none; // Ẩn text trên mobile
         }
     }
 
@@ -163,13 +171,17 @@
     }
 
     .zalo-chat-button {
-        padding: 10px 16px;
-        font-size: 13px;
+        // Chuyển thành hình tròn như scroll-to-top button
+        width: 56px;
+        height: 56px;
+        padding: 0;
+        border-radius: 50%;
+        justify-content: center;
 
         svg,
         .zalo-icon {
-            width: 20px;
-            height: 20px;
+            width: 32px;
+            height: 32px;
         }
 
         span {

@@ -482,22 +482,22 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
                             <>
                                 {/* Chỉ hiển thị rating selector khi ở tab "Đánh giá" */}
                                 {activeTab === 'reviews' && (
-                                    <div className={cx('rating-selector')}>
-                                        <span className={cx('rating-label')}>Đánh giá của bạn</span>
-                                        <div className={cx('rating-options')}>
-                                            {ratingOptions.map((value) => (
-                                                <button
-                                                    key={value}
-                                                    type="button"
-                                                    className={cx('rating-option', { 'is-active': selectedRating === value })}
-                                                    onClick={() => setSelectedRating(value)}
-                                                >
-                                                    <StarIcon size={14} />
-                                                    <span>{value} sao</span>
-                                                </button>
-                                            ))}
-                                        </div>
+                                <div className={cx('rating-selector')}>
+                                    <span className={cx('rating-label')}>Đánh giá của bạn</span>
+                                    <div className={cx('rating-options')}>
+                                        {ratingOptions.map((value) => (
+                                            <button
+                                                key={value}
+                                                type="button"
+                                                className={cx('rating-option', { 'is-active': selectedRating === value })}
+                                                onClick={() => setSelectedRating(value)}
+                                            >
+                                                <StarIcon size={14} />
+                                                <span>{value} sao</span>
+                                            </button>
+                                        ))}
                                     </div>
+                                </div>
                                 )}
 
                                 <textarea
