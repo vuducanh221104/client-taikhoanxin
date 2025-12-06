@@ -48,64 +48,41 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, mobileMenuSide
         { href: '/products/viewed', label: 'Đã xem', icon: <EyeIcon /> },
         { href: '/products/best-selling', label: 'Bán chạy', icon: <FlameIcon /> },
         { href: '/products/sale', label: 'Khuyến mại', icon: <PercentIcon /> },
-        { href: '/payment', label: 'Thanh toán', icon: <CreditCardIcon /> },
+        { href: '/tools', label: 'Tools', icon: <CategoryIcon /> },
+        { href: '/orders/lookup', label: 'Tra cứu đơn hàng', icon: <HistoryIcon /> },
     ];
 
-    // Categories with subcategories
+    // Categories - simplified without subcategories
     const categories = [
         {
             id: 'windows',
             label: 'Windows & Office',
             icon: <WindowsIcon />,
-            href: '/categories/windows-office',
-            subcategories: [
-                { href: '/categories/windows', label: 'Windows' },
-                { href: '/categories/office', label: 'Office' },
-            ],
+            href: '/categories/windows',
         },
         {
             id: 'ai',
             label: 'AI & Productivity',
             icon: <BrainIcon />,
-            href: '/categories/ai-productivity',
-            subcategories: [
-                { href: '/categories/chatgpt', label: 'ChatGPT' },
-                { href: '/categories/midjourney', label: 'Midjourney' },
-                { href: '/categories/notion', label: 'Notion' },
-            ],
+            href: '/categories/ai',
         },
         {
             id: 'design',
             label: 'Design & Creative',
             icon: <ImageIcon />,
-            href: '/categories/design-creative',
-            subcategories: [
-                { href: '/categories/adobe', label: 'Adobe Creative' },
-                { href: '/categories/canva', label: 'Canva Pro' },
-                { href: '/categories/figma', label: 'Figma' },
-            ],
+            href: '/categories/design',
         },
         {
             id: 'cloud',
             label: 'Cloud & Storage',
             icon: <CloudIcon />,
-            href: '/categories/cloud-storage',
-            subcategories: [
-                { href: '/categories/google-drive', label: 'Google Drive' },
-                { href: '/categories/dropbox', label: 'Dropbox' },
-                { href: '/categories/onedrive', label: 'OneDrive' },
-            ],
+            href: '/categories/storage',
         },
         {
             id: 'entertainment',
             label: 'Entertainment',
             icon: <PlayIcon />,
             href: '/categories/entertainment',
-            subcategories: [
-                { href: '/categories/netflix', label: 'Netflix' },
-                { href: '/categories/spotify', label: 'Spotify' },
-                { href: '/categories/youtube', label: 'YouTube Premium' },
-            ],
         },
     ];
 
@@ -196,40 +173,21 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, mobileMenuSide
                         ))}
                     </div>
 
-                    {/* Categories with Hierarchy */}
+                    {/* Categories - Simple links without subcategories */}
                     <div className={cx('menu-section')}>
                         <h3 className={cx('menu-section-title')}>Danh mục</h3>
                         {categories.map((category) => (
-                            <div key={category.id} className={cx('category-group')}>
-                                <button
-                                    className={cx('menu-item', 'category-item', {
-                                        active: pathname.startsWith(category.href),
-                                        expanded: expandedCategory === category.id,
-                                    })}
-                                    onClick={() => toggleCategory(category.id)}
-                                >
-                                    <span className={cx('menu-icon')}>{category.icon}</span>
-                                    <span className={cx('menu-label')}>{category.label}</span>
-                                    <ChevronDownIcon className={cx('expand-icon')} size={16} />
-                                </button>
-                                
-                                {expandedCategory === category.id && (
-                                    <div className={cx('subcategories')}>
-                                        {category.subcategories.map((sub) => (
-                                            <Link
-                                                key={sub.href}
-                                                href={sub.href}
-                                                className={cx('subcategory-item', {
-                                                    active: pathname === sub.href,
-                                                })}
-                                                onClick={onClose}
-                                            >
-                                                {sub.label}
-                                            </Link>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                            <Link
+                                key={category.id}
+                                href={category.href}
+                                className={cx('menu-item', 'category-item', {
+                                    active: pathname.startsWith(category.href),
+                                })}
+                                onClick={onClose}
+                            >
+                                <span className={cx('menu-icon')}>{category.icon}</span>
+                                <span className={cx('menu-label')}>{category.label}</span>
+                            </Link>
                         ))}
                     </div>
 
