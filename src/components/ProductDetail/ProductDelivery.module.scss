@@ -6,8 +6,13 @@
     box-shadow: 0 2px 8px var(--shadow-color-light);
 
     @media (max-width: 999px) {
-        padding: 24px;
+        padding: 20px;
         border-radius: 12px;
+    }
+    
+    @media (max-width: 480px) {
+        padding: 16px;
+        border-radius: 10px;
     }
 
     .delivery-title {
@@ -17,6 +22,16 @@
         margin-bottom: 20px;
         line-height: 1.3;
         font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        
+        @media (max-width: 999px) {
+            font-size: 18px;
+            margin-bottom: 16px;
+        }
+        
+        @media (max-width: 480px) {
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
     }
 
     .delivery-steps {
@@ -27,6 +42,14 @@
         flex-direction: column;
         gap: 16px;
         counter-reset: step-counter;
+        
+        @media (max-width: 999px) {
+            gap: 12px;
+        }
+        
+        @media (max-width: 480px) {
+            gap: 10px;
+        }
     }
 
     .delivery-step {
@@ -37,6 +60,17 @@
         position: relative;
         counter-increment: step-counter;
 
+        @media (max-width: 999px) {
+            font-size: 14px;
+            line-height: 1.5;
+            padding-left: 28px;
+        }
+        
+        @media (max-width: 480px) {
+            font-size: 13px;
+            padding-left: 24px;
+        }
+
         &::before {
             content: counter(step-counter) '.';
             position: absolute;
@@ -44,6 +78,14 @@
             color: var(--primary-color);
             font-weight: 700;
             font-size: 18px;
+            
+            @media (max-width: 999px) {
+                font-size: 16px;
+            }
+            
+            @media (max-width: 480px) {
+                font-size: 14px;
+            }
         }
     }
 
