@@ -19,7 +19,9 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     return (
         <ToastProvider>
             <Header />
-            {children}
+            <main id="main-content">
+                {children}
+            </main>
             <Footer />
             <BottomNavigation />
         </ToastProvider>

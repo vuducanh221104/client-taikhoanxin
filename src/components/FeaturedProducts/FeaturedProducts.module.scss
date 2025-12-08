@@ -133,10 +133,20 @@
 
 .badge:not(.dark-badge) {
     animation: pulse-badge 2s ease-in-out infinite, pulse-badge-light 2s ease-in-out infinite;
+    
+    // Disable animations on mobile for performance
+    @media (max-width: 768px) {
+        animation: none;
+    }
 }
 
 .badge.dark-badge {
     animation: pulse-badge 2s ease-in-out infinite, pulse-badge-dark 2s ease-in-out infinite;
+    
+    // Disable animations on mobile for performance
+    @media (max-width: 768px) {
+        animation: none;
+    }
 }
 
 .subtitle {
@@ -195,6 +205,11 @@
 
     // Animation pulse để thu hút sự chú ý
     animation: pulse-shadow 3s ease-in-out infinite;
+    
+    // Disable animations on mobile for performance
+    @media (max-width: 768px) {
+        animation: none;
+    }
 }
 
 @keyframes pulse-shadow {

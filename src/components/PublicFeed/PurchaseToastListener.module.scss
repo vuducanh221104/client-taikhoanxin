@@ -222,8 +222,9 @@
 @media (max-width: 999px) {
   .purchase-toast-wrapper {
     left: 12px;
-    right: 12px;
-    bottom: 12px;
+    right: auto; // Không stretch full width
+    bottom: 12px; // Nằm dưới bottom navigation
+    max-width: calc(100vw - 24px); // Giới hạn max width
     animation: slideInLeftMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
@@ -241,6 +242,7 @@
   .purchase-toast {
     max-width: 100%;
     min-width: auto;
+    width: fit-content; // Chỉ rộng vừa đủ nội dung
     border-radius: 12px;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
 
@@ -319,20 +321,23 @@
   }
 
   .purchase-toast-close {
-    top: 6px;
-    right: 6px;
-    width: 24px;
-    height: 24px;
-    border-radius: 6px;
-    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    backdrop-filter: none;
+    background: rgba(0, 0, 0, 0.06);
 
     &:hover {
       transform: scale(1.05);
+      background: rgba(0, 0, 0, 0.1);
     }
 
     svg {
-      width: 14px;
-      height: 14px;
+      width: 12px;
+      height: 12px;
     }
   }
 }
@@ -341,8 +346,9 @@
 @media (max-width: 480px) {
   .purchase-toast-wrapper {
     left: 8px;
-    right: 8px;
-    bottom: 8px;
+    right: auto; // Không stretch full width
+    bottom: 8px; // Nằm dưới bottom navigation
+    max-width: calc(100vw - 16px);
   }
 
   .purchase-toast {
@@ -405,12 +411,19 @@
   .purchase-toast-close {
     top: 4px;
     right: 4px;
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    backdrop-filter: none;
+    background: rgba(0, 0, 0, 0.06);
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
 
     svg {
-      width: 12px;
-      height: 12px;
+      width: 10px;
+      height: 10px;
     }
   }
 }

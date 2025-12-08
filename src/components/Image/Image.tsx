@@ -36,9 +36,13 @@ const Image: React.FC<ImageProps> = ({
     const [currentSrc, setCurrentSrc] = useState(src);
     const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
 
+    // Convert src to string for Set operations
+    const srcString = typeof src === 'string' ? src : '';
+    const currentSrcString = typeof currentSrc === 'string' ? currentSrc : '';
+
     useEffect(() => {
         // Check if image is already loaded (cached)
-        if (loadedImages.has(src)) {
+        if (srcString && loadedImages.has(srcString)) {
             setCurrentSrc(src);
             setImageError(false);
             setIsLoading(false);
@@ -48,7 +52,7 @@ const Image: React.FC<ImageProps> = ({
         setCurrentSrc(src);
         setImageError(false);
         setIsLoading(true);
-    }, [src, loadedImages]);
+    }, [src, srcString, loadedImages]);
 
     const handleError = useCallback(() => {
         if (!imageError && fallbackSrc && currentSrc !== fallbackSrc) {
@@ -67,13 +71,15 @@ const Image: React.FC<ImageProps> = ({
     const handleLoad = useCallback(() => {
         setIsLoading(false);
         // Mark this image as loaded for future use
-        setLoadedImages((prev) => {
-            const newSet = new Set(prev);
-            newSet.add(currentSrc);
-            return newSet;
-        });
+        if (currentSrcString) {
+            setLoadedImages((prev) => {
+                const newSet = new Set(prev);
+                newSet.add(currentSrcString);
+                return newSet;
+            });
+        }
         onLoad?.();
-    }, [onLoad, currentSrc]);
+    }, [onLoad, currentSrcString]);
 
     // If image failed and no fallback, show placeholder
     if (imageError && showPlaceholder) {

@@ -81,6 +81,14 @@
         min-height: unset;
         min-width: unset;
     }
+    
+    // Exception for modal checkboxes (tos-checkbox, etc.)
+    [class*="tos-checkbox"] input[type="checkbox"],
+    [class*="modal"] input[type="checkbox"],
+    .small-checkbox {
+        min-height: 18px;
+        min-width: 18px;
+    }
 }
 
 // Keyboard navigation improvements

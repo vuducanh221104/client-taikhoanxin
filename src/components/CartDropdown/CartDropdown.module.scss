@@ -357,10 +357,10 @@
 }
 
 .cart-item-image {
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
     flex-shrink: 0;
-    border-radius: 8px;
+    border-radius: 16px;
     overflow: hidden;
     background: transparent;
     display: flex;
@@ -376,6 +376,7 @@
     object-fit: contain;
     object-position: center;
     display: block;
+    border-radius: 16px;
 }
 
 .cart-item-placeholder {
@@ -719,16 +720,19 @@
     touch-action: manipulation;
     
     @media (max-width: 999px) {
-        padding: 10px 18px;
-        font-size: 13px;
-        min-height: 42px;
+        padding: 8px 14px;
+        font-size: 12px;
+        min-height: 36px;
+        border-radius: 8px;
+        border-width: 1.5px;
     }
     
     @media (max-width: 480px) {
-        padding: 9px 16px;
-        font-size: 12px;
-        min-height: 40px;
+        padding: 7px 12px;
+        font-size: 11px;
+        min-height: 32px;
         border-width: 1px;
+        border-radius: 6px;
     }
     
     &:hover {
@@ -762,15 +766,19 @@
     touch-action: manipulation;
     
     @media (max-width: 999px) {
-        padding: 10px 18px;
-        font-size: 13px;
-        min-height: 42px;
+        padding: 8px 14px;
+        font-size: 12px;
+        min-height: 36px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(47, 120, 255, 0.25);
     }
     
     @media (max-width: 480px) {
-        padding: 9px 16px;
-        font-size: 12px;
-        min-height: 40px;
+        padding: 7px 12px;
+        font-size: 11px;
+        min-height: 32px;
+        border-radius: 6px;
+        box-shadow: 0 2px 6px rgba(47, 120, 255, 0.2);
     }
     
     &:hover {
@@ -818,11 +826,11 @@
     }
 
     .cart-item-image {
-        width: 80px;
-        height: 80px;
-        min-width: 80px;
-        min-height: 80px;
-        border-radius: 10px;
+        width: 100px;
+        height: 100px;
+        min-width: 100px;
+        min-height: 100px;
+        border-radius: 14px;
     }
 
     .cart-item-header {
@@ -967,10 +975,10 @@
     }
 
     .cart-item-image {
-        width: 70px;
-        height: 70px;
-        min-width: 70px;
-        min-height: 70px;
+        width: 90px;
+        height: 90px;
+        min-width: 90px;
+        min-height: 90px;
     }
 
     .cart-item-name {

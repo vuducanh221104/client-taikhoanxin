@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import classNames from 'classnames/bind';
 import styles from './FilterBar.module.scss';
-import { ChevronDownIcon, FilterIcon, RotateCcwIcon } from '@/components/Icons';
+import { ChevronDownIcon, ChevronUpIcon, FilterIcon, RotateCcwIcon } from '@/components/Icons';
 
 const cx = classNames.bind(styles);
 
@@ -61,6 +61,7 @@ const FilterBar: React.FC<FilterBarProps> = React.memo(({
     const [isGenreOpen, setIsGenreOpen] = useState(false);
     const [isStatusOpen, setIsStatusOpen] = useState(false);
     const [isSortOpen, setIsSortOpen] = useState(false);
+    const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
     const categoryRef = useRef<HTMLDivElement>(null);
     const genreRef = useRef<HTMLDivElement>(null);
@@ -205,24 +206,52 @@ const FilterBar: React.FC<FilterBarProps> = React.memo(({
                sortBy !== 'default';
     }, [selectedCategory, defaultCategory, selectedGenre, selectedStatus, priceFrom, priceTo, sortBy]);
 
-    return (
-        <div className={cx('filter-bar')}>
-            {/* Reset Filters Link - Above filter row */}
-            {hasActiveFilters && (
-                <div className={cx('reset-filters-wrapper')}>
-                    <button 
-                        className={cx('reset-filters')} 
-                        onClick={handleResetFilters} 
-                        type="button"
-                        aria-label="Khôi phục bộ lọc về mặc định"
-                    >
-                        <RotateCcwIcon size={16} />
-                        <span>Khôi phục bộ lọc</span>
-                    </button>
-                </div>
-            )}
+    const toggleFilterExpanded = useCallback(() => {
+        setIsFilterExpanded(prev => !prev);
+    }, []);
 
-            <div className={cx('filter-row', { 'is-grid': layout === 'grid' })}>
+    return (
+        <div className={cx('filter-bar', { 'is-expanded': isFilterExpanded })}>
+            {/* Mobile Toggle Button */}
+            <button 
+                className={cx('filter-toggle-btn')}
+                onClick={toggleFilterExpanded}
+                type="button"
+                aria-expanded={isFilterExpanded}
+                aria-controls="filter-content"
+                aria-label={isFilterExpanded ? 'Thu gọn bộ lọc' : 'Mở rộng bộ lọc'}
+            >
+                <FilterIcon size={18} aria-hidden="true" />
+                <span>Bộ lọc</span>
+                {hasActiveFilters && <span className={cx('filter-badge')} aria-label="Có bộ lọc đang áp dụng" />}
+                {isFilterExpanded ? (
+                    <ChevronUpIcon size={18} className={cx('toggle-icon')} aria-hidden="true" />
+                ) : (
+                    <ChevronDownIcon size={18} className={cx('toggle-icon')} aria-hidden="true" />
+                )}
+            </button>
+
+            {/* Filter Content */}
+            <div 
+                id="filter-content"
+                className={cx('filter-content', { 'is-expanded': isFilterExpanded })}
+            >
+                {/* Reset Filters Link - Above filter row */}
+                {hasActiveFilters && (
+                    <div className={cx('reset-filters-wrapper')}>
+                        <button 
+                            className={cx('reset-filters')} 
+                            onClick={handleResetFilters} 
+                            type="button"
+                            aria-label="Khôi phục bộ lọc về mặc định"
+                        >
+                            <RotateCcwIcon size={16} />
+                            <span>Khôi phục bộ lọc</span>
+                        </button>
+                    </div>
+                )}
+
+                <div className={cx('filter-row', { 'is-grid': layout === 'grid' })}>
                 {/* Category Dropdown */}
                 <div className={cx('filter-item', { 'is-open': isCategoryOpen })} ref={categoryRef}>
                     <label className={cx('filter-label')}>Danh mục</label>
@@ -457,6 +486,7 @@ const FilterBar: React.FC<FilterBarProps> = React.memo(({
                         <FilterIcon size={18} aria-hidden="true" />
                         <span>Lọc</span>
                     </button>
+                </div>
                 </div>
             </div>
         </div>

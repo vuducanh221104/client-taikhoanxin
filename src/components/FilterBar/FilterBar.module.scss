@@ -12,24 +12,95 @@
     position: relative;
 
     @media (max-width: 999px) {
-        padding: 20px;
-        border-radius: 16px;
-        margin-bottom: 24px;
-    }
-
-    @media (max-width: 768px) {
-        padding: 16px;
+        padding: 12px;
         border-radius: 12px;
-        margin-bottom: 20px;
+        margin-bottom: 16px;
     }
 
     @media (max-width: 480px) {
-        padding: 14px;
+        padding: 10px;
         border-radius: 10px;
+        margin-bottom: 12px;
     }
 
     &:hover {
         box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+}
+
+// Mobile Toggle Button
+.filter-toggle-btn {
+    display: none;
+    width: 100%;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-hover) 100%);
+    border: none;
+    border-radius: 10px;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    transition: all 0.2s ease;
+    position: relative;
+
+    @media (max-width: 999px) {
+        display: flex;
+    }
+
+    @media (max-width: 480px) {
+        padding: 8px 12px;
+        font-size: 12px;
+        border-radius: 8px;
+        gap: 6px;
+    }
+
+    &:hover {
+        background: linear-gradient(135deg, var(--primary-color-hover) 0%, var(--primary-color) 100%);
+    }
+
+    &:active {
+        transform: scale(0.98);
+    }
+}
+
+.filter-badge {
+    width: 8px;
+    height: 8px;
+    background: #ff4757;
+    border-radius: 50%;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    
+    @media (max-width: 480px) {
+        width: 6px;
+        height: 6px;
+        top: 6px;
+        right: 6px;
+    }
+}
+
+.toggle-icon {
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+}
+
+// Filter Content (collapsible on mobile)
+.filter-content {
+    @media (max-width: 999px) {
+        display: none;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border-color-lighter);
+        
+        &.is-expanded {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
     }
 }
 
@@ -231,9 +302,14 @@
     margin-bottom: 6px;
 
     @media (max-width: 999px) {
-        font-size: 12px;
+        font-size: 11px;
         letter-spacing: 0.3px;
-        margin-bottom: 5px;
+        margin-bottom: 4px;
+    }
+    
+    @media (max-width: 480px) {
+        font-size: 10px;
+        margin-bottom: 3px;
     }
 }
 
@@ -265,17 +341,18 @@
     min-height: var(--touch-target-size);
 
     @media (max-width: 999px) {
-        padding: 12px 16px;
-        font-size: 14px;
-        border-radius: 12px;
-        min-height: 44px;
+        padding: 10px 12px;
+        font-size: 13px;
+        border-radius: 10px;
+        min-height: 40px;
+        border-width: 1px;
     }
 
     @media (max-width: 480px) {
-        padding: 12px 14px;
-        font-size: 13px;
-        border-radius: 10px;
-        min-height: 44px;
+        padding: 8px 10px;
+        font-size: 12px;
+        border-radius: 8px;
+        min-height: 36px;
     }
 
     &::before {
@@ -472,15 +549,16 @@
     width: 100%;
 
     @media (max-width: 999px) {
-        padding: 12px 14px;
-        font-size: 14px;
-        border-radius: 12px;
-    }
-
-    @media (max-width: 480px) {
         padding: 10px 12px;
         font-size: 13px;
         border-radius: 10px;
+        border-width: 1px;
+    }
+
+    @media (max-width: 480px) {
+        padding: 8px 10px;
+        font-size: 12px;
+        border-radius: 8px;
     }
 
     &::placeholder {
@@ -554,14 +632,15 @@
     white-space: nowrap;
 
     @media (max-width: 999px) {
-        padding: 8px 14px;
-        font-size: 12px;
-        border-radius: 10px;
+        padding: 6px 10px;
+        font-size: 11px;
+        border-radius: 8px;
     }
 
     @media (max-width: 480px) {
-        padding: 8px 12px;
-        font-size: 11px;
+        padding: 5px 8px;
+        font-size: 10px;
+        border-radius: 6px;
     }
 
     &:hover {
@@ -609,15 +688,18 @@
     box-shadow: 0 4px 12px rgba(47, 120, 255, 0.2);
 
     @media (max-width: 999px) {
-        padding: 12px 24px;
-        font-size: 14px;
-        border-radius: 12px;
-        min-height: 44px;
+        padding: 10px 20px;
+        font-size: 13px;
+        border-radius: 10px;
+        min-height: 40px;
+        border-width: 1px;
     }
 
     @media (max-width: 480px) {
-        padding: 12px 20px;
-        font-size: 13px;
+        padding: 8px 16px;
+        font-size: 12px;
+        border-radius: 8px;
+        min-height: 36px;
     }
 
     &:hover {

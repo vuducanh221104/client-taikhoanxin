@@ -858,6 +858,18 @@
     padding: 40px 36px;
     box-shadow: 0 30px 60px rgba(15, 23, 42, 0.25);
     animation: fadeInUp 0.3s ease;
+    
+    @media (max-width: 999px) {
+        padding: 24px 20px;
+        border-radius: 16px;
+        max-width: 400px;
+    }
+    
+    @media (max-width: 480px) {
+        padding: 20px 16px;
+        border-radius: 14px;
+        width: 92%;
+    }
 }
 
 .tos-modal-title {
@@ -866,6 +878,16 @@
     font-weight: 700;
     color: var(--text-color);
     text-align: center;
+    
+    @media (max-width: 999px) {
+        font-size: 20px;
+        margin: 0 0 14px;
+    }
+    
+    @media (max-width: 480px) {
+        font-size: 18px;
+        margin: 0 0 12px;
+    }
 }
 
 .tos-modal-message {
@@ -878,12 +900,31 @@
         font-size: 17px;
         font-weight: 600;
         color: #d63c3c;
+        
+        @media (max-width: 999px) {
+            font-size: 14px;
+            margin: 6px 0;
+        }
+        
+        @media (max-width: 480px) {
+            font-size: 13px;
+            margin: 5px 0;
+        }
+    }
+    
+    @media (max-width: 999px) {
+        margin-bottom: 16px;
+        line-height: 1.5;
+    }
+    
+    @media (max-width: 480px) {
+        margin-bottom: 14px;
     }
 }
 
 .tos-checkbox {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     font-size: 16px;
     color: var(--text-color);
@@ -893,6 +934,30 @@
         width: 20px;
         height: 20px;
         accent-color: var(--primary-color);
+        flex-shrink: 0;
+        margin-top: 2px;
+        
+        @media (max-width: 999px) {
+            width: 16px;
+            height: 16px;
+        }
+        
+        @media (max-width: 480px) {
+            width: 14px;
+            height: 14px;
+        }
+    }
+    
+    @media (max-width: 999px) {
+        font-size: 12px;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+    
+    @media (max-width: 480px) {
+        font-size: 11px;
+        gap: 6px;
+        margin-bottom: 8px;
     }
 }
 
@@ -900,6 +965,11 @@
     font-size: 13px;
     color: var(--error-color);
     margin-bottom: 10px;
+    
+    @media (max-width: 999px) {
+        font-size: 11px;
+        margin-bottom: 8px;
+    }
 }
 
 .tos-actions {
@@ -908,6 +978,15 @@
     align-items: center;
     gap: 12px;
     margin-top: 10px;
+    
+    @media (max-width: 999px) {
+        gap: 10px;
+        margin-top: 8px;
+    }
+    
+    @media (max-width: 480px) {
+        gap: 8px;
+    }
 }
 
 .tos-cancel,
@@ -920,6 +999,22 @@
     border: none;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    
+    @media (max-width: 999px) {
+        min-width: 80px;
+        height: 34px;
+        font-size: 12px;
+        border-radius: 8px;
+        padding: 0 12px;
+    }
+    
+    @media (max-width: 480px) {
+        min-width: 70px;
+        height: 32px;
+        font-size: 11px;
+        border-radius: 6px;
+        padding: 0 10px;
+    }
 }
 
 .tos-cancel {

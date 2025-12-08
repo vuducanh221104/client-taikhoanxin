@@ -63,7 +63,7 @@ a {
     // Text Colors
     --text-color: #333333;
     --text-color-secondary: #666666;
-    --text-color-tertiary: #999999;
+    --text-color-tertiary: #757575; // WCAG AA compliant (4.6:1 contrast on white)
     --text-color-white: #ffffff;
     --text-color-light: rgba(255, 255, 255, 0.7);
     --text-color-dark: rgba(255, 255, 255, 0.8);
@@ -103,7 +103,7 @@ a {
     --gray-color: #9ca3af;
     
     // Additional Colors
-    --old-price-color: #888888; // Màu giá cũ (gạch ngang)
+    --old-price-color: #767676; // Màu giá cũ (gạch ngang) - WCAG AA compliant (4.54:1 contrast)
     --discount-badge-color: #e74c3c; // Màu badge giảm giá
     --star-color: #ffd700; // Màu sao đánh giá
     --form-text-color: #5c769b; // Màu text trong form (label, placeholder)

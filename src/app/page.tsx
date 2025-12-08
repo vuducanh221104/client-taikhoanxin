@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, lazy, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import classNames from 'classnames/bind';
 import styles from './page.module.scss';
 import HeroBanner from '@/components/HeroBanner';
 import BannerSlider from '@/components/BannerSlider';
-import FeaturedProducts from '@/components/FeaturedProducts';
-import FeaturedProductSection from '@/components/FeaturedProductSection/FeaturedProductSection';
 import CategoryIcons from '@/components/CategoryIcons';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/redux/store';
@@ -15,6 +14,21 @@ import { FeaturedProduct } from '@/components/FeaturedProducts';
 import { useToast } from '@/hooks/useToast';
 import { useHomePage, FeaturedProductSection as FeaturedProductSectionType, ProductSection } from '@/services/homePageService';
 import { useProducts, usePopularProducts, useFeaturedProducts, useBestSellingProducts, useProductsByIds, mapProductToFeaturedProduct, parseProductQuery } from '@/services/productService';
+import { ProductListSkeleton } from '@/components/Skeleton';
+
+// Lazy load heavy components for better performance
+const FeaturedProducts = dynamic(() => import('@/components/FeaturedProducts'), {
+    loading: () => <ProductListSkeleton count={4} />,
+    ssr: true,
+});
+
+const FeaturedProductSection = dynamic(
+    () => import('@/components/FeaturedProductSection/FeaturedProductSection'),
+    {
+        loading: () => <ProductListSkeleton count={4} />,
+        ssr: true,
+    }
+);
 
 const cx = classNames.bind(styles);
 
