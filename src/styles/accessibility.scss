@@ -75,6 +75,12 @@
         min-width: 36px;
         padding: 8px;
     }
+
+    // Exception for slider dots (pagination indicators)
+    [class*="dot"] {
+        min-height: unset;
+        min-width: unset;
+    }
 }
 
 // Keyboard navigation improvements

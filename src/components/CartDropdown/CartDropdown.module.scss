@@ -279,15 +279,15 @@
     backface-visibility: hidden;
     
     @media (max-width: 999px) {
-        padding: 14px 28px;
-        font-size: 15px;
-        min-height: 46px;
-    }
-    
-    @media (max-width: 480px) {
         padding: 12px 24px;
         font-size: 14px;
         min-height: 44px;
+    }
+    
+    @media (max-width: 480px) {
+        padding: 10px 20px;
+        font-size: 13px;
+        min-height: 42px;
     }
 
     &:hover {
@@ -719,15 +719,15 @@
     touch-action: manipulation;
     
     @media (max-width: 999px) {
-        padding: 12px 20px;
-        font-size: 14px;
-        min-height: 46px;
+        padding: 10px 18px;
+        font-size: 13px;
+        min-height: 42px;
     }
     
     @media (max-width: 480px) {
-        padding: 11px 18px;
-        font-size: 13px;
-        min-height: 44px;
+        padding: 9px 16px;
+        font-size: 12px;
+        min-height: 40px;
         border-width: 1px;
     }
     
@@ -762,15 +762,15 @@
     touch-action: manipulation;
     
     @media (max-width: 999px) {
-        padding: 12px 20px;
-        font-size: 14px;
-        min-height: 46px;
+        padding: 10px 18px;
+        font-size: 13px;
+        min-height: 42px;
     }
     
     @media (max-width: 480px) {
-        padding: 11px 18px;
-        font-size: 13px;
-        min-height: 44px;
+        padding: 9px 16px;
+        font-size: 12px;
+        min-height: 40px;
     }
     
     &:hover {
@@ -797,10 +797,10 @@
     }
 
     .cart-close-button {
-        width: 40px;
-        height: 40px;
-        min-width: 40px;
-        min-height: 40px;
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
         z-index: 10001; // Đảm bảo cao hơn các elements khác
         position: relative;
     }
@@ -844,11 +844,11 @@
     }
 
     .quantity-btn {
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
-        min-height: 36px;
-        font-size: 16px;
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
+        font-size: 14px;
     }
 
     .quantity-value {
@@ -863,10 +863,10 @@
     }
 
     .cart-item-remove {
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
-        min-height: 36px;
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        min-height: 32px;
     }
 
     .cart-summary {
@@ -892,10 +892,10 @@
 
     .cart-view-button,
     .cart-checkout-button {
-        padding: 16px 24px;
-        font-size: 16px;
+        padding: 12px 20px;
+        font-size: 14px;
         font-weight: 700;
-        min-height: 52px;
+        min-height: 44px;
         width: 100%;
     }
 
@@ -926,12 +926,12 @@
     }
 
     .cart-return-button {
-        padding: 16px 32px;
-        font-size: 16px;
+        padding: 12px 24px;
+        font-size: 14px;
         font-weight: 700;
         width: 100%;
         max-width: 320px;
-        min-height: 52px;
+        min-height: 44px;
         border-radius: 12px;
         box-shadow: 0 4px 16px rgba(47, 120, 255, 0.35);
     }

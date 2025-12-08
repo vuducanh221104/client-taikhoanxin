@@ -22,8 +22,8 @@
   display: flex;
   align-items: flex-start;
   gap: 0;
-  max-width: 480px;
-  min-width: 360px;
+  max-width: 520px;
+  min-width: 400px;
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
@@ -41,6 +41,8 @@
   position: relative;
   flex-shrink: 0;
   width: 160px;
+  min-width: 160px;
+  max-width: 160px;
   align-self: stretch;
   background: transparent;
   display: flex;
@@ -76,7 +78,7 @@
   }
 
   .brand-text {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 800;
     color: #ffffff;
     text-transform: uppercase;
@@ -88,11 +90,11 @@
   }
 
   .package-label {
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700;
     color: rgba(255, 255, 255, 0.9);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.8px;
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
     font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     margin-bottom: 6px;
@@ -105,11 +107,11 @@
   top: 8px;
   left: 8px;
   right: 8px;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.95);
   text-transform: uppercase;
-  letter-spacing: 1.2px;
+  letter-spacing: 1px;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
   font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   z-index: 3;
@@ -137,12 +139,12 @@
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   color: #1e293b;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   z-index: 2;
   font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -150,17 +152,19 @@
 
 .purchase-toast-content {
   flex: 1;
+  min-width: 0;
+  max-width: 100%;
   padding: 16px 44px 16px 20px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   gap: 6px;
-  min-width: 0;
   align-self: stretch;
+  overflow: hidden;
 }
 
 .purchase-toast-subtitle {
-  font-size: 13px;
+  font-size: 12px;
   color: #64748b;
   line-height: 1.4;
   font-weight: 400;
@@ -170,7 +174,7 @@
 }
 
 .purchase-toast-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #0f172a;
   line-height: 1.4;
@@ -179,6 +183,7 @@
   overflow-wrap: break-word;
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -213,51 +218,202 @@
   }
 }
 
-@media (max-width: 640px) {
+// Mobile & Tablet (max-width: 999px)
+@media (max-width: 999px) {
   .purchase-toast-wrapper {
     left: 12px;
     right: 12px;
-    bottom: 16px;
+    bottom: 12px;
+    animation: slideInLeftMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes slideInLeftMobile {
+    from {
+      opacity: 0;
+      transform: translateX(-100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
 
   .purchase-toast {
     max-width: 100%;
     min-width: auto;
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
+
+    &:hover {
+      transform: translateY(0);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    }
   }
 
   .purchase-toast-image-wrapper {
-    width: 140px;
-    height: 100px;
-    padding: 10px 8px;
+    width: 120px;
+    min-width: 120px;
+    border-radius: 12px 0 0 12px;
   }
 
   .purchase-toast-image {
+    border-radius: 12px 0 0 12px;
+
+    .product-image {
+      border-radius: 12px 0 0 12px;
+    }
+
     .brand-text {
-      font-size: 24px;
+      font-size: 18px;
+      margin-top: 2px;
+      letter-spacing: -0.3px;
     }
 
     .package-label {
-      font-size: 9px;
-      margin-bottom: 4px;
+      font-size: 7px;
+      margin-bottom: 3px;
+      letter-spacing: 0.7px;
     }
   }
 
   .package-label-overlay {
-    font-size: 8px;
-    padding: 2px 5px;
+    top: 6px;
+    left: 6px;
+    right: 6px;
+    font-size: 7px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    letter-spacing: 0.8px;
+  }
+
+  .image-overlay {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, transparent 40%);
+  }
+
+  .duration-badge {
+    bottom: 6px;
+    left: 6px;
+    padding: 3px 8px;
+    border-radius: 8px;
+    font-size: 9px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
   }
 
   .purchase-toast-content {
-    padding: 14px 16px;
+    padding: 12px 36px 12px 12px;
+    gap: 4px;
   }
 
   .purchase-toast-title {
-    font-size: 15px;
+    font-size: 13px;
+    line-height: 1.3;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    font-weight: 600;
   }
 
   .purchase-toast-subtitle {
-    font-size: 12px;
+    font-size: 10px;
+    line-height: 1.3;
+  }
+
+  .purchase-toast-close {
+    top: 6px;
+    right: 6px;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+
+    &:hover {
+      transform: scale(1.05);
+    }
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
   }
 }
+
+// Small mobile (max-width: 480px)
+@media (max-width: 480px) {
+  .purchase-toast-wrapper {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+  }
+
+  .purchase-toast {
+    border-radius: 10px;
+  }
+
+  .purchase-toast-image-wrapper {
+    width: 110px;
+    min-width: 110px;
+    border-radius: 10px 0 0 10px;
+  }
+
+  .purchase-toast-image {
+    border-radius: 10px 0 0 10px;
+
+    .product-image {
+      border-radius: 10px 0 0 10px;
+    }
+
+    .brand-text {
+      font-size: 16px;
+    }
+
+    .package-label {
+      font-size: 6px;
+      margin-bottom: 2px;
+    }
+  }
+
+  .package-label-overlay {
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    font-size: 6px;
+    padding: 1px 3px;
+  }
+
+  .duration-badge {
+    bottom: 4px;
+    left: 4px;
+    padding: 2px 6px;
+    font-size: 8px;
+  }
+
+  .purchase-toast-content {
+    padding: 10px 32px 10px 10px;
+    gap: 3px;
+  }
+
+  .purchase-toast-title {
+    font-size: 12px;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .purchase-toast-subtitle {
+    font-size: 9px;
+  }
+
+  .purchase-toast-close {
+    top: 4px;
+    right: 4px;
+    width: 22px;
+    height: 22px;
+
+    svg {
+      width: 12px;
+      height: 12px;
+    }
+  }
+}
+
 
 

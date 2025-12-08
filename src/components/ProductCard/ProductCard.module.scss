@@ -672,14 +672,14 @@
         flex-shrink: 0;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 999px) {
         padding: 8px 14px;
         font-size: 13px;
         margin-top: 10px;
     }
 
     @media (max-width: 480px) {
-        padding: 8px 12px;
+        padding: 7px 12px;
         font-size: 12px;
         margin-top: 8px;
     }
@@ -730,16 +730,18 @@
           .action-buttons {
               top: 8px;
               right: 8px;
-              padding: 8px 6px;
-              gap: 6px;
+              padding: 6px 4px;
+              gap: 5px;
           }
 
           .action-button {
-              padding: 6px;
+              padding: 5px;
+              min-width: 36px;
+              min-height: 36px;
 
               .action-icon {
-                  width: 18px;
-                  height: 18px;
+                  width: 16px;
+                  height: 16px;
               }
           }
       }
@@ -795,19 +797,19 @@
           .action-buttons {
               top: 6px;
               right: 6px;
-              padding: 6px 4px;
+              padding: 5px 3px;
               gap: 4px;
               border-radius: 10px;
           }
 
           .action-button {
-              padding: 8px; // Increased from 5px for better touch target
-              min-width: 44px; // WCAG minimum touch target
-              min-height: 44px;
+              padding: 6px;
+              min-width: 36px; // Compact but still touchable
+              min-height: 36px;
 
               .action-icon {
-                  width: 18px; // Slightly larger for better visibility
-                  height: 18px;
+                  width: 16px;
+                  height: 16px;
               }
           }
       }
