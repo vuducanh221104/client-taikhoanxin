@@ -39,6 +39,10 @@
     line-height: 1.5;
 }
 
+.carousel-wrapper {
+    position: relative;
+}
+
 .category-icons-container {
     display: flex;
     flex-wrap: wrap;
@@ -48,6 +52,8 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
+    overflow: hidden;
+    scroll-behavior: smooth;
 
     @media (max-width: 999px) {
         gap: 20px;
@@ -62,20 +68,10 @@
     @media (max-width: 768px) {
         flex-wrap: nowrap;
         justify-content: flex-start;
-        overflow-x: auto;
-        overflow-y: hidden;
-        -webkit-overflow-scrolling: touch;
-        scroll-snap-type: x mandatory;
-        scroll-behavior: smooth;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
+        overflow: hidden; // disable swipe/drag scroll; use nav buttons
         padding: 0 16px;
         margin: 0;
         gap: 12px;
-
-        &::-webkit-scrollbar {
-            display: none;
-        }
     }
     
     @media (max-width: 480px) {
@@ -301,6 +297,56 @@
         font-size: 12px;
     }
 }
+
+.nav-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    border: none;
+    background: transparent;
+    color: var(--text-color);
+    font-size: 22px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    z-index: 2;
+    opacity: 1;
+    pointer-events: auto;
+
+    &:hover {
+        color: var(--primary-color);
+    }
+
+    &:focus-visible {
+        outline: none;
+    }
+
+    &.prev {
+        left: -6px; // push outside a bit
+    }
+
+    &.next {
+        right: -6px; // push further to the edge
+    }
+
+    @media (max-width: 768px) {
+        width: 36px;
+        height: 36px;
+        font-size: 20px;
+    }
+
+    @media (max-width: 480px) {
+        width: 32px;
+        height: 32px;
+        font-size: 19px;
+    }
+}
+
 
 // Responsive adjustments
 @media (max-width: 768px) {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import classNames from 'classnames/bind';
@@ -170,8 +170,11 @@ const CategoryIcons: React.FC<CategoryIconsProps> = ({
     title,
     subtitle,
 }) => {
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const [hasOverflow, setHasOverflow] = useState(false);
+
     // Fetch homepage data from API
-    const { data: homePageData, error, isLoading } = useHomePage();
+    const { data: homePageData, error: _error, isLoading: _isLoading } = useHomePage();
 
     // Map API menu items to CategoryItem format, sorted by sortOrder
     const apiCategories = useMemo(() => {
@@ -372,6 +375,27 @@ const CategoryIcons: React.FC<CategoryIconsProps> = ({
     // Priority: API categories > props categories > default categories
     const displayCategories = apiCategories.length > 0 ? apiCategories : (categories || defaultCategories);
 
+    // Detect overflow for showing navigation
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el) return;
+
+        const checkOverflow = () => {
+            setHasOverflow(el.scrollWidth > el.clientWidth + 4); // small tolerance
+        };
+
+        checkOverflow();
+        window.addEventListener('resize', checkOverflow);
+        return () => window.removeEventListener('resize', checkOverflow);
+    }, [displayCategories]);
+
+    const scrollByAmount = (direction: 'prev' | 'next') => {
+        const el = containerRef.current;
+        if (!el) return;
+        const delta = direction === 'next' ? el.clientWidth : -el.clientWidth;
+        el.scrollBy({ left: delta, behavior: 'smooth' });
+    };
+
     return (
         <section className={cx('category-icons-section')}>
             <div className="container-wide">
@@ -383,32 +407,54 @@ const CategoryIcons: React.FC<CategoryIconsProps> = ({
                         </div>
                     </div>
                 )}
-                <div className={cx('category-icons-container')}>
-                    {displayCategories.map((category) => (
-                        <Link
-                            key={category.id}
-                            href={category.href}
-                            className={cx('category-item')}
-                            style={{ '--category-color': category.color || '#666' } as React.CSSProperties}
-                        >
-                            <div className={cx('category-icon-wrapper')}>
-                                <div className={cx('category-icon')}>
-                                    {category.image ? (
-                                        <Image
-                                            src={category.image}
-                                            alt={category.name}
-                                            width={24}
-                                            height={24}
-                                            className={cx('category-image')}
-                                        />
-                                    ) : (
-                                        category.icon
-                                    )}
+                <div className={cx('carousel-wrapper')}>
+                    {hasOverflow && (
+                        <>
+                            <button
+                                type="button"
+                                className={cx('nav-button', 'prev')}
+                                aria-label="Trượt về trước"
+                                onClick={() => scrollByAmount('prev')}
+                            >
+                                ‹
+                            </button>
+                            <button
+                                type="button"
+                                className={cx('nav-button', 'next')}
+                                aria-label="Trượt tiếp"
+                                onClick={() => scrollByAmount('next')}
+                            >
+                                ›
+                            </button>
+                        </>
+                    )}
+                    <div ref={containerRef} className={cx('category-icons-container')}>
+                        {displayCategories.map((category) => (
+                            <Link
+                                key={category.id}
+                                href={category.href}
+                                className={cx('category-item')}
+                                style={{ '--category-color': category.color || '#666' } as React.CSSProperties}
+                            >
+                                <div className={cx('category-icon-wrapper')}>
+                                    <div className={cx('category-icon')}>
+                                        {category.image ? (
+                                            <Image
+                                                src={category.image}
+                                                alt={category.name}
+                                                width={24}
+                                                height={24}
+                                                className={cx('category-image')}
+                                            />
+                                        ) : (
+                                            category.icon
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                            <span className={cx('category-name')}>{category.name}</span>
-                        </Link>
-                    ))}
+                                <span className={cx('category-name')}>{category.name}</span>
+                            </Link>
+                        ))}
+                    </div>
                 </div>
             </div>
         </section>
