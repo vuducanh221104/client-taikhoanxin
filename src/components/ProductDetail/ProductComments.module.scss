@@ -368,9 +368,9 @@
 }
 
 .thread-panel {
-    background: var(--bg-color);
+    background: transparent; // Remove grey overlay layer
     border-radius: 20px;
-    border: 1px solid var(--border-color-lighter);
+    border: none;
     padding: 24px;
     position: relative;
     overflow: hidden;
@@ -410,11 +410,7 @@
     gap: 0;
 
     &.is-reply {
-        margin-left: 32px;
-
-        @media (max-width: 999px) {
-            margin-left: 16px;
-        }
+        margin-left: 0; // Pull replies into main column
     }
 }
 
@@ -447,7 +443,7 @@
 }
 
 .comment-card {
-    background: var(--bg-color-secondary);
+    background: var(--bg-color); // switch to white layer
     border-radius: 22px;
     padding: 20px;
     border: 1px solid var(--border-color-lighter);
@@ -462,23 +458,28 @@
     }
 
     @media (max-width: 480px) {
-        grid-template-columns: 1fr;
+        grid-template-columns: auto 1fr; // keep avatar and content on one row
+        align-items: flex-start;
         padding: 12px;
     }
 }
 
 .comment-avatar {
-    width: 48px;
-    height: 48px;
+    width: 42px;
+    height: 42px;
     border-radius: 16px;
     overflow: hidden;
     border: none;
+    align-self: flex-start; // lift avatar so it aligns with username/top text
+    margin-top: 0;
+    transform: translateY(-10px); // lift higher above reply
 
     @media (max-width: 999px) {
-        width: 40px;
-        height: 40px;
+        width: 35px;
+        height: 35px;
         border-radius: 12px;
         border-width: 1px;
+        transform: translateY(-8px);
     }
 }
 
@@ -500,9 +501,10 @@
 
 .comment-header {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
+    justify-content: flex-start; // keep timestamp close to content
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 6px;
     flex-wrap: wrap;
 }
 
@@ -518,11 +520,11 @@
     color: var(--text-color);
 
     @media (max-width: 999px) {
-        font-size: 14px;
+        font-size: 15px;
     }
     
     @media (max-width: 480px) {
-        font-size: 13px;
+        font-size: 14px;
     }
 }
 
@@ -560,6 +562,10 @@
 .comment-timestamp {
     font-size: 12px;
     color: var(--text-color-tertiary);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 4px; // slight separation from username/rating
 
     @media (max-width: 999px) {
         font-size: 11px;
@@ -571,7 +577,7 @@
 }
 
 .comment-text {
-    font-size: 15px;
+    font-size: 16px;
     line-height: 1.6;
     color: var(--text-color);
 
@@ -581,7 +587,7 @@
     }
     
     @media (max-width: 480px) {
-        font-size: 13px;
+        font-size: 14px;
     }
 }
 
@@ -641,17 +647,33 @@
 }
 
 .comment-replies {
-    margin-left: 8px;
-    padding-left: 24px;
-    border-left: 2px dashed var(--border-color-lighter);
+    margin-left: 0; // Remove left gutter
+    padding-left: 0; // Remove timeline space
+    border-left: none; // Remove vertical line
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+.replies-toggle {
+    align-self: flex-start;
+    border: none;
+    background: transparent;
+    color: var(--primary-color);
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+
+    &:hover {
+        text-decoration: underline;
+    }
 
     @media (max-width: 999px) {
-        margin-left: 0;
-        padding-left: 16px; // Reduced padding on mobile
-        border-left-width: 1px; // Thinner border on mobile
+        font-size: 12px;
     }
 }
 

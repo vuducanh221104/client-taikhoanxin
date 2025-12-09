@@ -48,6 +48,7 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
     const [replyDraft, setReplyDraft] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [activeTab, setActiveTab] = useState<'comments' | 'reviews'>('comments');
+    const [replyVisibleCount, setReplyVisibleCount] = useState<Record<string, number>>({});
     const { showSuccess, showError } = useToast();
 
     // Reset form when switching tabs
@@ -60,7 +61,7 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
     }, [activeTab]);
 
     const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
-    const isAdmin = Boolean(currentUser && currentUser.role !== undefined && currentUser.role >= 2);
+    const _isAdmin = Boolean(currentUser && currentUser.role !== undefined && currentUser.role >= 2);
     const canInteract = Boolean(currentUser && productId);
 
     const {
@@ -80,13 +81,27 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
         if (Number.isNaN(date.getTime())) {
             return timestamp;
         }
-        return date.toLocaleString('vi-VN', {
-            hour: '2-digit',
-            minute: '2-digit',
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-        });
+
+        const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+
+        const thresholds: { limit: number; divisor?: number; unit?: string; text?: string }[] = [
+            { limit: 60, text: 'vài giây trước' },
+            { limit: 3600, divisor: 60, unit: 'phút' },
+            { limit: 86400, divisor: 3600, unit: 'giờ' },
+            { limit: 2592000, divisor: 86400, unit: 'ngày' }, // 30 days
+            { limit: 31104000, divisor: 2592000, unit: 'tháng' }, // 12 months
+        ];
+
+        for (const threshold of thresholds) {
+            if (diffSeconds < threshold.limit) {
+                if (threshold.text) return threshold.text;
+                const value = Math.floor(diffSeconds / (threshold.divisor || 1));
+                return `${value} ${threshold.unit} trước`;
+            }
+        }
+
+        const years = Math.floor(diffSeconds / 31104000);
+        return `${years} năm trước`;
     };
 
     const mapReviewToComment = (review: Review): DisplayComment => {
@@ -264,7 +279,32 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
         }
     };
 
-    const renderComment = (commentItem: DisplayComment, isReply: boolean = false) => (
+    const toggleReplies = (id: string, totalReplies: number, previewCount: number, chunkSize: number) => {
+        setReplyVisibleCount((prev) => {
+            const currentVisible = prev[id] ?? previewCount;
+            const isFullyExpanded = currentVisible >= totalReplies;
+            return {
+                ...prev,
+                [id]: isFullyExpanded ? previewCount : Math.min(totalReplies, currentVisible + chunkSize),
+            };
+        });
+    };
+
+    const renderComment = (commentItem: DisplayComment, isReply: boolean = false) => {
+        const PREVIEW_COUNT = 2; // initial replies shown
+        const CHUNK_SIZE = 2; // how many to reveal per click
+        const hasReplies = commentItem.replies && commentItem.replies.length > 0;
+        const totalReplies = commentItem.replies?.length || 0;
+        const isRootWithManyReplies = commentItem.isRoot && hasReplies && totalReplies > PREVIEW_COUNT;
+        const visibleCount = replyVisibleCount[commentItem.id] ?? PREVIEW_COUNT;
+        const clampedVisible = isRootWithManyReplies ? Math.min(visibleCount, totalReplies) : totalReplies;
+        const repliesToRender =
+            commentItem.isRoot && hasReplies
+                ? commentItem.replies.slice(0, clampedVisible)
+                : commentItem.replies;
+        const remaining = totalReplies - clampedVisible;
+
+        return (
         <article key={commentItem.id} className={cx('comment-row', { 'is-reply': isReply })}>
             <div className={cx('timeline-marker')}>
                 <span className={cx('timeline-dot', { 'is-reply': isReply })} />
@@ -329,7 +369,10 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
                                 </div>
                             )}
                         </div>
-                        <span className={cx('comment-timestamp')}>{formatTimestamp(commentItem.timestamp)}</span>
+                        <span className={cx('comment-timestamp')}>
+                            <ClockIcon size={14} />
+                            <span>{formatTimestamp(commentItem.timestamp)}</span>
+                        </span>
                     </div>
 
                     <div className={cx('comment-text')}>{commentItem.text}</div>
@@ -341,8 +384,23 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
                         </button>
                     </div>
 
-                    {commentItem.replies && commentItem.replies.length > 0 && (
-                        <div className={cx('comment-replies')}>{commentItem.replies.map((reply) => renderComment(reply, true))}</div>
+                    {hasReplies && (
+                        <div className={cx('comment-replies')}>
+                            {repliesToRender?.map((reply) => renderComment(reply, true))}
+                            {isRootWithManyReplies && (
+                                <button
+                                    type="button"
+                                    className={cx('replies-toggle')}
+                                    onClick={() =>
+                                        toggleReplies(commentItem.id, totalReplies, PREVIEW_COUNT, CHUNK_SIZE)
+                                    }
+                                >
+                                    {remaining > 0
+                                        ? `Xem thêm ${remaining} phản hồi`
+                                        : 'Thu gọn phản hồi'}
+                                </button>
+                            )}
+                        </div>
                     )}
 
                     {commentItem.isRoot && replyTarget?.rootId === commentItem.id && (
@@ -396,7 +454,8 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
                 </div>
             </div>
         </article>
-    );
+        );
+    };
 
     const renderCommentsList = () => {
         if (!productId) {
