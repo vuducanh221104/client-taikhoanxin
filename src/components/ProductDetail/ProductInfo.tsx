@@ -31,6 +31,10 @@ interface Product {
     status: 'in-stock' | 'out-of-stock';
     productCode: string;
     category: string;
+    images?: string[];
+    slug?: string;
+    imageSrc?: string;
+    image?: string[];
 }
 
 interface VariantItem {
@@ -74,9 +78,9 @@ const formatPrice = (value: number): string => {
     return value.toLocaleString('vi-VN');
 };
 
-const ProductInfo: React.FC<ProductInfoProps> = ({ 
-    product, 
-    selectedPackage, 
+const ProductInfo: React.FC<ProductInfoProps> = ({
+    product,
+    selectedPackage,
     onPackageSelect,
     variants,
     options,
@@ -97,7 +101,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     const [tosAccepted, setTosAccepted] = React.useState(false);
     const [tosError, setTosError] = React.useState('');
     const pendingActionRef = React.useRef<'add' | 'buy' | null>(null);
-    
+
     // State for options values and errors
     const [optionsValues, setOptionsValues] = React.useState<Record<string, any>>({});
     const [optionsErrors, setOptionsErrors] = React.useState<Record<string, string>>({});
@@ -423,8 +427,8 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                                     variant.list.map((item) => (
                                         <button
                                             key={item.slug || item._id || item.text}
-                                            className={cx('package-button', { 
-                                                selected: currentSlug === item.slug 
+                                            className={cx('package-button', {
+                                                selected: currentSlug === item.slug
                                             })}
                                             onClick={() => {
                                                 if (onVariantSelect && item.slug) {
@@ -444,38 +448,38 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                 }
                 return null;
             })()}
-            
+
             {/* Fallback to default packages if no variants */}
             {(() => {
                 // Check if variants exist and have data
                 const hasVariants = variants && (
-                    Array.isArray(variants) ? variants.length > 0 : 
-                    (variants.title && variants.list && variants.list.length > 0)
+                    Array.isArray(variants) ? variants.length > 0 :
+                        (variants.title && variants.list && variants.list.length > 0)
                 );
                 return !hasVariants;
             })() && (
-                <div className={cx('product-packages')}>
-                    <h3 className={cx('packages-title')}>Chọn gói sản phẩm</h3>
-                    <div className={cx('packages-grid')}>
-                        {[
-                            { id: '1', name: 'Ultra (1 tháng)', price: 199000, selected: false },
-                            { id: '2', name: 'Ultra Không Credit (1 tháng)', price: 179000, selected: false },
-                            { id: '3', name: 'Pro (1 tháng)', price: 149000, selected: false },
-                            { id: '4', name: 'Pro (6 tháng)', price: 799000, selected: false },
-                            { id: '5', name: 'Pro (1 năm)', price: 1499000, selected: false },
-                            { id: '6', name: 'SP AI khác', price: 0, selected: false },
-                        ].map((pkg) => (
-                            <button
-                                key={pkg.id}
-                                className={cx('package-button', { selected: selectedPackage.id === pkg.id })}
-                                onClick={() => onPackageSelect(pkg)}
-                            >
-                                {pkg.name}
-                            </button>
-                        ))}
+                    <div className={cx('product-packages')}>
+                        <h3 className={cx('packages-title')}>Chọn gói sản phẩm</h3>
+                        <div className={cx('packages-grid')}>
+                            {[
+                                { id: '1', name: 'Ultra (1 tháng)', price: 199000, selected: false },
+                                { id: '2', name: 'Ultra Không Credit (1 tháng)', price: 179000, selected: false },
+                                { id: '3', name: 'Pro (1 tháng)', price: 149000, selected: false },
+                                { id: '4', name: 'Pro (6 tháng)', price: 799000, selected: false },
+                                { id: '5', name: 'Pro (1 năm)', price: 1499000, selected: false },
+                                { id: '6', name: 'SP AI khác', price: 0, selected: false },
+                            ].map((pkg) => (
+                                <button
+                                    key={pkg.id}
+                                    className={cx('package-button', { selected: selectedPackage.id === pkg.id })}
+                                    onClick={() => onPackageSelect(pkg)}
+                                >
+                                    {pkg.name}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
 
             {/* Product Options - Input fields for email, password, etc. */}
             {options && options.length > 0 && (
@@ -486,21 +490,21 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                             const optionId = getOptionId(option);
                             const value = optionsValues[optionId] || '';
                             const isRequired = option.constraints?.required || false;
-                            
+
                             const handleOptionChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                                 const newValue = e.target.value;
                                 const newOptionsValues = {
                                     ...optionsValues,
                                     [optionId]: newValue,
                                 };
-                                
+
                                 // Validate on change
                                 const error = validateOption(option, newValue);
                                 setOptionsErrors({
                                     ...optionsErrors,
                                     [optionId]: error,
                                 });
-                                
+
                                 setOptionsValues(newOptionsValues);
                                 if (onOptionsChange) {
                                     onOptionsChange(newOptionsValues);
@@ -542,7 +546,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                                             {error && <span className={cx('error-message')}>{error}</span>}
                                         </div>
                                     );
-                                
+
                                 case 'email':
                                     return (
                                         <div key={optionId} className={cx('option-field')}>
@@ -565,7 +569,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                                             {error && <span className={cx('error-message')}>{error}</span>}
                                         </div>
                                     );
-                                
+
                                 case 'number':
                                     return (
                                         <div key={optionId} className={cx('option-field')}>
@@ -583,14 +587,14 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                                                         ...optionsValues,
                                                         [optionId]: numValue,
                                                     };
-                                                    
+
                                                     // Validate on change
                                                     const validationError = validateOption(option, numValue);
                                                     setOptionsErrors({
                                                         ...optionsErrors,
                                                         [optionId]: validationError,
                                                     });
-                                                    
+
                                                     setOptionsValues(newOptionsValues);
                                                     if (onOptionsChange) {
                                                         onOptionsChange(newOptionsValues);
@@ -605,7 +609,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                                             {error && <span className={cx('error-message')}>{error}</span>}
                                         </div>
                                     );
-                                
+
                                 case 'tel':
                                     return (
                                         <div key={optionId} className={cx('option-field')}>
@@ -628,7 +632,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                                             {error && <span className={cx('error-message')}>{error}</span>}
                                         </div>
                                     );
-                                
+
                                 case 'url':
                                     return (
                                         <div key={optionId} className={cx('option-field')}>
@@ -649,7 +653,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                                             {error && <span className={cx('error-message')}>{error}</span>}
                                         </div>
                                     );
-                                
+
                                 case 'date':
                                     return (
                                         <div key={optionId} className={cx('option-field')}>
@@ -670,7 +674,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                                             {error && <span className={cx('error-message')}>{error}</span>}
                                         </div>
                                     );
-                                
+
                                 case 'checkbox':
                                     return (
                                         <div key={optionId} className={cx('option-field', 'option-checkbox')}>
@@ -685,14 +689,14 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                                                             ...optionsValues,
                                                             [optionId]: checked,
                                                         };
-                                                        
+
                                                         // Validate on change
                                                         const validationError = validateOption(option, checked);
                                                         setOptionsErrors({
                                                             ...optionsErrors,
                                                             [optionId]: validationError,
                                                         });
-                                                        
+
                                                         setOptionsValues(newOptionsValues);
                                                         if (onOptionsChange) {
                                                             onOptionsChange(newOptionsValues);
@@ -707,7 +711,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                                             {error && <span className={cx('error-message')}>{error}</span>}
                                         </div>
                                     );
-                                
+
                                 default: // text, select, radio
                                     return (
                                         <div key={optionId} className={cx('option-field')}>
@@ -742,8 +746,8 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                         <CreditCardIcon size={20} />
                         <span>Mua ngay</span>
                     </button>
-                    <button 
-                        className={cx('add-to-cart-button')} 
+                    <button
+                        className={cx('add-to-cart-button')}
                         onClick={handleAddToCart}
                         disabled={isAddingToCart}
                     >
@@ -751,8 +755,8 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                         <span>{isAddingToCart ? 'Đang thêm...' : 'Thêm vào giỏ'}</span>
                     </button>
                 </div>
-                <button 
-                    className={cx('wishlist-button', { 'is-favorite': isFavorite })} 
+                <button
+                    className={cx('wishlist-button', { 'is-favorite': isFavorite })}
                     onClick={handleToggleWishlist}
                     aria-label={isFavorite ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'}
                     type="button"
@@ -798,18 +802,48 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                             />
                             <span>Tôi đã đọc kỹ thông tin của sản phẩm và đồng ý.</span>
                         </label>
-                        {tosError && <div className={cx('tos-error')}>{tosError}</div>}
-                        <div className={cx('tos-actions')}>
-                            <button type="button" className={cx('tos-cancel')} onClick={handleCloseTosModal}>
-                                Hủy
+                        <div className={cx('tos-modal-actions')}>
+                            <button className={cx('tos-cancel-button')} onClick={handleCloseTosModal}>
+                                Hủy bỏ
                             </button>
-                            <button type="button" className={cx('tos-confirm')} onClick={handleConfirmTosModal}>
+                            <button className={cx('tos-confirm-button')} onClick={handleConfirmTosModal}>
                                 Xác nhận
                             </button>
                         </div>
+                        {tosError && <p className={cx('tos-error-message')}>{tosError}</p>}
                     </div>
                 </div>
             )}
+
+            {/* Mobile Sticky Action Bar */}
+            <div className={cx('mobile-sticky-actions')}>
+                <div className={cx('mobile-actions-wrapper')}>
+                    <div className={cx('mobile-price-info')}>
+                        <span className={cx('mobile-current-price')}>{formatPrice(displayPrice)}₫</span>
+                        {product.oldPrice && (
+                            <span className={cx('mobile-old-price')}>{formatPrice(product.oldPrice)}₫</span>
+                        )}
+                    </div>
+                    <div className={cx('mobile-action-buttons')}>
+                        <button
+                            className={cx('mobile-btn', 'mobile-add-cart')}
+                            onClick={handleAddToCart}
+                            disabled={isAddingToCart}
+                            aria-label="Thêm vào giỏ hàng"
+                        >
+                            <CartIcon size={22} />
+                            <span className={cx('mobile-add-cart-text')}>Thêm vào giỏ</span>
+                        </button>
+                        <button
+                            className={cx('mobile-btn', 'mobile-buy-now')}
+                            onClick={handleBuyNow}
+                        >
+                            <CreditCardIcon size={20} />
+                            <span>Mua ngay</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

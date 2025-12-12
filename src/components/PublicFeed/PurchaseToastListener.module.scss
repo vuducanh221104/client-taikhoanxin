@@ -12,6 +12,7 @@
     opacity: 0;
     transform: translateX(-100%);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -223,7 +224,7 @@
   .purchase-toast-wrapper {
     left: 12px;
     right: auto; // Không stretch full width
-    bottom: 12px; // Nằm dưới bottom navigation
+    bottom: 80px; // Nằm trên bottom navigation/sticky actions
     max-width: calc(100vw - 24px); // Giới hạn max width
     animation: slideInLeftMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
@@ -233,6 +234,7 @@
       opacity: 0;
       transform: translateX(-100%);
     }
+
     to {
       opacity: 1;
       transform: translateX(0);
@@ -347,7 +349,7 @@
   .purchase-toast-wrapper {
     left: 8px;
     right: auto; // Không stretch full width
-    bottom: 8px; // Nằm dưới bottom navigation
+    bottom: 80px; // Nằm trên bottom navigation/sticky actions
     max-width: calc(100vw - 16px);
   }
 
@@ -427,6 +429,3 @@
     }
   }
 }
-
-
-

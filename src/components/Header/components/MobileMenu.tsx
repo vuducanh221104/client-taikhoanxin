@@ -43,6 +43,18 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, mobileMenuSide
     const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
     const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
+    // Prevent body scroll when menu is open
+    React.useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isOpen]);
+
     const menuItems = [
         { href: '/', label: 'Trang chủ', icon: <HomeIcon /> },
         { href: '/products/viewed', label: 'Đã xem', icon: <EyeIcon /> },
@@ -103,13 +115,13 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, mobileMenuSide
     return (
         <>
             {/* Overlay */}
-            <div 
+            <div
                 className={cx('mobile-menu-overlay')}
                 onClick={onClose}
             />
-            
+
             {/* Sidebar */}
-            <div 
+            <div
                 className={cx('mobile-menu-sidebar')}
                 ref={mobileMenuSidebarRef}
             >

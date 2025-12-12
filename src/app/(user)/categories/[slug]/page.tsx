@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import classNames from 'classnames/bind';
 import styles from './page.module.scss';
 import ProductCard from '@/components/ProductCard/ProductCard';
-import { SortIcon } from '@/components/Icons';
+import { SortIcon, FilterIcon, CloseIcon } from '@/components/Icons';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import Breadcrumbs from '@/components/Breadcrumbs/Breadcrumbs';
 import { useCategory } from '@/services/categoryService';
@@ -13,7 +13,6 @@ import { useProducts, mapProductToFeaturedProduct } from '@/services/productServ
 import type { FeaturedProduct } from '@/components/FeaturedProducts';
 
 const cx = classNames.bind(styles);
-
 const categoryNames: Record<string, string> = {
     'work': 'Làm việc',
     'ai-account': 'Sản phẩm AI',
@@ -79,6 +78,7 @@ export default function CategoryDetailPage() {
     const [loadedProducts, setLoadedProducts] = useState<FeaturedProduct[]>([]);
     const itemsPerPage = 30;
     const [isSortOpen, setIsSortOpen] = useState(false);
+    const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
     const sortDropdownRef = useRef<HTMLDivElement | null>(null);
 
     const { data: categoryData } = useCategory(slug);
@@ -197,10 +197,13 @@ export default function CategoryDetailPage() {
         });
     };
 
+    const toggleMobileFilter = () => setIsMobileFilterOpen((prev) => !prev);
+
     const handleApplyFilters = () => {
         setPriceRange(pendingPriceRange);
         setCurrentPage(1);
         setLoadedProducts([]);
+        setIsMobileFilterOpen(false); // Close mobile filter on apply
     };
 
     const clearFilters = () => {
@@ -347,6 +350,14 @@ export default function CategoryDetailPage() {
                     </div>
 
                     <div className={cx('category-controls')}>
+                        <button
+                            className={cx('mobile-filter-button')}
+                            onClick={toggleMobileFilter}
+                        >
+                            <FilterIcon size={20} />
+                            <span>Bộ lọc</span>
+                        </button>
+
                         <div
                             className={cx('sort-dropdown', { 'is-open': isSortOpen })}
                             ref={sortDropdownRef}
@@ -400,7 +411,17 @@ export default function CategoryDetailPage() {
 
                 <div className={cx('category-content')}>
                     {/* Filters Sidebar */}
-                    <aside className={cx('filters-sidebar')}>
+                    <aside className={cx('filters-sidebar', { 'mobile-open': isMobileFilterOpen })}>
+                        <div className={cx('mobile-filter-header')}>
+                            <h3 className={cx('mobile-filter-title')}>Bộ lọc sản phẩm</h3>
+                            <button
+                                className={cx('mobile-filter-close')}
+                                onClick={toggleMobileFilter}
+                            >
+                                <CloseIcon size={24} />
+                            </button>
+                        </div>
+
                         <div className={cx('filters-header')}>
                             <div>
                                 <h2 className={cx('filters-title')}>Bộ lọc thông minh</h2>
@@ -569,6 +590,15 @@ export default function CategoryDetailPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Mobile Filter Overlay */}
+            {isMobileFilterOpen && (
+                <div
+                    className={cx('mobile-filter-overlay')}
+                    onClick={toggleMobileFilter}
+                    aria-hidden="true"
+                />
+            )}
         </div>
     );
 }
