@@ -2,6 +2,8 @@
 
 import React, { useState, useMemo } from 'react';
 import classNames from 'classnames/bind';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import styles from './ProductDetail.module.scss';
 import ProductImageGallery from './ProductImageGallery';
 import ProductInfo from './ProductInfo';
@@ -392,14 +394,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
                     <div className={cx('product-details-left')}>
                         {/* Description Content */}
                         {mappedProduct.description && (
-                        <div className={cx('product-detail-content')}>
-                                <div 
-                                    className={cx('section-description')}
-                                    dangerouslySetInnerHTML={{ 
-                                        __html: mappedProduct.description.replace(/\n/g, '<br />') 
-                                    }}
-                                />
-                        </div>
+                            <div className={cx('product-detail-content')}>
+                                <div className={cx('section-description', 'markdown-body')}>
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {mappedProduct.description}
+                                    </ReactMarkdown>
+                                </div>
+                            </div>
                         )}
                         
                         {mappedProduct.features.length > 0 && (

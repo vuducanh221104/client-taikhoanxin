@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import classNames from 'classnames/bind';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import styles from './ProductFAQ.module.scss';
 import { StarIcon } from '@/components/Icons';
 
@@ -55,20 +57,15 @@ const ProductFAQ: React.FC<ProductFAQProps> = ({ faqs, rating, reviewCount, vari
                             </div>
                         )}
                         {isExpanded(index) && (
-                            <div id={`faq-answer-${index}`} className={cx('faq-answer', { 'expanded-variant': variant === 'expanded' })}>
-                                <p>
-                                    {faq.answer.split('tại đây').map((part, i) => {
-                                        if (i === 0) return <span key={i}>{part}</span>;
-                                        return (
-                                            <React.Fragment key={i}>
-                                                <a href="#" className={cx('faq-link')}>
-                                                    tại đây
-                                                </a>
-                                                {part}
-                                            </React.Fragment>
-                                        );
-                                    })}
-                                </p>
+                            <div
+                                id={`faq-answer-${index}`}
+                                className={cx('faq-answer', { 'expanded-variant': variant === 'expanded' })}
+                            >
+                                <div className={cx('faq-answer-content', 'markdown-body')}>
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {faq.answer}
+                                    </ReactMarkdown>
+                                </div>
                             </div>
                         )}
                     </div>
