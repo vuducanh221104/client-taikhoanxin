@@ -1,3 +1,4 @@
+
 .product-faq {
     margin-bottom: 60px;
     padding: 32px;
@@ -174,18 +175,52 @@
             padding-left: 20px;
         }
 
-        p {
+        .faq-answer-content {
             font-size: 16px;
             line-height: 1.6;
             color: var(--text-color-secondary);
-            
+
             @media (max-width: 999px) {
                 font-size: 14px;
                 line-height: 1.5;
             }
-            
+
             @media (max-width: 480px) {
                 font-size: 13px;
+            }
+
+            // Markdown typography
+            &.markdown-body {
+                p {
+                    margin: 0 0 8px 0;
+
+                    &:last-child {
+                        margin-bottom: 0;
+                    }
+                }
+
+                ul,
+                ol {
+                    margin: 4px 0 8px 20px;
+                    padding: 0;
+
+                    li {
+                        margin-bottom: 4px;
+                    }
+                }
+
+                strong,
+                b {
+                    color: var(--text-color);
+                }
+
+                img {
+                    max-width: 100%;
+                    height: auto;
+                    display: block;
+                    margin: 12px 0 0;
+                    border-radius: 6px;
+                }
             }
         }
     }
@@ -233,4 +268,3 @@
         }
     }
 }
-

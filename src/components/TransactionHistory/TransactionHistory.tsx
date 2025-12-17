@@ -484,19 +484,19 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = React.memo(({ user
                                     ? 'Bạn chưa có giao dịch nào. Giao dịch sẽ được hiển thị tại đây sau khi bạn thực hiện thanh toán hoặc nạp tiền.'
                                     : 'Không có giao dịch nào phù hợp với bộ lọc của bạn. Thử điều chỉnh bộ lọc để xem thêm kết quả.'
                             }
-                            action={
+                            actionLabel={
                                 allTransactions.length === 0
-                                    ? {
-                                          label: 'Khám phá sản phẩm',
-                                          href: '/products',
-                                      }
-                                    : {
-                                          label: 'Xóa bộ lọc',
-                                          onClick: handleReset,
-                                          variant: 'secondary',
-                                      }
+                                    ? 'Khám phá sản phẩm'
+                                    : 'Xóa bộ lọc'
                             }
-                            size="medium"
+                            actionHref={
+                                allTransactions.length === 0 ? '/products' : undefined
+                            }
+                            onAction={
+                                allTransactions.length === 0
+                                    ? undefined
+                                    : handleReset
+                            }
                         />
                     </div>
                 ) : (

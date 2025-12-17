@@ -6,6 +6,7 @@ import ProviderRedux from '@/redux/ProviderRedux';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { harmonyOS } from '@/assets/FontNext';
 import { Metadata, Viewport } from 'next/types';
+import Script from 'next/script';
 import ErrorBoundary from '@/components/ErrorBoundary/ErrorBoundary';
 import LayoutWrapper from './LayoutWrapper';
 import { ConfirmDialogProvider } from '@/components/ConfirmDialog';
@@ -23,11 +24,57 @@ export const viewport: Viewport = {
     themeColor: '#2f78ff',
 };
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taikhoanxin.com';
+const defaultOgImage = 'https://taikhoanxin.com/seo/banner-seo.jpeg';
+
 export const metadata: Metadata = {
     title: 'Tài Khoản Xịn - Nền Tảng Tài Khoản Số 1 Việt Nam',
     description: 'Khám phá thế giới tài khoản chất lượng cao. Tài Khoản Xịn - Đối tác tin cậy của bạn.',
     icons: {
         icon: '/favicon.ico',
+    },
+    metadataBase: new URL(siteUrl),
+    openGraph: {
+        title: 'Tài Khoản Xịn - Nền Tảng Tài Khoản Số 1 Việt Nam',
+        description: 'Khám phá thế giới tài khoản chất lượng cao. Tài Khoản Xịn - Đối tác tin cậy của bạn.',
+        url: siteUrl,
+        siteName: 'TaiKhoanXin',
+        type: 'website',
+        locale: 'vi_VN',
+        images: [
+            {
+                url: defaultOgImage,
+                width: 1200,
+                height: 630,
+                alt: 'Tài Khoản Xịn',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Tài Khoản Xịn - Nền Tảng Tài Khoản Số 1 Việt Nam',
+        description: 'Khám phá thế giới tài khoản chất lượng cao. Tài Khoản Xịn - Đối tác tin cậy của bạn.',
+        images: [defaultOgImage],
+    },
+};
+
+const organizationJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'TaiKhoanXin',
+    url: siteUrl,
+    logo: `${siteUrl}/favicon.ico`,
+};
+
+const websiteJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'TaiKhoanXin',
+    url: siteUrl,
+    potentialAction: {
+        '@type': 'SearchAction',
+        target: `${siteUrl}/search?q={search_term_string}`,
+        'query-input': 'required name=search_term_string',
     },
 };
 
@@ -38,6 +85,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 {/* Preconnect to external domains */}
                 <link rel="preconnect" href="https://res.cloudinary.com" />
                 <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+                <Script
+                    id="ld-organization"
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+                />
+                <Script
+                    id="ld-website"
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+                />
             </head>
             <body className={harmonyOS.variable}>
                 {/* Skip to main content link for accessibility */}

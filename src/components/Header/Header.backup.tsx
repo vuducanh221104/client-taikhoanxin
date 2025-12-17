@@ -45,9 +45,7 @@ import { useWishlist } from '@/hooks/useWishlist';
 
 const cx = classNames.bind(styles);
 
-interface HeaderProps {}
-
-const Header: React.FC<HeaderProps> = () => {
+const Header: React.FC = () => {
     const router = useRouter();
     const [searchValue, setSearchValue] = useState('');
     const [scrollY, setScrollY] = useState(0);
@@ -1076,7 +1074,7 @@ const Header: React.FC<HeaderProps> = () => {
 
                         {/* Quick Links */}
                         <Link 
-                            href="/products/viewed" 
+                            href="/viewed" 
                             className={cx('quick-link')}
                             aria-label="Sản phẩm bạn vừa xem"
                         >

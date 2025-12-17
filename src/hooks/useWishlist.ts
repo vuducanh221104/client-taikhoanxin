@@ -16,6 +16,7 @@ import {
 interface ToggleWishlistPayload {
     productId?: string;
     id?: string;
+    slug?: string;
     productName?: string;
     price?: number;
     oldPrice?: number;

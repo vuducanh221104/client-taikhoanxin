@@ -13,7 +13,7 @@ export interface Step {
     description?: string;
 }
 
-interface ProgressIndicatorProps {
+export interface ProgressIndicatorProps {
     steps: Step[];
     currentStep: number;
     className?: string;

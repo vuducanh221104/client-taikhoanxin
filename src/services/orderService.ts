@@ -207,17 +207,19 @@ export const useOrder = (id?: string | null) => {
  * Get checkout order info via token (public success page)
  */
 export const useCheckoutOrder = (orderId?: string | null, token?: string | null, email?: string | null) => {
-    if (!orderId || !token) {
-        return useSWRUser<CheckoutOrderResponse>(null);
+    let key: string | null = null;
+
+    if (orderId && token) {
+        const params = new URLSearchParams({
+            token: token,
+        });
+        if (email) {
+            params.append('email', email);
+        }
+        key = `/api/v1/orders/checkout/${orderId}?${params.toString()}`;
     }
-    const params = new URLSearchParams({
-        token: token,
-    });
-    if (email) {
-        params.append('email', email);
-    }
-    const query = `/api/v1/orders/checkout/${orderId}?${params.toString()}`;
-    return useSWRUser<CheckoutOrderResponse>(query);
+
+    return useSWRUser<CheckoutOrderResponse>(key);
 };
 
 // ============================================

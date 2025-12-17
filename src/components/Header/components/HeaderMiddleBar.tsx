@@ -23,7 +23,7 @@ const HeaderMiddleBar: React.FC<HeaderMiddleBarProps> = ({ setIsHeaderHoverOverl
 
                     {/* Quick Links */}
                     <Link 
-                        href="/products/viewed" 
+                        href="/viewed" 
                         className={cx('quick-link')}
                         aria-label="Sản phẩm bạn vừa xem"
                     >

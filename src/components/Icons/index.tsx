@@ -87,9 +87,18 @@ const createIcon = (
     IconComponent: React.ComponentType<any>,
     defaultSize: number = 24
 ): React.FC<React.SVGProps<SVGSVGElement> & { size?: number }> => {
-    return ({ className, size, ...props }) => (
+    const IconWrapper: React.FC<React.SVGProps<SVGSVGElement> & { size?: number }> = ({
+        className,
+        size,
+        ...props
+    }) => (
         <IconComponent className={className} size={size || defaultSize} {...props} />
     );
+
+    IconWrapper.displayName =
+        IconComponent.displayName || IconComponent.name || 'Icon';
+
+    return IconWrapper;
 };
 
 // Create icons with default size 24

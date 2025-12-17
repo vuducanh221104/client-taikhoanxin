@@ -122,10 +122,10 @@ const Footer: React.FC = () => {
                                 <Link href="/contact">Liên hệ</Link>
                             </li>
                             <li>
-                                <Link href="/help/policies/privacy">Chính sách bảo mật</Link>
+                                <Link href="/privacy">Chính sách bảo mật</Link>
                             </li>
                             <li>
-                                <Link href="/help/policies/terms">Điều khoản sử dụng</Link>
+                                <Link href="/terms">Điều khoản sử dụng</Link>
                             </li>
                         </ul>
                     </div>

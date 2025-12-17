@@ -1,51 +1,51 @@
 import { MetadataRoute } from 'next';
-import { getAllProducts } from '@/services/productService';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+type SitemapEntry = MetadataRoute.Sitemap[number];
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taikhoanxin.com';
-    
-    // Static pages
-    const staticPages = [
-        '',
-        '/products',
+    const now = new Date();
+
+    // Static pages (App Router routes thực tế, không bao gồm product)
+    const staticRoutes = [
+        '/', // Home
+        '/product',
+        '/categories',
+        '/search',
         '/cart',
         '/wishlist',
-        '/auth/login',
-        '/auth/register',
+        '/viewed',
         '/about',
         '/contact',
-    ].map((route) => ({
-        url: `${siteUrl}${route}`,
-        lastModified: new Date(),
-        changeFrequency: 'daily' as const,
-        priority: route === '' ? 1 : 0.8,
-    }));
+        '/payment',
+        '/privacy',
+        '/terms',
+        '/orders/lookup',
+        '/account',
+        '/account/orders',
+        '/account/transactions',
+        '/account/addresses',
+        '/account/comments',
+        '/account/manage',
+        '/account/password',
+        '/auth/login',
+        '/auth/register',
+        '/auth/forgot-password',
+        '/auth/reset-password',
+        '/auth/google/callback',
+        '/checkout',
+        '/checkout/success',
+    ];
 
-    // Category pages
-    const categories = [
-        'work',
-        'ai-account',
-        'entertainment',
-        'windows',
-        'office',
-        'education',
-        'design',
-        'cloud-storage',
-    ].map((slug) => ({
-        url: `${siteUrl}/categories/${slug}`,
-        lastModified: new Date(),
-        changeFrequency: 'daily' as const,
-        priority: 0.7,
+    const staticPages: MetadataRoute.Sitemap = staticRoutes.map((path) => ({
+        url: `${siteUrl}${path === '/' ? '' : path}`,
+        lastModified: now,
+        changeFrequency: path === '/' ? 'daily' : 'weekly',
+        priority: path === '/' ? 1 : 0.8,
     }));
+    // Lưu ý:
+    // - Category sitemap đã tách riêng ở /sitemap_category.xml
+    // - Product sitemap đã tách riêng ở /sitemap_product.xml
 
-    // Product pages
-    const products = getAllProducts();
-    const productPages = products.map((product) => ({
-        url: `${siteUrl}/products/${product.id}`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly' as const,
-        priority: 0.6,
-    }));
-
-    return [...staticPages, ...categories, ...productPages];
+    return [...staticPages];
 }

@@ -1,0 +1,10 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://joel-grimy-nonindustrially.ngrok-free.dev/
+
+# Sitemaps
+Sitemap: https://joel-grimy-nonindustrially.ngrok-free.dev/sitemap.xml
+Sitemap: https://joel-grimy-nonindustrially.ngrok-free.dev//sitemap.xml

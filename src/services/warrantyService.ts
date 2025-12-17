@@ -1,22 +1,41 @@
 'use client';
 import { useSWRUser } from './swrConfig';
-import { post } from '@/utils/httpRequest';
+import { post, put, del } from '@/utils/httpRequest';
 
 // ============================================
 // TYPES
 // ============================================
 export interface Warranty {
     _id: string;
-    userId: string;
-    orderId: string;
-    accountId: string;
+    userId: string | { _id: string; fullName: string; email: string; phone?: string };
+    orderId: string | { _id: string; orderId: string; totalPrice: number; orderStatus: string; createdAt: string };
+    accountId: string | { _id: string; email: string; username: string; status: string };
     reason: string;
-    status: 'pending' | 'processing' | 'resolved' | 'rejected';
+    description?: string;
+    attachments?: string[];
+    status: 'pending' | 'processing' | 'resolved' | 'rejected' | 'closed';
+    priority?: 'low' | 'medium' | 'high' | 'urgent';
     adminNote?: string;
     resolution?: string;
+    resolvedAt?: string;
+    resolvedBy?: string | { _id: string; fullName: string; email: string };
+    assignedTo?: string | { _id: string; fullName: string; email: string };
+    assignedAt?: string;
+    slaDeadline?: string;
+    slaStatus?: 'on_time' | 'at_risk' | 'overdue';
+    firstResponseAt?: string;
+    responseTime?: number;
+    resolutionTime?: number;
+    tags?: string[];
+    category?: 'account_issue' | 'payment' | 'refund' | 'other';
+    source?: 'web' | 'email' | 'phone' | 'chat';
+    createBy?: string;
+    updateBy?: string;
+    deletedBy?: string;
+    isDeleted?: boolean;
+    deletedAt?: string;
     createdAt: string;
     updatedAt: string;
-    resolvedAt?: string;
 }
 
 export interface WarrantyListResponse {
@@ -39,6 +58,18 @@ export interface CreateWarrantyData {
     orderId: string;
     accountId: string;
     reason: string;
+    description?: string;
+    attachments?: string[];
+    category?: 'account_issue' | 'payment' | 'refund' | 'other';
+    tags?: string[];
+    source?: 'web' | 'email' | 'phone' | 'chat';
+}
+
+export interface UpdateWarrantyData {
+    reason?: string;
+    description?: string;
+    attachments?: string[];
+    tags?: string[];
 }
 
 // ============================================
@@ -77,6 +108,22 @@ export const useWarranty = (id: string) => {
  */
 export const createWarranty = async (data: CreateWarrantyData): Promise<WarrantyResponse> => {
     const response = await post<WarrantyResponse>('/api/v1/warranties', data);
+    return response.data;
+};
+
+/**
+ * Update warranty (User - only when pending)
+ */
+export const updateWarranty = async (id: string, data: UpdateWarrantyData): Promise<WarrantyResponse> => {
+    const response = await put<WarrantyResponse>(`/api/v1/warranties/${id}`, data);
+    return response.data;
+};
+
+/**
+ * Cancel warranty (User - only when pending)
+ */
+export const cancelWarranty = async (id: string): Promise<{ success: boolean; message: string }> => {
+    const response = await del<{ success: boolean; message: string }>(`/api/v1/warranties/${id}`);
     return response.data;
 };
 

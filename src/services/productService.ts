@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import type { SWRConfiguration } from 'swr';
 import { useSWRUser } from './swrConfig';
 import mockProductsData from '@/data/mockProducts.json';
 import { FeaturedProduct } from '@/components/FeaturedProducts';
@@ -133,7 +134,7 @@ export const useProducts = (params?: {
     includeSubcategories?: boolean;
     sortBy?: string; // Field to sort by: "sold", "price", "createdAt", "rating"
     sortOrder?: string; // Sort order: "asc" or "desc"
-}) => {
+}, config?: SWRConfiguration<ProductListResponse>) => {
     const queryParams: any = {};
     if (params?.page) queryParams.page = params.page.toString();
     if (params?.limit) queryParams.limit = params.limit.toString();
@@ -155,7 +156,7 @@ export const useProducts = (params?: {
         ? '?' + new URLSearchParams(queryParams).toString()
         : '';
     const key = `/api/v1/products${queryString}`;
-    return useSWRUser<ProductListResponse>(key);
+    return useSWRUser<ProductListResponse>(key, config);
 };
 
 /**
@@ -163,9 +164,9 @@ export const useProducts = (params?: {
  * @param slug - Product slug
  * @returns SWR hook for single product
  */
-export const useProduct = (slug: string) => {
+export const useProduct = (slug: string, config?: SWRConfiguration<ProductResponse>) => {
     const key = slug ? `/api/v1/products/${slug}` : null;
-    return useSWRUser<ProductResponse>(key);
+    return useSWRUser<ProductResponse>(key, config);
 };
 
 /**

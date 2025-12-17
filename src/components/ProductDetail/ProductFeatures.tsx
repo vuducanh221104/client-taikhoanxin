@@ -2,6 +2,8 @@
 
 import React from 'react';
 import classNames from 'classnames/bind';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import styles from './ProductFeatures.module.scss';
 
 const cx = classNames.bind(styles);
@@ -23,7 +25,11 @@ const ProductFeatures: React.FC<ProductFeaturesProps> = ({ features }) => {
                 {features.map((feature, index) => (
                     <li key={index} className={cx('feature-item')}>
                         <strong className={cx('feature-title')}>{feature.title}:</strong>{' '}
-                        <span className={cx('feature-description')}>{feature.description}</span>
+                        <div className={cx('feature-description', 'markdown-body')}>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {feature.description}
+                            </ReactMarkdown>
+                        </div>
                     </li>
                 ))}
             </ul>
@@ -32,4 +38,3 @@ const ProductFeatures: React.FC<ProductFeaturesProps> = ({ features }) => {
 };
 
 export default ProductFeatures;
-
