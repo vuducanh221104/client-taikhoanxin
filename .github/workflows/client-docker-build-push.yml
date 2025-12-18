@@ -44,6 +44,9 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          build-args: |
+            NEXT_PUBLIC_SERVER_URL=http://36.50.27.198:4000
+            NEXT_PUBLIC_SITE_URL=http://36.50.27.198:3000
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
