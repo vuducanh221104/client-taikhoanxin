@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import EmptyState from '@/components/EmptyState/EmptyState';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taikhoanxin.com';
-const ogImage = 'https://taikhoanxin.com/seo/banner-seo.jpeg';
+const ogImage = 'https://cdn.taikhoanxin.com/seo/banner-seo.jpeg';
 
 export const metadata: Metadata = {
     title: '404 - Không tìm thấy trang',

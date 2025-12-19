@@ -25,7 +25,7 @@ export const viewport: Viewport = {
 };
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taikhoanxin.com';
-const defaultOgImage = 'https://taikhoanxin.com/seo/banner-seo.jpeg';
+const defaultOgImage = 'https://cdn.taikhoanxin.com/seo/banner-seo.jpeg';
 
 export const metadata: Metadata = {
     title: 'Tài Khoản Xịn - Nền Tảng Tài Khoản Số 1 Việt Nam',

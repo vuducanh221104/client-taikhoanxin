@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import OrderLookupLayout from '@/layout/orderLookup';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taikhoanxin.com';
-const ogImage = 'https://taikhoanxin.com/seo/banner-seo.jpeg';
+const ogImage = 'https://cdn.taikhoanxin.com/seo/banner-seo.jpeg';
 
 export function generateMetadata({ params }: { params: { orderCode: string } }): Metadata {
     const code = params?.orderCode ? String(params.orderCode) : '';

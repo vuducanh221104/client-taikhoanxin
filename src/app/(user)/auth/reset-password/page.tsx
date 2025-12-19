@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import ResetPasswordLayout from '@/layout/resetPassword';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taikhoanxin.com';
-const ogImage = 'https://taikhoanxin.com/seo/banner-seo.jpeg';
+const ogImage = 'https://cdn.taikhoanxin.com/seo/banner-seo.jpeg';
 
 export const metadata: Metadata = {
     title: 'Đặt lại mật khẩu | TaiKhoanXin',

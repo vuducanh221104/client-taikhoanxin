@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import GoogleCallbackLayout from '@/layout/googleCallback';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taikhoanxin.com';
-const ogImage = 'https://taikhoanxin.com/seo/banner-seo.jpeg';
+const ogImage = 'https://cdn.taikhoanxin.com/seo/banner-seo.jpeg';
 
 export const metadata: Metadata = {
     title: 'Xác minh đăng nhập Google | TaiKhoanXin',

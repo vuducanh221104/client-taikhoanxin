@@ -5,7 +5,7 @@ import Script from 'next/script';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taikhoanxin.com';
 const apiBase = process.env.NEXT_PUBLIC_SERVER_URL || 'https://taikhoanxin.com';
-const defaultOgImage = 'https://taikhoanxin.com/seo/banner-seo.jpeg';
+const defaultOgImage = 'https://cdn.taikhoanxin.com/seo/banner-seo.jpeg';
 
 type ProductApiResponse = {
     product?: Record<string, unknown>;
