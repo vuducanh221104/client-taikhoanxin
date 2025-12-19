@@ -29,6 +29,45 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Load environment variables from Production/env/client.env
+        id: env
+        working-directory: Client
+        run: |
+          # Đọc file env từ Production/env/client.env (từ repo root)
+          ENV_FILE="../Production/env/client.env"
+          if [ ! -f "$ENV_FILE" ]; then
+            echo "❌ File $ENV_FILE not found!"
+            echo "Current directory: $(pwd)"
+            echo "Files in repo root:"
+            ls -la ../
+            exit 1
+          fi
+          
+          # Parse file env và export vào GITHUB_ENV (bỏ qua comment và dòng trống)
+          while IFS= read -r line || [ -n "$line" ]; do
+            # Bỏ qua comment và dòng trống
+            if [[ "$line" =~ ^[[:space:]]*# ]] || [[ -z "${line// }" ]]; then
+              continue
+            fi
+            # Parse key=value
+            if [[ "$line" =~ ^([^=]+)=(.*)$ ]]; then
+              key="${BASH_REMATCH[1]// /}"
+              value="${BASH_REMATCH[2]}"
+              # Export vào GITHUB_ENV
+              echo "${key}=${value}" >> $GITHUB_ENV
+            fi
+          done < "$ENV_FILE"
+          
+          # Tạo hash của env file để invalidate cache khi env thay đổi
+          ENV_HASH=$(sha256sum "$ENV_FILE" | cut -d' ' -f1)
+          echo "env_hash=$ENV_HASH" >> $GITHUB_OUTPUT
+          echo "ENV_HASH=$ENV_HASH" >> $GITHUB_ENV
+          
+          echo "✅ Loaded env variables from $ENV_FILE"
+          echo "  NEXT_PUBLIC_SERVER_URL=$NEXT_PUBLIC_SERVER_URL"
+          echo "  NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL"
+          echo "  ENV_HASH=$ENV_HASH"
+
       - name: Extract metadata (tags, labels)
         id: meta
         uses: docker/metadata-action@v5
@@ -42,10 +81,18 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./Client
+          file: ./Client/Dockerfile
+          build-args: |
+            NEXT_PUBLIC_SERVER_URL=${{ env.NEXT_PUBLIC_SERVER_URL }}
+            NEXT_PUBLIC_SITE_URL=${{ env.NEXT_PUBLIC_SITE_URL }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:buildcache
-          cache-to: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+          # Cache key bao gồm env hash để invalidate khi env thay đổi
+          cache-from: |
+            type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:buildcache-${{ steps.env.outputs.env_hash }}
+            type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: |
+            type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:buildcache-${{ steps.env.outputs.env_hash }},mode=max
+            type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
