@@ -4,7 +4,6 @@ Allow: /
 Disallow: /api/
 Disallow: /admin/
 Disallow: /dashboard/
-Disallow: /_next/
 Disallow: /private/
 
 # Googlebot
