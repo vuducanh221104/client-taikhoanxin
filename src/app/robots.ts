@@ -22,7 +22,11 @@ export default function robots(): MetadataRoute.Robots {
                 disallow: ['/api/', '/admin/', '/dashboard/'],
             },
         ],
-        sitemap: `${siteUrl}/sitemap.xml`,
+        sitemap: [
+            `${siteUrl}/sitemap.xml`,
+            `${siteUrl}/sitemap_product.xml`,
+            `${siteUrl}/sitemap_category.xml`,
+        ],
         host: siteUrl,
     };
 }
