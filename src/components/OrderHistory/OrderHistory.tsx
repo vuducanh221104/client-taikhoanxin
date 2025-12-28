@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import classNames from 'classnames/bind';
 import styles from './OrderHistory.module.scss';
 import { useMyOrders, getStatusLabel, getStatusColor, Order, cancelOrder } from '@/services/orderService';
+import { useMyWarranties } from '@/services/warrantyService';
 import { FilterIcon, CalendarIcon, ChevronDownIcon, RotateCcwIcon, CloseIcon } from '@/components/Icons';
 import { EmptyState } from '@/components/EmptyState';
 import { PackageIcon } from '@/components/Icons';
@@ -25,6 +26,9 @@ const orderStatuses = [
     { value: 'processing', label: 'Đang xử lý' },
     { value: 'completed', label: 'Đã xử lý' },
     { value: 'warranty_pending', label: 'Đang bảo hành' },
+    { value: 'warranty_processing', label: 'Đang xử lý bảo hành' },
+    { value: 'warranty_resolved', label: 'Đã xử lý bảo hành' },
+    { value: 'warranty_rejected', label: 'Từ chối bảo hành' },
     { value: 'warranty_completed', label: 'Đã bảo hành' },
     { value: 'cancelled', label: 'Đã hủy' },
 ];
@@ -43,16 +47,36 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
     const { confirm } = useConfirm();
     const { data: ordersData, error, isLoading, mutate } = useMyOrders();
     
+    // Fetch all warranties to calculate progress for each order
+    const { data: warrantiesData } = useMyWarranties();
+    
+    // Create a map of orderId -> warranty progress
+    const warrantyProgressMap = useMemo(() => {
+        if (!warrantiesData?.data) return new Map();
+        const map = new Map<string, { resolved: number; total: number }>();
+        warrantiesData.data.forEach(warranty => {
+            const orderId = typeof warranty.orderId === 'object' 
+                ? warranty.orderId._id 
+                : warranty.orderId;
+            if (!orderId) return;
+            
+            const current = map.get(orderId) || { resolved: 0, total: 0 };
+            current.total += 1;
+            // Count as resolved: warranty_resolved, resolved (old), closed (old)
+            const status = warranty.status;
+            if (status === 'warranty_resolved' || status === 'resolved' || status === 'closed') {
+                current.resolved += 1;
+            }
+            map.set(orderId, current);
+        });
+        return map;
+    }, [warrantiesData]);
+    
     // Map API response to component format
     const allOrders = useMemo(() => {
         if (!ordersData?.data) return [];
-        return ordersData.data.map((order: Order) => ({
-            id: order._id,
-            orderCode: order.orderId.toString(),
-            orderDate: order.createdAt,
-            status: order.orderStatus,
-            totalAmount: order.totalPrice,
-            products: order.items.map((item) => {
+        return ordersData.data.map((order: Order) => {
+            const products = order.items.map((item) => {
                 // Get product ID - support both productId and product_id
                 const productId = item.productId?._id || 
                                  (typeof item.product_id === 'object' ? item.product_id?._id : item.product_id) || 
@@ -69,15 +93,55 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
                                     (typeof item.product_id === 'object' ? item.product_id?.image?.[0] : null) ||
                                     '';
                 
+                // Xác định trạng thái của từng item: 'completed' nếu đã có account, 'processing' nếu chưa
+                const accountEntries = item.keys?.entries && Array.isArray(item.keys.entries) && item.keys.entries.length > 0
+                    ? item.keys.entries.filter((entry: string) => entry && entry.trim())
+                    : undefined;
+                const itemStatus = accountEntries && accountEntries.length > 0 ? 'completed' : 'processing';
+                
                 return {
                     id: productId,
                     productName: productName,
                     quantity: item.quantity,
                     price: item.price,
                     image: productImage,
+                    itemStatus,
                 };
-            }),
-        }));
+            });
+
+            // Tính toán trạng thái hiển thị dựa trên items thực tế
+            const itemsCompleted = products.filter(p => p.itemStatus === 'completed').length;
+            const itemsProcessing = products.filter(p => p.itemStatus === 'processing').length;
+            const totalItems = products.length;
+            
+            // Nếu có items đang xử lý → order status là "processing"
+            // Chỉ hiển thị "completed" khi TẤT CẢ items đều đã xử lý
+            let displayStatus = order.orderStatus;
+            if (itemsProcessing > 0 && itemsCompleted > 0) {
+                // Có cả 2 loại → hiển thị "Đang xử lý" với thông tin chi tiết
+                displayStatus = 'processing';
+            } else if (itemsCompleted === totalItems && totalItems > 0) {
+                // Tất cả items đều đã xử lý → hiển thị "Đã xử lý"
+                displayStatus = 'completed';
+            } else if (itemsProcessing === totalItems && totalItems > 0) {
+                // Tất cả items đều đang xử lý → hiển thị "Đang xử lý"
+                displayStatus = 'processing';
+            }
+
+            return {
+                id: order._id,
+                orderCode: order.orderId.toString(),
+                orderDate: order.createdAt,
+                status: displayStatus,
+                totalAmount: order.totalPrice,
+                products,
+                itemsStatusInfo: {
+                    completed: itemsCompleted,
+                    processing: itemsProcessing,
+                    total: totalItems,
+                },
+            };
+        });
     }, [ordersData]);
     
     const [filters, setFilters] = useState({
@@ -760,7 +824,27 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
                                         <div className={cx('order-cell', 'order-status')}>
                                             <span className={cx('cell-label')}>Trạng thái</span>
                                             <span className={cx('status-badge', getStatusColor(order.status as string))}>
-                                                {getStatusLabel(order.status as string)}
+                                                <span className={cx('status-main')}>
+                                                    {getStatusLabel(order.status as string)}
+                                                </span>
+                                                {order.itemsStatusInfo && 
+                                                 order.itemsStatusInfo.completed > 0 && 
+                                                 order.itemsStatusInfo.processing > 0 && (
+                                                    <span className={cx('status-detail')}>
+                                                        ({order.itemsStatusInfo.completed}/{order.itemsStatusInfo.total} đã xử lý)
+                                                    </span>
+                                                )}
+                                                {(() => {
+                                                    const warrantyProgress = warrantyProgressMap.get(order.id);
+                                                    if (warrantyProgress && warrantyProgress.total > 0) {
+                                                        return (
+                                                            <span className={cx('status-detail', 'warranty-progress')}>
+                                                                ({warrantyProgress.resolved}/{warrantyProgress.total} đã bảo hành)
+                                                            </span>
+                                                        );
+                                                    }
+                                                    return null;
+                                                })()}
                                             </span>
                                         </div>
                                         <div className={cx('order-cell', 'order-actions')}>

@@ -1,4 +1,86 @@
-import mockCommentsData from '@/data/mockComments.json';
+'use client';
+import { useSWRUser } from './swrConfig';
+import { post } from '@/utils/httpRequest';
+
+export interface CommentReply {
+    _id: string;
+    userId: {
+        _id: string;
+        fullName?: string;
+        avatar?: string;
+    };
+    comment: string;
+    role: 'user' | 'support' | 'manager' | 'admin';
+    responseType: 'public' | 'internal';
+    visibility: 'visible' | 'hidden';
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Comment {
+    _id: string;
+    userId: {
+        _id: string;
+        fullName?: string;
+        avatar?: string;
+    };
+    productId: string;
+    orderId?: string | null;
+    orderItemId?: string | null;
+    comment: string;
+    status: 'pending_review' | 'approved' | 'rejected' | 'hidden';
+    replies?: CommentReply[];
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CommentPagination {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+}
+
+export interface CommentListResponse {
+    success: boolean;
+    data: {
+        comments: Comment[];
+        pagination: CommentPagination;
+    };
+}
+
+export interface CommentResponse {
+    success: boolean;
+    data: Comment;
+}
+
+export interface CreateCommentPayload {
+    productId: string;
+    comment: string;
+    orderId?: string;
+}
+
+export const useProductComments = (productId: string, params?: { page?: number; limit?: number }) => {
+    const queryString = params ? '?' + new URLSearchParams(params as any).toString() : '';
+    const key = productId ? `/api/v1/comments/product/${productId}${queryString}` : null;
+    return useSWRUser<CommentListResponse>(key);
+};
+
+export const useMyComments = (params?: { page?: number; limit?: number }) => {
+    const queryString = params ? '?' + new URLSearchParams(params as any).toString() : '';
+    const key = `/api/v1/comments/my-comments${queryString}`;
+    return useSWRUser<CommentListResponse>(key);
+};
+
+export const createComment = async (data: CreateCommentPayload): Promise<CommentResponse> => {
+    const response = await post<CommentResponse>('/api/v1/comments', data);
+    return response.data;
+};
+
+export const replyComment = async (commentId: string, comment: string): Promise<CommentResponse> => {
+    const response = await post<CommentResponse>(`/api/v1/comments/${commentId}/reply`, { comment });
+    return response.data;
+};
 
 export interface Comment {
     id: string;

@@ -82,17 +82,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return (
         <html lang="vi" suppressHydrationWarning={true}>
             <head>
-                {/* Preconnect to external domains */}
-                <link rel="preconnect" href="https://res.cloudinary.com" />
+                {/* Preconnect to external domains for faster loading */}
+                <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
                 <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+                <link rel="preconnect" href="https://cdn.taikhoanxin.com" crossOrigin="anonymous" />
+                <link rel="dns-prefetch" href="https://cdn.taikhoanxin.com" />
+                <link rel="preconnect" href="https://api.vietqr.io" crossOrigin="anonymous" />
+                <link rel="dns-prefetch" href="https://api.vietqr.io" />
+                
+                {/* Preload critical resources */}
+                <link rel="preload" href="/favicon.ico" as="image" />
+                
+                {/* Structured Data for SEO */}
                 <Script
                     id="ld-organization"
                     type="application/ld+json"
+                    strategy="beforeInteractive"
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
                 />
                 <Script
                     id="ld-website"
                     type="application/ld+json"
+                    strategy="beforeInteractive"
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
                 />
             </head>

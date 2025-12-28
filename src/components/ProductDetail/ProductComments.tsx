@@ -15,6 +15,7 @@ import {
     ClockIcon,
 } from '@/components/Icons';
 import { useProductReviews, createReview, replyReview, type Review } from '@/services/reviewService';
+import { useProductComments, createComment, replyComment, type Comment as ProductComment } from '@/services/commentService';
 import { RootState } from '@/redux/store';
 import { useToast } from '@/hooks/useToast';
 
@@ -62,6 +63,7 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
 
     const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
     const _isAdmin = Boolean(currentUser && currentUser.role !== undefined && currentUser.role >= 2);
+    const canReplyToThread = Boolean(currentUser && currentUser.role !== undefined && currentUser.role >= 2);
     const canInteract = Boolean(currentUser && productId);
 
     const {
@@ -71,6 +73,15 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
         mutate,
     } = useProductReviews(productId || '', { page: 1, limit: 10 });
 
+    const {
+        data: productComments,
+        error: commentsError,
+        isLoading: commentsLoading,
+        mutate: mutateComments,
+    } = useProductComments(productId || '', { page: 1, limit: 10 });
+
+    // Check if user purchased this product with successful status
+    // Fetch user orders to verify purchase (wider limit to reduce miss)
     const ratingSummary = productReviews?.data?.ratingSummary;
     const totalReviews = ratingSummary?.totalReviews ?? 0;
     const averageRating = ratingSummary?.averageRating ?? 0;
@@ -104,8 +115,7 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
         return `${years} năm trước`;
     };
 
-    const mapReviewToComment = (review: Review): DisplayComment => {
-        const resolveUser = (input: any) => {
+        const resolveUser = (input: any, role?: string | number) => {
             if (!input) {
                 return {
                     username: 'Khách hàng',
@@ -124,14 +134,62 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
                 };
             }
 
+            // Kiểm tra role từ input hoặc parameter
+            const userRole = role !== undefined ? role : (input as any).role;
+            const isAdmin = userRole !== undefined && (typeof userRole === 'number' ? userRole >= 2 : ['manager', 'admin'].includes(String(userRole)));
+
             return {
-                username: input.fullName || 'Khách hàng',
+                username: isAdmin ? 'Admin-TaiKhoanXin' : (input.fullName || 'Khách hàng'),
                 avatar: input.avatar || '/avatar/user-icon.png',
                 isVerified: Boolean((input as any).isVerified),
-                isCustomerService: Boolean((input as any).role && (input as any).role >= 2),
+                isCustomerService: Boolean((input as any).role && (input as any).role >= 2) || isAdmin,
             };
         };
 
+    const mapCommentToDisplay = (cmt: ProductComment): DisplayComment => {
+        const userInfo = resolveUser(cmt.userId as any);
+        const rawReplies = (cmt as any).replies || [];
+
+        const replies: DisplayComment[] = Array.isArray(rawReplies)
+            ? rawReplies.map((reply: any) => {
+                  // Lấy role từ reply object (backend trả về role trong reply)
+                  const replyRole = reply.role;
+                  const replyUser = resolveUser(reply.userId as any, replyRole);
+                  return {
+                      id: reply._id || reply.id,
+                      username: replyUser.username,
+                      avatar:
+                          replyUser.avatar ||
+                          (replyUser.isCustomerService ? '/avatar/cskh-icon.png' : '/avatar/user-icon.png'),
+                      timestamp: reply.createdAt || reply.timestamp,
+                      text: reply.comment || reply.text,
+                      isCustomerService: replyUser.isCustomerService,
+                      isVerified: replyUser.isVerified,
+                      hasPurchased: false,
+                      replies: [],
+                      rootId: cmt._id,
+                      isRoot: false,
+                  };
+              })
+            : [];
+
+        return {
+            id: cmt._id,
+            username: userInfo.username,
+            avatar: userInfo.avatar,
+            timestamp: cmt.createdAt,
+            text: cmt.comment,
+            rating: 0,
+            isVerified: userInfo.isVerified,
+            hasPurchased: false,
+            isCustomerService: userInfo.isCustomerService,
+            replies,
+            rootId: cmt._id,
+            isRoot: true,
+        };
+    };
+
+    const mapReviewToComment = (review: Review): DisplayComment => {
         const userInfo = resolveUser(review.userId);
 
         return {
@@ -148,11 +206,13 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
             isRoot: true,
             replies:
                 review.replies?.map((reply) => {
-                    const replyUser = resolveUser(reply.userId);
+                    // Lấy role từ reply object
+                    const replyRole = reply.role;
+                    const replyUser = resolveUser(reply.userId, replyRole);
                             return {
                         id: reply._id,
                         username: replyUser.username,
-                        avatar: replyUser.avatar || (reply.role === 'admin' ? '/avatar/cskh-icon.png' : '/avatar/user-icon.png'),
+                        avatar: replyUser.avatar || (reply.role === 'admin' || reply.role === 'manager' ? '/avatar/cskh-icon.png' : '/avatar/user-icon.png'),
                         timestamp: reply.createdAt,
                         text: reply.comment,
                         isCustomerService: reply.role !== 'user',
@@ -166,38 +226,39 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
         };
     };
 
-    const allComments = useMemo<DisplayComment[]>(() => {
-        if (!productReviews?.data?.reviews) {
-            return [];
-        }
+    const reviewsList = useMemo<DisplayComment[]>(() => {
+        if (!productReviews?.data?.reviews) return [];
         return productReviews.data.reviews.map(mapReviewToComment);
-    }, [productReviews]);
+    }, [productReviews, mapReviewToComment]);
 
-    // Filter comments based on active tab
-    const comments = useMemo<DisplayComment[]>(() => {
-        if (activeTab === 'reviews') {
-            // Tab "Đánh giá": chỉ hiển thị các review gốc có rating > 0
-            return allComments.filter(comment => comment.isRoot && comment.rating && comment.rating > 0);
-        } else {
-            // Tab "Bình luận": chỉ hiển thị các comment không có rating (rating = 0 hoặc undefined)
-            return allComments.filter(comment => !comment.rating || comment.rating === 0);
-        }
-    }, [allComments, activeTab]);
+    const commentsList = useMemo<DisplayComment[]>(() => {
+        if (!productComments?.data?.comments) return [];
+        return productComments.data.comments.map(mapCommentToDisplay);
+    }, [productComments, mapCommentToDisplay]);
 
     // Count comments and reviews separately
     const commentsCount = useMemo(() => {
-        return allComments.filter(comment => !comment.rating || comment.rating === 0).length;
-    }, [allComments]);
+        return commentsList.length;
+    }, [commentsList]);
 
     const reviewsCount = useMemo(() => {
-        return allComments.filter(comment => comment.isRoot && comment.rating && comment.rating > 0).length;
-    }, [allComments]);
+        return reviewsList.length;
+    }, [reviewsList]);
 
     const handleReplyClick = (review: DisplayComment) => {
+        // Tab đánh giá: chỉ cho phép role đủ quyền (CSKH/Admin) trả lời
+        if (activeTab === 'reviews') {
+            if (!canReplyToThread || !canInteract) {
+                return;
+            }
+        } else {
+            // Tab bình luận: chỉ yêu cầu đăng nhập
         if (!canInteract) {
             showError('Vui lòng đăng nhập để trả lời bình luận.');
             return;
         }
+        }
+
         setReplyTarget({ id: review.id, username: review.username, rootId: review.rootId });
         setReplyDraft(`@${review.username} `);
     };
@@ -232,27 +293,85 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
             return;
         }
 
-        // Chỉ yêu cầu rating khi đang ở tab "Đánh giá"
-        if (activeTab === 'reviews' && !replyTarget && (!selectedRating || selectedRating < 1)) {
+        // Flow: Bình luận (tab comments)
+        if (activeTab === 'comments') {
+            setSubmitting(true);
+            try {
+                const res = await createComment({
+                    productId,
+                    comment: comment.trim(),
+                });
+                showSuccess('Đã gửi bình luận.');
+                // Optimistic: chèn bình luận mới (pending) để tránh hiển thị mock/placeholder
+                const created = res?.data;
+                if (created) {
+                    const currentUserAny = currentUser as any;
+                    const displayUser = currentUserAny
+                        ? {
+                              _id: currentUserAny._id || currentUserAny.id || '',
+                              fullName: currentUserAny.fullName || currentUserAny.full_name || 'Bạn',
+                              avatar: currentUserAny.avatar || '/avatar/user-icon.png',
+                          }
+                        : created.userId;
+
+                    await mutateComments(
+                        (prev) => {
+                            const prevComments = prev?.data?.comments || [];
+                            const newComment: ProductComment = {
+                                ...created,
+                                userId: displayUser as any,
+                            };
+                            const nextComments = [newComment, ...prevComments];
+                            return {
+                                ...(prev || { success: true, data: { comments: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 1 } } }),
+                                data: {
+                                    ...((prev && prev.data) || { pagination: { page: 1, limit: 10, total: 0, totalPages: 1 } }),
+                                    comments: nextComments,
+                                    pagination: prev?.data?.pagination
+                                        ? {
+                                              ...prev.data.pagination,
+                                              total: (prev.data.pagination.total || 0) + 1,
+                                              totalPages: prev.data.pagination.limit
+                                                  ? Math.ceil(((prev.data.pagination.total || 0) + 1) / prev.data.pagination.limit)
+                                                  : prev.data.pagination.totalPages,
+                                          }
+                                        : { page: 1, limit: 10, total: nextComments.length, totalPages: 1 },
+                                },
+                            };
+                        },
+                        { revalidate: false }
+                    );
+                } else {
+                    await mutateComments(undefined, { revalidate: false });
+                }
+                resetFormState();
+            } catch (err: any) {
+                const message = err?.response?.data?.message || 'Không thể gửi bình luận. Vui lòng thử lại.';
+                showError(message);
+            } finally {
+                setSubmitting(false);
+            }
+            return;
+        }
+
+        // Flow: Đánh giá (tab reviews)
+        if (!replyTarget && (!selectedRating || selectedRating < 1)) {
             showError('Vui lòng chọn số sao đánh giá.');
             return;
         }
         
-        // Tab "Bình luận" không cần rating, set về 0
-        const finalRating = activeTab === 'comments' ? 0 : selectedRating;
-
         setSubmitting(true);
         try {
         await createReview({
             productId,
             comment: comment.trim(),
-            rating: finalRating,
+                rating: selectedRating,
         });
-        showSuccess('Đã gửi đánh giá. Bình luận sẽ hiển thị sau khi được duyệt.');
+            showSuccess('Đã gửi đánh giá. Sẽ hiển thị sau khi được duyệt.');
         resetFormState();
         await mutate();
         } catch (err: any) {
-            const message = err?.response?.data?.message || 'Không thể gửi bình luận. Vui lòng thử lại.';
+            const message = err?.response?.data?.message || 'Không thể gửi đánh giá. Vui lòng thử lại.';
             showError(message);
         } finally {
             setSubmitting(false);
@@ -266,13 +385,74 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
             return;
         }
         setSubmitting(true);
+
+        // Tab bình luận: gọi API reply comment để lưu vào database
+        if (activeTab === 'comments') {
+            try {
+                const res = await replyComment(replyTarget.rootId, replyDraft.trim());
+                
+                // Optimistic update: thêm reply vào comment ngay lập tức, không revalidate
+                mutateComments(
+                    (prev) => {
+                        if (!prev?.data?.comments) return prev;
+                        
+                        const updatedComments = prev.data.comments.map((item: any) => {
+                            if (item._id !== replyTarget.rootId) return item;
+                            
+                            // Lấy reply mới nhất từ response (đã có đầy đủ thông tin từ server)
+                            const allReplies = res?.data?.replies || [];
+                            const newReply = allReplies[allReplies.length - 1];
+                            
+                            if (!newReply) return item;
+                            
+                            const existingReplies = Array.isArray(item.replies) ? item.replies : [];
+                            
+                            // Kiểm tra xem reply đã tồn tại chưa (tránh duplicate)
+                            const replyExists = existingReplies.some(
+                                (r: any) => r._id?.toString() === newReply._id?.toString()
+                            );
+                            
+                            if (replyExists) return item;
+                            
+                            return {
+                                ...item,
+                                replies: [...existingReplies, newReply],
+                            };
+                        });
+                        
+                        return {
+                            ...prev,
+                            data: {
+                                ...prev.data,
+                                comments: updatedComments,
+                            },
+                        };
+                    },
+                    { revalidate: false } // Không revalidate để tránh refresh UI
+                );
+                
+                showSuccess('Đã phản hồi bình luận.');
+                resetReplyState();
+                // Không revalidate - chỉ dùng optimistic update để UI mượt
+            } catch (err: any) {
+                const message = err?.response?.data?.message || err?.response?.data?.error || 'Không thể gửi phản hồi. Vui lòng thử lại.';
+                showError(message);
+                // Chỉ revalidate khi có lỗi để revert
+                mutateComments(undefined, { revalidate: true });
+            } finally {
+                setSubmitting(false);
+            }
+            return;
+        }
+
+        // Tab đánh giá: gọi API reply review
         try {
         await replyReview(replyTarget.rootId, replyDraft.trim());
-            showSuccess('Đã phản hồi bình luận.');
+            showSuccess('Đã phản hồi đánh giá.');
             resetReplyState();
             await mutate();
         } catch (err: any) {
-            const message = err?.response?.data?.message || 'Không thể gửi phản hồi. Vui lòng thử lại.';
+            const message = err?.response?.data?.message || err?.response?.data?.error || 'Không thể gửi phản hồi. Vui lòng thử lại.';
             showError(message);
         } finally {
             setSubmitting(false);
@@ -378,7 +558,14 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
                     <div className={cx('comment-text')}>{commentItem.text}</div>
 
                     <div className={cx('comment-footer')}>
-                        <button className={cx('reply-button')} type="button" onClick={() => handleReplyClick(commentItem)}>
+                        <button
+                            className={cx('reply-button', {
+                                'is-disabled': activeTab === 'reviews' && !canReplyToThread,
+                            })}
+                            type="button"
+                            onClick={() => handleReplyClick(commentItem)}
+                            disabled={activeTab === 'reviews' && !canReplyToThread}
+                        >
                             <MessageCircleIcon size={14} />
                             <span>Trả lời</span>
                         </button>
@@ -403,7 +590,9 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
                         </div>
                     )}
 
-                    {commentItem.isRoot && replyTarget?.rootId === commentItem.id && (
+                    {(activeTab !== 'reviews' || canReplyToThread) &&
+                        commentItem.isRoot &&
+                        replyTarget?.rootId === commentItem.id && (
                         <div className={cx('inline-reply-form')}>
                             <div className={cx('inline-reply-wrapper')}>
                                 <div className={cx('inline-reply-avatar')}>
@@ -462,19 +651,23 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
             return <p className={cx('comments-empty')}>Không tìm thấy sản phẩm để hiển thị bình luận.</p>;
         }
 
-        if (isLoading) {
-            return <p className={cx('comments-empty')}>Đang tải bình luận...</p>;
+        const displayList = activeTab === 'reviews' ? reviewsList : commentsList;
+        const loading = activeTab === 'reviews' ? isLoading : commentsLoading;
+        const fetchError = activeTab === 'reviews' ? error : commentsError;
+
+        if (loading) {
+            return <p className={cx('comments-empty')}>Đang tải {activeTab === 'reviews' ? 'đánh giá' : 'bình luận'}...</p>;
         }
 
-        if (error) {
-            return <p className={cx('comments-empty')}>Không thể tải bình luận. Vui lòng thử lại sau.</p>;
+        if (fetchError) {
+            return <p className={cx('comments-empty')}>Không thể tải {activeTab === 'reviews' ? 'đánh giá' : 'bình luận'}. Vui lòng thử lại sau.</p>;
         }
 
-        if (comments.length === 0) {
-            return <p className={cx('comments-empty')}>Chưa có bình luận nào cho sản phẩm này.</p>;
+        if (displayList.length === 0) {
+            return <p className={cx('comments-empty')}>Chưa có {activeTab === 'reviews' ? 'đánh giá' : 'bình luận'} nào cho sản phẩm này.</p>;
         }
 
-        return comments.map((commentItem) => renderComment(commentItem));
+        return displayList.map((commentItem) => renderComment(commentItem));
     };
 
     const commentsInfo = ratingSummary
@@ -628,6 +821,7 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
                     <div className={cx('thread-timeline')}>{renderCommentsList()}</div>
                 </div>
             </div>
+
         </section>
     );
 };

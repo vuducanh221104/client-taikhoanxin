@@ -9,11 +9,12 @@ export interface Warranty {
     _id: string;
     userId: string | { _id: string; fullName: string; email: string; phone?: string };
     orderId: string | { _id: string; orderId: string; totalPrice: number; orderStatus: string; createdAt: string };
-    accountId: string | { _id: string; email: string; username: string; status: string };
+    accountId?: string | { _id: string; email: string; username: string; status: string };
+    itemOrderId: string; // Reference to order item _id
     reason: string;
     description?: string;
     attachments?: string[];
-    status: 'pending' | 'processing' | 'resolved' | 'rejected' | 'closed';
+    status: 'pending' | 'processing' | 'resolved' | 'rejected' | 'closed' | 'warranty_processing' | 'warranty_resolved' | 'warranty_rejected';
     priority?: 'low' | 'medium' | 'high' | 'urgent';
     adminNote?: string;
     resolution?: string;

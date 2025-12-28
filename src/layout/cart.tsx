@@ -282,14 +282,43 @@ const CartLayout: React.FC = () => {
                 const productId = product?._id || product?.id || '';
                 const productName = product?.name || '';
 
-                let price = 0;
-                if (product?.price) {
+                // Use unitPrice from cart item (already calculated as priceDiscount if available)
+                // This is the final price that was stored when adding to cart
+                let price = item.unitPrice || 0;
+                
+                // If unitPrice is not available, calculate from product.price
+                if (!price && product?.price) {
                     if (Array.isArray(product.price)) {
-                        price = product.price[0]?.priceOriginal || product.price[0]?.original || 0;
+                        const priceItem = product.price[0];
+                        const discount = priceItem?.discount;
+                        // Use priceDiscount if available, otherwise use priceOriginal
+                        price = discount?.priceDiscount !== undefined && discount.priceDiscount !== null
+                            ? discount.priceDiscount
+                            : priceItem?.priceOriginal || priceItem?.original || 0;
                     } else if (typeof product.price === 'object') {
-                        price = product.price.priceOriginal || product.price.original || 0;
+                        const discount = product.price.discount;
+                        // Use priceDiscount if available, otherwise use priceOriginal
+                        price = discount?.priceDiscount !== undefined && discount.priceDiscount !== null
+                            ? discount.priceDiscount
+                            : product.price.priceOriginal || product.price.original || 0;
                     }
                 }
+                
+                // Calculate oldPrice: if price is priceDiscount, oldPrice = priceOriginal
+                let oldPrice: number | undefined = undefined;
+                if (product?.price) {
+                    let priceOriginal = 0;
+                    if (Array.isArray(product.price)) {
+                        priceOriginal = product.price[0]?.priceOriginal || product.price[0]?.original || 0;
+                    } else if (typeof product.price === 'object') {
+                        priceOriginal = product.price.priceOriginal || product.price.original || 0;
+                    }
+                    // If current price is different from priceOriginal, show oldPrice
+                    if (priceOriginal > 0 && price !== priceOriginal) {
+                        oldPrice = priceOriginal;
+                }
+                }
+                
                 const image = product?.image || [];
                 const imageSrc = Array.isArray(image) && image.length > 0 ? image[0] : '';
                 const slug = product?.slug || '';
@@ -304,7 +333,7 @@ const CartLayout: React.FC = () => {
                     id: productId,
                     productName,
                     price,
-                    oldPrice: undefined,
+                    oldPrice,
                     imageSrc,
                     imageAlt: productName,
                     href: productHref,
@@ -316,16 +345,31 @@ const CartLayout: React.FC = () => {
                 };
             });
 
+            // Calculate totalDiscountBefore from products if not provided by API
+            const calculatedSubtotal = mappedProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
+            const totalDiscountBefore = apiCart.totalDiscountBefore ?? calculatedSubtotal;
+
             return {
                 products: mappedProducts,
-                totalPrice: apiCart.totalDiscountBefore || 0,
+                // totalDiscountBefore is the subtotal before discount
+                totalDiscountBefore,
+                // totalPrice is the final price after discount code (already calculated: totalDiscountBefore - discountAmount)
+                totalPrice: apiCart.totalPrice || totalDiscountBefore,
                 totalQuantity: apiCart.quantity || 0,
                 couponCode: apiCart.discountCode || undefined,
                 couponDiscount: apiCart.discountAmount || apiCart.totalDiscount || 0,
                 couponError: apiCart.discountError || undefined,
             };
         }
-        return reduxCart;
+        // Calculate totalDiscountBefore from products for Redux cart
+        const totalDiscountBefore = reduxCart.products.reduce((sum, product) => {
+            return sum + (product.price || 0) * (product.quantity || 1);
+        }, 0);
+
+        return {
+            ...reduxCart,
+            totalDiscountBefore,
+        };
     }, [cartData, currentUser, reduxCart]);
 
     const formatPrice = (value: number): string => value.toLocaleString('vi-VN');
@@ -380,8 +424,14 @@ const CartLayout: React.FC = () => {
                 pendingUpdatesRef.current.set(id, { ...pendingUpdate, expectedQuantity: newQuantity });
             }
 
-            const priceDiff = ((product as any)?.price || 0) * (newQuantity - actualCurrentQuantity);
             const quantityDiff = newQuantity - actualCurrentQuantity;
+            // Use unitPrice from cart item (already calculated as priceDiscount if available)
+            const cartItem = currentCartData?.data?.items?.find((item: any) => {
+                const productId = item.productId?._id || item.product_id?._id || '';
+                return productId === id;
+            });
+            const unitPrice = cartItem?.unitPrice || (product as any)?.price || 0;
+            const priceDiff = unitPrice * quantityDiff;
 
             const optimisticCart = {
                 ...currentCartData,
@@ -447,8 +497,14 @@ const CartLayout: React.FC = () => {
                 pendingUpdatesRef.current.set(id, { ...pendingUpdate, expectedQuantity: newQuantity });
             }
 
-            const priceDiff = ((product as any)?.price || 0) * (newQuantity - actualCurrentQuantity);
             const quantityDiff = newQuantity - actualCurrentQuantity;
+            // Use unitPrice from cart item (already calculated as priceDiscount if available)
+            const cartItem = currentCartData?.data?.items?.find((item: any) => {
+                const productId = item.productId?._id || item.product_id?._id || '';
+                return productId === id;
+            });
+            const unitPrice = cartItem?.unitPrice || (product as any)?.price || 0;
+            const priceDiff = unitPrice * quantityDiff;
 
             const optimisticCart = {
                 ...currentCartData,
@@ -674,9 +730,11 @@ const CartLayout: React.FC = () => {
         showSuccess('Đã xóa mã giới thiệu');
     };
 
-    const subtotal = cart.totalPrice;
-    const discount = cart.couponDiscount;
-    const total = subtotal - discount;
+    // subtotal is the price before discount
+    const subtotal = cart.totalDiscountBefore ?? cart.totalPrice;
+    const discount = cart.couponDiscount || 0;
+    // total is the final price after discount (already calculated from backend)
+    const total = cart.totalPrice;
 
     if (currentUser && cartLoading) {
         return (

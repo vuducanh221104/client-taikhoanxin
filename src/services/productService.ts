@@ -350,16 +350,21 @@ export const mapProductToFeaturedProduct = (product: Product): FeaturedProduct =
     const discount = priceItem?.discount;
     
     // Calculate discount price
+    // If priceDiscount exists, use it as the final price (not subtract from original)
+    // Example: priceDiscount = 2000đ → finalPrice = 2000đ
     let finalPrice = priceOriginal;
     let oldPrice: number | undefined = undefined;
     let discountPercent: number | undefined = undefined;
     
     if (discount) {
-        if (discount.priceDiscount) {
-            // Use priceDiscount if available
-            finalPrice = priceOriginal - discount.priceDiscount;
+        if (discount.priceDiscount !== undefined && discount.priceDiscount !== null) {
+            // Use priceDiscount as the final price directly
+            finalPrice = discount.priceDiscount;
             oldPrice = priceOriginal;
-            discountPercent = Math.round((discount.priceDiscount / priceOriginal) * 100);
+            // Calculate discount percent: (priceOriginal - priceDiscount) / priceOriginal * 100
+            discountPercent = priceOriginal > 0 
+                ? Math.round(((priceOriginal - discount.priceDiscount) / priceOriginal) * 100)
+                : undefined;
         } else if (discount.quantity) {
             // Fallback to percentage discount
             finalPrice = Math.round(priceOriginal * (1 - discount.quantity / 100));

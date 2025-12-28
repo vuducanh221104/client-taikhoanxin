@@ -35,6 +35,10 @@ interface Product {
     slug?: string;
     imageSrc?: string;
     image?: string[];
+    tos?: {
+        title?: string;
+        description?: string;
+    };
 }
 
 interface VariantItem {
@@ -110,6 +114,12 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     React.useEffect(() => {
         setOptionsValues({});
         setOptionsErrors({});
+        // Reset TOS acceptance when product changes
+        setTosAccepted(false);
+        setIsTosModalOpen(false);
+        setTosCheckboxChecked(false);
+        setTosError('');
+        pendingActionRef.current = null;
     }, [product.id]);
 
     // Helper to build stable option key
@@ -286,7 +296,18 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         return isSuccess;
     };
 
+    // Check if product has TOS data
+    const hasTos = React.useMemo(() => {
+        const tos = (product as any).tos;
+        return tos && (tos.title || tos.description);
+    }, [product]);
+
     const ensureTosAccepted = (action: 'add' | 'buy') => {
+        // If no TOS, skip modal and proceed directly
+        if (!hasTos) {
+            return true;
+        }
+        
         if (tosAccepted) {
             return true;
         }
@@ -417,14 +438,20 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                     }
                 }
 
-                // Render variants if available
-                if (variantsArray.length > 0) {
-                    return variantsArray.map((variant, variantIndex) => (
+                // Filter variants that have at least one item in list
+                const validVariants = variantsArray.filter(
+                    (variant) => variant.list && variant.list.length > 0
+                );
+
+                // Only render if there are valid variants with items
+                if (validVariants.length > 0) {
+                    return validVariants.map((variant, variantIndex) => {
+                        const title = (variant.title || '').trim();
+                        return (
                         <div key={variantIndex} className={cx('product-packages')}>
-                            <h3 className={cx('packages-title')}>{variant.title || 'Chọn gói sản phẩm'}</h3>
+                                {title && <h3 className={cx('packages-title')}>{title}</h3>}
                             <div className={cx('packages-grid')}>
-                                {variant.list && variant.list.length > 0 ? (
-                                    variant.list.map((item) => (
+                                    {variant.list.map((item) => (
                                         <button
                                             key={item.slug || item._id || item.text}
                                             className={cx('package-button', {
@@ -438,48 +465,14 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                                         >
                                             {item.text}
                                         </button>
-                                    ))
-                                ) : (
-                                    <p className={cx('no-variants')}>Không có biến thể</p>
-                                )}
+                                    ))}
                             </div>
                         </div>
-                    ));
+                        );
+                    });
                 }
                 return null;
             })()}
-
-            {/* Fallback to default packages if no variants */}
-            {(() => {
-                // Check if variants exist and have data
-                const hasVariants = variants && (
-                    Array.isArray(variants) ? variants.length > 0 :
-                        (variants.title && variants.list && variants.list.length > 0)
-                );
-                return !hasVariants;
-            })() && (
-                    <div className={cx('product-packages')}>
-                        <h3 className={cx('packages-title')}>Chọn gói sản phẩm</h3>
-                        <div className={cx('packages-grid')}>
-                            {[
-                                { id: '1', name: 'Ultra (1 tháng)', price: 199000, selected: false },
-                                { id: '2', name: 'Ultra Không Credit (1 tháng)', price: 179000, selected: false },
-                                { id: '3', name: 'Pro (1 tháng)', price: 149000, selected: false },
-                                { id: '4', name: 'Pro (6 tháng)', price: 799000, selected: false },
-                                { id: '5', name: 'Pro (1 năm)', price: 1499000, selected: false },
-                                { id: '6', name: 'SP AI khác', price: 0, selected: false },
-                            ].map((pkg) => (
-                                <button
-                                    key={pkg.id}
-                                    className={cx('package-button', { selected: selectedPackage.id === pkg.id })}
-                                    onClick={() => onPackageSelect(pkg)}
-                                >
-                                    {pkg.name}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
 
             {/* Product Options - Input fields for email, password, etc. */}
             {options && options.length > 0 && (
@@ -781,13 +774,23 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                 </ul>
             </div>
 
-            {isTosModalOpen && (
+            {isTosModalOpen && hasTos && (
                 <div className={cx('tos-modal-backdrop')} role="dialog" aria-modal="true">
                     <div className={cx('tos-modal')}>
-                        <h3 className={cx('tos-modal-title')}>Xác nhận cam kết</h3>
+                        <h3 className={cx('tos-modal-title')}>
+                            {(product as any).tos?.title || 'Xác nhận cam kết'}
+                        </h3>
                         <div className={cx('tos-modal-message')}>
+                            {(product as any).tos?.description ? (
+                                <div dangerouslySetInnerHTML={{ 
+                                    __html: (product as any).tos.description.replace(/\n/g, '<br />') 
+                                }} />
+                            ) : (
+                                <>
                             <p>Chỉ hỗ trợ sử dụng với khách hàng ở Việt Nam</p>
                             <p>Sản phẩm không hỗ trợ sử dụng với khách hàng ở nước ngoài.</p>
+                                </>
+                            )}
                         </div>
                         <label className={cx('tos-checkbox')}>
                             <input

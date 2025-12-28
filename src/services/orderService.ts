@@ -74,6 +74,9 @@ export interface Order {
         | 'completed'
         | 'cancelled'
         | 'warranty_pending'
+        | 'warranty_processing'
+        | 'warranty_resolved'
+        | 'warranty_rejected'
         | 'warranty_completed';
     paymentStatus?: 'unpaid' | 'pending' | 'paid' | 'failed' | 'refunded';
     phoneUserOrder: string;
@@ -283,6 +286,9 @@ export const getStatusLabel = (status: string): string => {
         completed: 'Đã xử lý',
         cancelled: 'Đã hủy',
         warranty_pending: 'Đang bảo hành',
+        warranty_processing: 'Đang xử lý bảo hành',
+        warranty_resolved: 'Đã xử lý bảo hành',
+        warranty_rejected: 'Từ chối bảo hành',
         warranty_completed: 'Đã bảo hành',
         refunded: 'Đã hoàn tiền',
     };
@@ -299,6 +305,9 @@ export const getStatusColor = (status: string): string => {
         processing: 'status-processing',
         completed: 'status-completed',
         warranty_pending: 'status-processing',
+        warranty_processing: 'status-processing',
+        warranty_resolved: 'status-completed',
+        warranty_rejected: 'status-cancelled',
         warranty_completed: 'status-completed',
         cancelled: 'status-cancelled',
         refunded: 'status-cancelled',

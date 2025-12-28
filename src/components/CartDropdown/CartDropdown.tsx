@@ -102,14 +102,44 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                 const product = item.productId || item.product_id;
                 const productId = product?._id || product?.id || '';
                 const productName = product?.name || '';
-                let price = 0;
-                if (product?.price) {
+                
+                // Use unitPrice from cart item (already calculated as priceDiscount if available)
+                // This is the final price that was stored when adding to cart
+                let price = item.unitPrice || 0;
+                
+                // If unitPrice is not available, calculate from product.price
+                if (!price && product?.price) {
                     if (Array.isArray(product.price)) {
-                        price = product.price[0]?.priceOriginal || product.price[0]?.original || 0;
+                        const priceItem = product.price[0];
+                        const discount = priceItem?.discount;
+                        // Use priceDiscount if available, otherwise use priceOriginal
+                        price = discount?.priceDiscount !== undefined && discount.priceDiscount !== null
+                            ? discount.priceDiscount
+                            : priceItem?.priceOriginal || priceItem?.original || 0;
                     } else if (typeof product.price === 'object') {
-                        price = product.price.priceOriginal || product.price.original || 0;
+                        const discount = product.price.discount;
+                        // Use priceDiscount if available, otherwise use priceOriginal
+                        price = discount?.priceDiscount !== undefined && discount.priceDiscount !== null
+                            ? discount.priceDiscount
+                            : product.price.priceOriginal || product.price.original || 0;
                     }
                 }
+                
+                // Calculate oldPrice: if price is priceDiscount, oldPrice = priceOriginal
+                let oldPrice: number | undefined = undefined;
+                if (product?.price) {
+                    let priceOriginal = 0;
+                    if (Array.isArray(product.price)) {
+                        priceOriginal = product.price[0]?.priceOriginal || product.price[0]?.original || 0;
+                    } else if (typeof product.price === 'object') {
+                        priceOriginal = product.price.priceOriginal || product.price.original || 0;
+                    }
+                    // If current price is different from priceOriginal, show oldPrice
+                    if (priceOriginal > 0 && price !== priceOriginal) {
+                        oldPrice = priceOriginal;
+                    }
+                }
+                
                 const image = product?.image || [];
                 const imageSrc = Array.isArray(image) && image.length > 0 ? image[0] : '';
                 const slug = product?.slug || '';
@@ -127,7 +157,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                     id: productId,
                     productName,
                     price,
-                    oldPrice: undefined,
+                    oldPrice,
                     imageSrc,
                     imageAlt: productName,
                     href: productHref,
@@ -141,7 +171,8 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
             
             return {
                 products: mappedProducts,
-                totalPrice: apiCart.totalDiscountBefore || 0,
+                // totalPrice is the final price after discount code (already calculated from unitPrice which is priceDiscount if available)
+                totalPrice: apiCart.totalPrice || 0,
                 totalQuantity: apiCart.quantity || 0,
                 couponCode: apiCart.discountCode || undefined,
                 couponDiscount: apiCart.totalDiscount || 0,

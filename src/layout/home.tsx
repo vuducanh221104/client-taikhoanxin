@@ -4,9 +4,17 @@ import React, { useMemo, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import classNames from 'classnames/bind';
 import styles from '@/app/page.module.scss';
-import HeroBanner from '@/components/HeroBanner';
-import BannerSlider from '@/components/BannerSlider';
-import CategoryIcons from '@/components/CategoryIcons';
+// Lazy load heavy components for better performance
+const HeroBanner = dynamic(() => import('@/components/HeroBanner'), {
+    ssr: true,
+});
+const BannerSlider = dynamic(() => import('@/components/BannerSlider'), {
+    ssr: true,
+});
+const CategoryIcons = dynamic(() => import('@/components/CategoryIcons'), {
+    ssr: true,
+    loading: () => <div style={{ height: '150px' }} aria-label="Loading categories" />,
+});
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/redux/store';
 import { addToCart } from '@/redux/cartSlice';
@@ -51,6 +59,31 @@ export default function Home() {
         
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
+
+    // Preload first banner image for faster loading
+    useEffect(() => {
+        if (typeof window === 'undefined' || !homePageData?.data) return;
+        
+        const bannerData = isMobile 
+            ? homePageData.data.bannerSlideMoblie || []
+            : homePageData.data.bannerSlide || [];
+        
+        const firstBanner = bannerData.sort((a, b) => a.numberSort - b.numberSort)[0];
+        if (!firstBanner?.image) return;
+        
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = firstBanner.image;
+        link.setAttribute('fetchpriority', 'high');
+        document.head.appendChild(link);
+        
+        return () => {
+            if (document.head.contains(link)) {
+                document.head.removeChild(link);
+            }
+        };
+    }, [homePageData?.data, isMobile]);
 
     // Map API data to component format
     const heroBanners = useMemo(() => {
@@ -246,7 +279,7 @@ export default function Home() {
                         <div className={cx('banners-small-wrapper')}>
                             {displaySmallBanners[0] ? (
                                 <div className={cx('banner-small')}>
-                                    <HeroBanner bannerData={displaySmallBanners[0]} priority={false} />
+                                    <HeroBanner bannerData={displaySmallBanners[0]} priority={true} />
                                 </div>
                             ) : (
                                 <div className={cx('banner-small')}>
@@ -255,7 +288,7 @@ export default function Home() {
                             )}
                             {displaySmallBanners[1] ? (
                                 <div className={cx('banner-small')}>
-                                    <HeroBanner bannerData={displaySmallBanners[1]} priority={false} />
+                                    <HeroBanner bannerData={displaySmallBanners[1]} priority={true} />
                                 </div>
                             ) : (
                                 <div className={cx('banner-small')}>

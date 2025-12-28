@@ -87,23 +87,27 @@ const CheckoutLayout: React.FC = () => {
                 const product = item.productId || item.product_id;
                 const productId = product?._id || product?.id || '';
                 const productName = product?.name || '';
-                let price = 0;
-                if (product?.price) {
+                
+                // Use unitPrice from cart item (already calculated as priceDiscount if available)
+                // This is the final price that was stored when adding to cart
+                let price = item.unitPrice || 0;
+                
+                // If unitPrice is not available, calculate from product.price
+                if (!price && product?.price) {
                     if (Array.isArray(product.price)) {
-                        price =
-                            product.price[0]?.priceOriginal ||
-                            product.price[0]?.original ||
-                            item.unitPrice ||
-                            0;
+                        const priceItem = product.price[0];
+                        const discount = priceItem?.discount;
+                        // Use priceDiscount if available, otherwise use priceOriginal
+                        price = discount?.priceDiscount !== undefined && discount.priceDiscount !== null
+                            ? discount.priceDiscount
+                            : priceItem?.priceOriginal || priceItem?.original || 0;
                     } else if (typeof product.price === 'object') {
-                        price =
-                            product.price.priceOriginal ||
-                            product.price.original ||
-                            item.unitPrice ||
-                            0;
+                        const discount = product.price.discount;
+                        // Use priceDiscount if available, otherwise use priceOriginal
+                        price = discount?.priceDiscount !== undefined && discount.priceDiscount !== null
+                            ? discount.priceDiscount
+                            : product.price.priceOriginal || product.price.original || 0;
                     }
-                } else {
-                    price = item.unitPrice || 0;
                 }
 
                 const itemOptions = Array.isArray(item.options) ? item.options : [];
@@ -117,19 +121,32 @@ const CheckoutLayout: React.FC = () => {
                 };
             });
 
+            // Calculate totalDiscountBefore from products if not provided by API
+            const calculatedSubtotal = mappedProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
+            const totalDiscountBefore = apiCart.totalDiscountBefore ?? calculatedSubtotal;
+
             return {
                 products: mappedProducts,
-                totalPrice: apiCart.totalDiscountBefore || 0,
+                // totalDiscountBefore is the subtotal before discount
+                totalDiscountBefore,
+                // totalPrice is the final price after discount code (already calculated: totalDiscountBefore - discountAmount)
+                totalPrice: apiCart.totalPrice || totalDiscountBefore,
                 totalQuantity: apiCart.quantity || 0,
                 couponCode: apiCart.discountCode || undefined,
                 couponDiscount: apiCart.discountAmount || apiCart.totalDiscount || 0,
             };
         }
+        // Calculate totalDiscountBefore from products for Redux cart
+        const totalDiscountBefore = reduxCart.products.reduce((sum, product) => {
+            return sum + (product.price || 0) * (product.quantity || 1);
+        }, 0);
+
         return {
             products: reduxCart.products.map((product) => ({
                 ...product,
                 options: product.options || [],
             })),
+            totalDiscountBefore,
             totalPrice: reduxCart.totalPrice,
             totalQuantity: reduxCart.totalQuantity,
             couponCode: reduxCart.couponCode,
@@ -488,7 +505,7 @@ const CheckoutLayout: React.FC = () => {
                         </div>
                         <div className={cx('summary-row')}>
                             <span>Tạm tính</span>
-                            <strong>{formatPrice(cart.totalPrice)}₫</strong>
+                            <strong>{formatPrice(cart.totalDiscountBefore || cart.totalPrice)}₫</strong>
                         </div>
 
                         {cart.couponCode && cart.couponDiscount > 0 && (
@@ -505,7 +522,7 @@ const CheckoutLayout: React.FC = () => {
 
                         <div className={cx('summary-total')}>
                             <span>Tổng</span>
-                            <strong>{formatPrice(cart.totalPrice - cart.couponDiscount)}₫</strong>
+                            <strong>{formatPrice(cart.totalPrice)}₫</strong>
                         </div>
                         <button
                             className={cx('place-order')}

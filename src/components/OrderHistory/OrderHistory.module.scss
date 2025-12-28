@@ -831,13 +831,30 @@
 }
 
 .status-badge {
-    display: inline-block;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
     padding: 6px 12px;
     border-radius: 6px;
     font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    line-height: 1.4;
+
+    .status-main {
+        display: block;
+    }
+
+    .status-detail {
+        display: block;
+        font-weight: 400;
+        opacity: 0.8;
+        font-size: 11px;
+        text-transform: none;
+        letter-spacing: 0;
+        margin-top: 2px;
+    }
 }
 
 .status-pending {
