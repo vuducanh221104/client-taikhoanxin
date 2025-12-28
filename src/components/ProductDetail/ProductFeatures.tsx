@@ -38,4 +38,3 @@ const ProductFeatures: React.FC<ProductFeaturesProps> = ({ features }) => {
 };
 
 export default ProductFeatures;
-

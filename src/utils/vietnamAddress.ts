@@ -3,16 +3,7 @@
  * Helper functions to work with vietnam-provinces
  */
 
-// Dynamic import for CommonJS module compatibility
-let vietnamProvinces: any;
-
-// Lazy load the module
-const getVietnamProvinces = () => {
-    if (!vietnamProvinces) {
-        vietnamProvinces = require('vietnam-provinces');
-    }
-    return vietnamProvinces;
-};
+import * as vietnamProvinces from 'vietnam-provinces';
 
 export interface AddressOption {
     value: string;
@@ -23,8 +14,7 @@ export interface AddressOption {
  * Get all provinces
  */
 export const getProvinces = (): AddressOption[] => {
-    const vp = getVietnamProvinces();
-    const provinces = vp.getProvinces();
+    const provinces = vietnamProvinces.getProvinces();
     
     return provinces.map((province: any) => ({
         value: province.code,
@@ -40,8 +30,7 @@ export const getDistricts = (provinceCode: string): AddressOption[] => {
         return [];
     }
     
-    const vp = getVietnamProvinces();
-    const districts = vp.getDistricts(provinceCode);
+    const districts = vietnamProvinces.getDistricts(provinceCode);
     
     return districts.map((district: any) => ({
         value: district.code,
@@ -57,8 +46,7 @@ export const getWards = (districtCode: string): AddressOption[] => {
         return [];
     }
     
-    const vp = getVietnamProvinces();
-    const wards = vp.getWards(districtCode);
+    const wards = vietnamProvinces.getWards(districtCode);
     
     return wards.map((ward: any) => ({
         value: ward.code,
@@ -73,8 +61,7 @@ export const getProvinceName = (provinceCode: string): string => {
     if (!provinceCode) {
         return '';
     }
-    const vp = getVietnamProvinces();
-    const provinces = vp.getProvinces();
+    const provinces = vietnamProvinces.getProvinces();
     const province = provinces.find((p: any) => p.code === provinceCode);
     return province?.name || '';
 };
@@ -86,8 +73,7 @@ export const getDistrictName = (provinceCode: string, districtCode: string): str
     if (!provinceCode || !districtCode) {
         return '';
     }
-    const vp = getVietnamProvinces();
-    const districts = vp.getDistricts(provinceCode);
+    const districts = vietnamProvinces.getDistricts(provinceCode);
     const district = districts.find((d: any) => d.code === districtCode);
     return district?.name || '';
 };
@@ -99,8 +85,7 @@ export const getWardName = (districtCode: string, wardCode: string): string => {
     if (!districtCode || !wardCode) {
         return '';
     }
-    const vp = getVietnamProvinces();
-    const wards = vp.getWards(districtCode);
+    const wards = vietnamProvinces.getWards(districtCode);
     const ward = wards.find((w: any) => w.code === wardCode);
     return ward?.name || '';
 };

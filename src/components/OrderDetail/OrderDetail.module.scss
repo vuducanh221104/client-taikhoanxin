@@ -183,6 +183,12 @@
     font-size: 0.875rem;
     font-weight: 500;
 
+    .status-detail {
+        font-weight: 400;
+        opacity: 0.8;
+        margin-left: 0.25rem;
+    }
+
     &.status-pending {
         background: transparent;
         color: #f59e0b;
@@ -277,6 +283,21 @@
 .product-quantity {
     font-size: 0.9375rem;
     color: #6b7280;
+}
+
+.product-item-status {
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: inline-block;
+    margin-top: 0.25rem;
+
+    &.status-completed {
+        color: #16a34a;
+    }
+
+    &.status-processing {
+        color: #2563eb;
+    }
 }
 
 .product-price {

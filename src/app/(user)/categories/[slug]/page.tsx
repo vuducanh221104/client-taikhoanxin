@@ -1,604 +1,166 @@
-'use client';
+import type { Metadata } from 'next';
+import CategoryDetailLayout from '@/layout/categoryDetail';
+import { SWRConfig } from 'swr';
+import Script from 'next/script';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'next/navigation';
-import classNames from 'classnames/bind';
-import styles from './page.module.scss';
-import ProductCard from '@/components/ProductCard/ProductCard';
-import { SortIcon, FilterIcon, CloseIcon } from '@/components/Icons';
-import EmptyState from '@/components/EmptyState/EmptyState';
-import Breadcrumbs from '@/components/Breadcrumbs/Breadcrumbs';
-import { useCategory } from '@/services/categoryService';
-import { useProducts, mapProductToFeaturedProduct } from '@/services/productService';
-import type { FeaturedProduct } from '@/components/FeaturedProducts';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taikhoanxin.com';
+const apiBase = process.env.NEXT_PUBLIC_SERVER_URL || 'https://taikhoanxin.com';
+const defaultOgImage = 'https://cdn.taikhoanxin.com/seo/banner-seo.jpeg';
 
-const cx = classNames.bind(styles);
-const categoryNames: Record<string, string> = {
-    'work': 'Làm việc',
-    'ai-account': 'Sản phẩm AI',
-    'entertainment': 'Giải trí',
-    'giai-tri': 'Giải trí',
-    'windows': 'Windows',
-    'office': 'Office',
-    'education': 'Giáo dục',
-    'design': 'Thiết kế',
-    'cloud-storage': 'Cloud Storage',
-};
+async function fetchCategory(slug: string) {
+    try {
+        const res = await fetch(`${apiBase}/api/v1/categories/${slug}`, {
+            next: { revalidate: 300 },
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data?.data?.category || null;
+    } catch {
+        return null;
+    }
+}
+
+async function fetchCategoryResponse(slug: string) {
+    try {
+        const res = await fetch(`${apiBase}/api/v1/categories/${slug}`, {
+            next: { revalidate: 300 },
+        });
+        if (!res.ok) return null;
+        return res.json();
+    } catch {
+        return null;
+    }
+}
 
 const DEFAULT_PRICE_RANGE: [number, number] = [0, 10_000_000];
-const PRICE_SLIDER_STEP = 50_000;
-const sortOptions = [
-    { value: 'default', label: 'Mặc định' },
-    { value: 'newest', label: 'Mới nhất' },
-    { value: 'price-asc', label: 'Giá: Thấp đến cao' },
-    { value: 'price-desc', label: 'Giá: Cao đến thấp' },
-    { value: 'name-asc', label: 'Tên: A-Z' },
-    { value: 'name-desc', label: 'Tên: Z-A' },
-];
-const quickPricePresets: Array<{ label: string; range: [number, number] }> = [
-    { label: 'Dưới 100k', range: [0, 100_000] },
-    { label: '100k - 500k', range: [100_000, 500_000] },
-    { label: '500k - 1tr', range: [500_000, 1_000_000] },
-    { label: '1tr - 3tr', range: [1_000_000, 3_000_000] },
-    { label: '3tr - 5tr', range: [3_000_000, 5_000_000] },
-    { label: 'Trên 5tr', range: [5_000_000, 10_000_000] },
-];
+const DEFAULT_ITEMS_PER_PAGE = 30;
 
-type ApiError = {
-    response?: {
-        data?: {
-            message?: string;
-        };
-    };
-    message?: string;
-};
+function buildProductsKey(slug: string) {
+    const queryParams = new URLSearchParams();
+    queryParams.append('page', '1');
+    queryParams.append('limit', DEFAULT_ITEMS_PER_PAGE.toString());
+    queryParams.append('categorySlug', slug);
+    queryParams.append('minPrice', DEFAULT_PRICE_RANGE[0].toString());
+    queryParams.append('maxPrice', DEFAULT_PRICE_RANGE[1].toString());
+    queryParams.append('sortBy', 'createdAt');
+    queryParams.append('sortOrder', 'desc');
+    return `/api/v1/products?${queryParams.toString()}`;
+}
 
-const formatCurrency = (value: number) => value.toLocaleString('vi-VN');
-const parseCurrency = (value: string): number => {
-    // Remove all non-digit characters
-    const cleaned = value.replace(/[^\d]/g, '');
-    return cleaned ? parseInt(cleaned, 10) : 0;
-};
-const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+async function fetchCategoryProducts(slug: string) {
+    const productsKey = buildProductsKey(slug);
+    try {
+        const res = await fetch(`${apiBase}${productsKey}`, {
+            next: { revalidate: 300 },
+        });
+        if (!res.ok) return { productsKey, data: null as any };
+        const data = await res.json();
+        return { productsKey, data };
+    } catch {
+        return { productsKey, data: null as any };
+    }
+}
 
-export default function CategoryDetailPage() {
-    const params = useParams();
-    const slug = params.slug as string;
-    const categoryFallbackName = categoryNames[slug] || 'Danh mục';
+function buildCategoryJsonLd(raw: any, slug: string) {
+    const category = raw?.data?.category || raw?.category || raw;
+    if (!category) return null;
+    const name = category.name || 'Danh mục';
+    const description =
+        category.description || `Khám phá sản phẩm trong danh mục ${name} tại TaiKhoanXin.`;
+    const url = `${siteUrl}/categories/${slug}`;
 
-    const [sortBy, setSortBy] = useState('default');
-    const [priceRange, setPriceRange] = useState<[number, number]>(DEFAULT_PRICE_RANGE);
-    const [pendingPriceRange, setPendingPriceRange] = useState<[number, number]>(DEFAULT_PRICE_RANGE);
-    const [priceInputValues, setPriceInputValues] = useState<[string, string]>([
-        formatCurrency(DEFAULT_PRICE_RANGE[0]),
-        formatCurrency(DEFAULT_PRICE_RANGE[1])
-    ]);
-    const [focusedInput, setFocusedInput] = useState<0 | 1 | null>(null);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [loadedProducts, setLoadedProducts] = useState<FeaturedProduct[]>([]);
-    const itemsPerPage = 30;
-    const [isSortOpen, setIsSortOpen] = useState(false);
-    const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
-    const sortDropdownRef = useRef<HTMLDivElement | null>(null);
-
-    const { data: categoryData } = useCategory(slug);
-
-    const sortConfig = React.useMemo(() => {
-        switch (sortBy) {
-            case 'price-asc':
-                return { sortField: 'price.priceOriginal', sortOrder: 'asc' };
-            case 'price-desc':
-                return { sortField: 'price.priceOriginal', sortOrder: 'desc' };
-            case 'name-asc':
-                return { sortField: 'name', sortOrder: 'asc' };
-            case 'name-desc':
-                return { sortField: 'name', sortOrder: 'desc' };
-            case 'newest':
-                return { sortField: 'createdAt', sortOrder: 'desc' };
-            default:
-                return { sortField: 'createdAt', sortOrder: 'desc' };
-        }
-    }, [sortBy]);
-
-    const { data: productsData, error: productsError, isLoading: isProductsLoading } = useProducts({
-        page: currentPage,
-        limit: itemsPerPage,
-        categorySlug: slug,
-        minPrice: priceRange[0],
-        maxPrice: priceRange[1],
-        sortBy: sortConfig.sortField,
-        sortOrder: sortConfig.sortOrder,
+    return JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name,
+        description,
+        url,
+        image: [defaultOgImage],
+        breadcrumb: {
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+                {
+                    '@type': 'ListItem',
+                    position: 1,
+                    name: 'Trang chủ',
+                    item: siteUrl,
+                },
+                {
+                    '@type': 'ListItem',
+                    position: 2,
+                    name,
+                    item: url,
+                },
+            ],
+        },
     });
+}
 
-    const products = React.useMemo<FeaturedProduct[]>(() => {
-        if (!productsData?.data) return [];
-        return productsData.data.map((product) => mapProductToFeaturedProduct(product));
-    }, [productsData?.data]);
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+    const category = await fetchCategory(params.slug);
+    const name = category?.name || 'Danh mục';
+    const title = `${name} | TaiKhoanXin`;
+    const description =
+        category?.description ||
+        `Khám phá sản phẩm trong danh mục ${name} tại TaiKhoanXin.`;
+    const canonical = `${siteUrl}/categories/${params.slug}`;
 
-    useEffect(() => {
-        setCurrentPage(1);
-        setLoadedProducts([]);
-    }, [slug]);
-
-    useEffect(() => {
-        const maxPage = productsData?.pagination?.totalPages ?? 0;
-
-        if (maxPage > 0 && currentPage > maxPage) {
-            setCurrentPage(maxPage);
-        } else if (maxPage === 0 && currentPage !== 1) {
-            setCurrentPage(1);
-        }
-    }, [currentPage, productsData?.pagination?.totalPages]);
-
-    const handleSortChange = (value: string) => {
-        setSortBy(value);
-        setCurrentPage(1);
-        setLoadedProducts([]);
+    return {
+        title,
+        description,
+        alternates: { canonical },
+        openGraph: {
+            title,
+            description,
+            url: canonical,
+            siteName: 'TaiKhoanXin',
+            locale: 'vi_VN',
+            type: 'website',
+            images: [
+                {
+                    url: defaultOgImage,
+                    width: 1200,
+                    height: 630,
+                    alt: name,
+                },
+            ],
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title,
+            description,
+            images: [defaultOgImage],
+        },
     };
+}
 
-    // Update input display values when pendingPriceRange changes (from slider)
-    useEffect(() => {
-        if (focusedInput === null) {
-            setPriceInputValues([
-                formatCurrency(pendingPriceRange[0]),
-                formatCurrency(pendingPriceRange[1])
-            ]);
-        }
-    }, [pendingPriceRange, focusedInput]);
+export default async function CategoryDetailPage({ params }: { params: { slug: string } }) {
+    const categoryResponse = await fetchCategoryResponse(params.slug);
+    const { productsKey, data: productsResponse } = await fetchCategoryProducts(params.slug);
+    const fallback: Record<string, unknown> = {};
+    const categoryJsonLd = buildCategoryJsonLd(categoryResponse, params.slug);
 
-    const handlePriceInputChange = (index: 0 | 1, value: string) => {
-        // Update display value
-        setPriceInputValues((prev) => {
-            const newValues: [string, string] = [...prev];
-            newValues[index] = value;
-            return newValues;
-        });
-
-        // Parse and update actual range
-        const parsedValue = parseCurrency(value);
-        const nextValue = clamp(parsedValue, DEFAULT_PRICE_RANGE[0], DEFAULT_PRICE_RANGE[1]);
-        setPendingPriceRange((prev) => {
-            if (index === 0) {
-                return [Math.min(nextValue, prev[1]), prev[1]];
-            }
-            return [prev[0], Math.max(nextValue, prev[0])];
-        });
-    };
-
-    const handlePriceInputFocus = (index: 0 | 1) => {
-        setFocusedInput(index);
-        // Show raw number when focused for easier editing
-        setPriceInputValues((prev) => {
-            const newValues: [string, string] = [...prev];
-            newValues[index] = pendingPriceRange[index].toString();
-            return newValues;
-        });
-    };
-
-    const handlePriceInputBlur = (index: 0 | 1) => {
-        setFocusedInput(null);
-        // Format the value when blur
-        setPriceInputValues((prev) => {
-            const newValues: [string, string] = [...prev];
-            newValues[index] = formatCurrency(pendingPriceRange[index]);
-            return newValues;
-        });
-    };
-
-    const handleSliderChange = (index: 0 | 1, targetValue: number) => {
-        const safeValue = clamp(targetValue, DEFAULT_PRICE_RANGE[0], DEFAULT_PRICE_RANGE[1]);
-        setPendingPriceRange((prev) => {
-            if (index === 0) {
-                const maxAllowed = Math.max(DEFAULT_PRICE_RANGE[0], prev[1] - PRICE_SLIDER_STEP);
-                return [Math.min(safeValue, maxAllowed), prev[1]];
-            }
-            const minAllowed = Math.min(DEFAULT_PRICE_RANGE[1], prev[0] + PRICE_SLIDER_STEP);
-            return [prev[0], Math.max(safeValue, minAllowed)];
-        });
-    };
-
-    const toggleMobileFilter = () => setIsMobileFilterOpen((prev) => !prev);
-
-    const handleApplyFilters = () => {
-        setPriceRange(pendingPriceRange);
-        setCurrentPage(1);
-        setLoadedProducts([]);
-        setIsMobileFilterOpen(false); // Close mobile filter on apply
-    };
-
-    const clearFilters = () => {
-        setPendingPriceRange(DEFAULT_PRICE_RANGE);
-        setPriceRange(DEFAULT_PRICE_RANGE);
-        setPriceInputValues([
-            formatCurrency(DEFAULT_PRICE_RANGE[0]),
-            formatCurrency(DEFAULT_PRICE_RANGE[1])
-        ]);
-        handleSortChange('default');
-        setLoadedProducts([]);
-    };
-
-    const categoryName = categoryData?.data?.category?.name || categoryFallbackName;
-    const totalPages = productsData?.pagination?.totalPages ?? 0;
-    const productCount = productsData?.pagination?.total ?? loadedProducts.length;
-    const responsePage = productsData?.pagination?.page ?? currentPage;
-    const hasMoreProducts = currentPage < totalPages;
-    const isLoadMoreLoading = isProductsLoading && currentPage > 1;
-    const currentProducts = loadedProducts;
-
-    useEffect(() => {
-        if (!productsData?.data) {
-            if (!isProductsLoading && responsePage === 1) {
-                setLoadedProducts([]);
-            }
-            return;
-        }
-
-        if (responsePage === 1) {
-            setLoadedProducts(products);
-        } else if (products.length > 0) {
-            setLoadedProducts((prev) => {
-                const existingIds = new Set(prev.map((product) => product.id));
-                const newItems = products.filter((product) => !existingIds.has(product.id));
-                return [...prev, ...newItems];
-            });
-        }
-    }, [products, productsData?.data, responsePage, isProductsLoading]);
-
-    const handleLoadMore = () => {
-        if (!hasMoreProducts || isProductsLoading) return;
-        setCurrentPage((prev) => prev + 1);
-    };
-    const hasActiveFilters =
-        sortBy !== 'default' ||
-        priceRange[0] !== DEFAULT_PRICE_RANGE[0] ||
-        priceRange[1] !== DEFAULT_PRICE_RANGE[1];
-    const hasPendingPriceChanges =
-        pendingPriceRange[0] !== priceRange[0] || pendingPriceRange[1] !== priceRange[1];
-
-    const productsErrorMessage =
-        (productsError as ApiError | undefined)?.response?.data?.message ||
-        (productsError as ApiError | undefined)?.message;
-    const emptyDescription = isProductsLoading
-        ? 'Đang tải sản phẩm...'
-        : productsErrorMessage || 'Không tìm thấy sản phẩm nào trong danh mục này.';
-
-    const breadcrumbItems = [
-        { label: 'Trang chủ', href: '/' },
-        { label: 'Danh mục', href: '/categories' },
-        { label: categoryName, href: '' },
-    ];
-
-    const sliderStyle = React.useMemo(() => {
-        const [minValue, maxValue] = pendingPriceRange;
-        const minPercent =
-            ((minValue - DEFAULT_PRICE_RANGE[0]) / (DEFAULT_PRICE_RANGE[1] - DEFAULT_PRICE_RANGE[0])) * 100;
-        const maxPercent =
-            ((maxValue - DEFAULT_PRICE_RANGE[0]) / (DEFAULT_PRICE_RANGE[1] - DEFAULT_PRICE_RANGE[0])) * 100;
-        return {
-            '--slider-start': `${minPercent}%`,
-            '--slider-end': `${maxPercent}%`,
-        } as React.CSSProperties;
-    }, [pendingPriceRange]);
-
-    const filterBadges = React.useMemo(() => {
-        const badges: Array<{ label: string; value: string }> = [];
-        if (priceRange[0] !== DEFAULT_PRICE_RANGE[0] || priceRange[1] !== DEFAULT_PRICE_RANGE[1]) {
-            badges.push({
-                label: 'Khoảng giá',
-                value: `${formatCurrency(priceRange[0])}₫ - ${formatCurrency(priceRange[1])}₫`,
-            });
-        }
-        if (sortBy !== 'default') {
-            const sortLabel = sortOptions.find((option) => option.value === sortBy)?.label;
-            if (sortLabel) {
-                badges.push({
-                    label: 'Sắp xếp',
-                    value: sortLabel,
-                });
-            }
-        }
-        return badges;
-    }, [priceRange, sortBy]);
-
-    const presetIsActive = (range: [number, number]) =>
-        pendingPriceRange[0] === range[0] && pendingPriceRange[1] === range[1];
-
-    const currentSortLabel = React.useMemo(() => {
-        return sortOptions.find((option) => option.value === sortBy)?.label ?? 'Mặc định';
-    }, [sortBy]);
-
-    const toggleSortDropdown = () => setIsSortOpen((prev) => !prev);
-
-    const handleSelectSort = (value: string) => {
-        handleSortChange(value);
-        setIsSortOpen(false);
-    };
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
-                setIsSortOpen(false);
-            }
-        };
-
-        const handleEscape = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                setIsSortOpen(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        document.addEventListener('keydown', handleEscape);
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-            document.removeEventListener('keydown', handleEscape);
-        };
-    }, []);
+    if (categoryResponse) {
+        fallback[`/api/v1/categories/${params.slug}`] = categoryResponse;
+    }
+    if (productsResponse) {
+        fallback[productsKey] = productsResponse;
+    }
 
     return (
-        <div className={cx('category-detail-page')}>
-            <div className={cx('container')}>
-                <Breadcrumbs items={breadcrumbItems} />
-
-                <div className={cx('category-header')}>
-                    <div className={cx('category-info')}>
-                        <h1 className={cx('category-title')}>{categoryName}</h1>
-                        <p className={cx('product-count')}>
-                            {productCount} sản phẩm
-                        </p>
-                    </div>
-
-                    <div className={cx('category-controls')}>
-                        <button
-                            className={cx('mobile-filter-button')}
-                            onClick={toggleMobileFilter}
-                        >
-                            <FilterIcon size={20} />
-                            <span>Bộ lọc</span>
-                        </button>
-
-                        <div
-                            className={cx('sort-dropdown', { 'is-open': isSortOpen })}
-                            ref={sortDropdownRef}
-                        >
-                            <div className={cx('sort-summary')}>
-                                <div className={cx('sort-icon')}>
-                                    <SortIcon size={18} />
-                                </div>
-                                <div>
-                                    <p className={cx('sort-label')}>Sắp xếp theo</p>
-                                    <p className={cx('sort-value')}>{currentSortLabel}</p>
-                                </div>
-                            </div>
-                            <div className={cx('sort-select-wrapper')}>
-                                <button
-                                    type="button"
-                                    className={cx('sort-select-trigger')}
-                                    onClick={toggleSortDropdown}
-                                    aria-haspopup="listbox"
-                                    aria-expanded={isSortOpen}
-                                    aria-controls="sort-options"
-                                >
-                                    {currentSortLabel}
-                                </button>
-                                <ul
-                                    id="sort-options"
-                                    className={cx('sort-options')}
-                                    role="listbox"
-                                    aria-hidden={!isSortOpen}
-                                >
-                                    {sortOptions.map((option) => (
-                                        <li key={option.value}>
-                                            <button
-                                                type="button"
-                                                className={cx('sort-option', {
-                                                    'is-active': option.value === sortBy,
-                                                })}
-                                                role="option"
-                                                aria-selected={option.value === sortBy}
-                                                onClick={() => handleSelectSort(option.value)}
-                                            >
-                                                {option.label}
-                                            </button>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className={cx('category-content')}>
-                    {/* Filters Sidebar */}
-                    <aside className={cx('filters-sidebar', { 'mobile-open': isMobileFilterOpen })}>
-                        <div className={cx('mobile-filter-header')}>
-                            <h3 className={cx('mobile-filter-title')}>Bộ lọc sản phẩm</h3>
-                            <button
-                                className={cx('mobile-filter-close')}
-                                onClick={toggleMobileFilter}
-                            >
-                                <CloseIcon size={24} />
-                            </button>
-                        </div>
-
-                        <div className={cx('filters-header')}>
-                            <div>
-                                <h2 className={cx('filters-title')}>Bộ lọc thông minh</h2>
-                                <p className={cx('filters-subtitle')}>
-                                    Tinh chỉnh mức giá và xem kết quả tức thì
-                                </p>
-                            </div>
-
-                            {hasActiveFilters && (
-                                <button className={cx('clear-filters-button')} onClick={clearFilters}>
-                                    Xóa tất cả
-                                </button>
-                            )}
-                        </div>
-
-                        {hasActiveFilters && filterBadges.length > 0 && (
-                            <div className={cx('active-filters')}>
-                                <span className={cx('active-filters-label')}>Đang áp dụng:</span>
-                                <div className={cx('filter-badges')}>
-                                    {filterBadges.map((badge) => (
-                                        <span key={badge.label} className={cx('filter-badge')}>
-                                            <strong>{badge.label}:</strong> {badge.value}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Price Range Filter */}
-                        <div className={cx('filter-section')}>
-                            <h3 className={cx('filter-title')}>Khoảng giá</h3>
-                            <div className={cx('price-input-row')}>
-                                <div className={cx('price-input-group')}>
-                                    <label>TỐI THIỂU</label>
-                                    <input
-                                        type="text"
-                                        value={priceInputValues[0]}
-                                        onChange={(e) => handlePriceInputChange(0, e.target.value)}
-                                        onFocus={() => handlePriceInputFocus(0)}
-                                        onBlur={() => handlePriceInputBlur(0)}
-                                        className={cx('price-input')}
-                                        placeholder="0"
-                                        inputMode="numeric"
-                                    />
-                                </div>
-                                <div className={cx('price-input-group')}>
-                                    <label>TỐI ĐA</label>
-                                    <input
-                                        type="text"
-                                        value={priceInputValues[1]}
-                                        onChange={(e) => handlePriceInputChange(1, e.target.value)}
-                                        onFocus={() => handlePriceInputFocus(1)}
-                                        onBlur={() => handlePriceInputBlur(1)}
-                                        className={cx('price-input')}
-                                        placeholder="10.000.000"
-                                        inputMode="numeric"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className={cx('price-range-slider')} style={sliderStyle}>
-                                <div className={cx('slider-track')} />
-                                <div className={cx('slider-active-track')} />
-                                <input
-                                    type="range"
-                                    min={DEFAULT_PRICE_RANGE[0]}
-                                    max={DEFAULT_PRICE_RANGE[1]}
-                                    step={PRICE_SLIDER_STEP}
-                                    value={pendingPriceRange[0]}
-                                    onChange={(e) => handleSliderChange(0, Number(e.target.value))}
-                                    className={cx('slider-input')}
-                                />
-                                <input
-                                    type="range"
-                                    min={DEFAULT_PRICE_RANGE[0]}
-                                    max={DEFAULT_PRICE_RANGE[1]}
-                                    step={PRICE_SLIDER_STEP}
-                                    value={pendingPriceRange[1]}
-                                    onChange={(e) => handleSliderChange(1, Number(e.target.value))}
-                                    className={cx('slider-input')}
-                                />
-                            </div>
-
-                            <div className={cx('price-range-display')}>
-                                {formatCurrency(pendingPriceRange[0])}₫ - {formatCurrency(pendingPriceRange[1])}₫
-                            </div>
-                        </div>
-
-                        {/* Quick Price Filters */}
-                        <div className={cx('filter-section')}>
-                            <h3 className={cx('filter-title')}>Mức giá</h3>
-                            <div className={cx('quick-price-grid')}>
-                                {quickPricePresets.map((preset) => (
-                                    <button
-                                        key={preset.label}
-                                        className={cx('quick-price-button', {
-                                            'is-active': presetIsActive(preset.range),
-                                        })}
-                                        onClick={() => {
-                                            setPendingPriceRange(preset.range);
-                                            setPriceInputValues([
-                                                formatCurrency(preset.range[0]),
-                                                formatCurrency(preset.range[1])
-                                            ]);
-                                        }}
-                                        type="button"
-                                    >
-                                        {preset.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className={cx('filters-footer')}>
-                            <button
-                                className={cx('apply-filters-button')}
-                                onClick={handleApplyFilters}
-                                disabled={!hasPendingPriceChanges}
-                            >
-                                Áp dụng bộ lọc
-                            </button>
-                            <p className={cx('filters-hint')}>
-                                {hasPendingPriceChanges
-                                    ? 'Bạn có thay đổi chưa được áp dụng.'
-                                    : 'Tất cả bộ lọc đã được áp dụng.'}
-                            </p>
-                        </div>
-                    </aside>
-
-                    {/* Products Grid */}
-                    <div className={cx('products-section')}>
-                        {currentProducts.length > 0 ? (
-                            <>
-                                <div className={cx('products-grid')}>
-                                    {currentProducts.map((product) => (
-                                        <ProductCard key={product.id} {...product} />
-                                    ))}
-                                </div>
-
-                                {/* Load More */}
-                                {hasMoreProducts && (
-                                    <div className={cx('load-more')}>
-                                        <button
-                                            type="button"
-                                            className={cx('load-more-button')}
-                                            onClick={handleLoadMore}
-                                            disabled={isLoadMoreLoading}
-                                        >
-                                            {isLoadMoreLoading ? 'Đang tải...' : 'Xem thêm sản phẩm'}
-                                        </button>
-                                        <p className={cx('load-more-hint')}>
-                                            Đang hiển thị {currentProducts.length} / {productCount} sản phẩm
-                                        </p>
-                                    </div>
-                                )}
-                            </>
-                        ) : (
-                            <EmptyState
-                                type="products"
-                                title="Không có sản phẩm"
-                                description={emptyDescription}
-                                actionLabel="Xem tất cả danh mục"
-                                actionHref="/categories"
-                            />
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Mobile Filter Overlay */}
-            {isMobileFilterOpen && (
-                <div
-                    className={cx('mobile-filter-overlay')}
-                    onClick={toggleMobileFilter}
-                    aria-hidden="true"
+        <SWRConfig
+            value={{
+                fallback,
+            }}
+        >
+            {categoryJsonLd ? (
+                <Script
+                    id={`ld-category-${params.slug}`}
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: categoryJsonLd }}
                 />
-            )}
-        </div>
+            ) : null}
+            <CategoryDetailLayout />
+        </SWRConfig>
     );
 }

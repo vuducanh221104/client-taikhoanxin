@@ -1,4 +1,5 @@
 'use client';
+import type { SWRConfiguration } from 'swr';
 import { useSWRUser } from './swrConfig';
 
 // ============================================
@@ -41,7 +42,10 @@ export interface CategoryResponse {
 /**
  * Get all categories
  */
-export const useCategories = (params?: { isActive?: boolean; parentId?: string; includeHidden?: boolean }) => {
+export const useCategories = (
+    params?: { isActive?: boolean; parentId?: string; includeHidden?: boolean },
+    config?: SWRConfiguration<CategoryListResponse>
+) => {
     const queryParams: Record<string, string> = {};
     
     if (params) {
@@ -60,14 +64,14 @@ export const useCategories = (params?: { isActive?: boolean; parentId?: string; 
         ? '?' + new URLSearchParams(queryParams).toString()
         : '';
     const key = `/api/v1/categories${queryString}`;
-    return useSWRUser<CategoryListResponse>(key);
+    return useSWRUser<CategoryListResponse>(key, config);
 };
 
 /**
  * Get category by slug
  */
-export const useCategory = (slug: string) => {
+export const useCategory = (slug: string, config?: SWRConfiguration<CategoryResponse>) => {
     const key = slug ? `/api/v1/categories/${slug}` : null;
-    return useSWRUser<CategoryResponse>(key);
+    return useSWRUser<CategoryResponse>(key, config);
 };
 

@@ -7,12 +7,15 @@ import styles from './Toast.module.scss';
 
 const cx = classNames.bind(styles);
 
-export type ToastVariant = 'success' | 'error' | 'warning' | 'info';
+// Kiểu toast chính dùng nội bộ
+export type ToastType = 'success' | 'error' | 'warning' | 'info';
+// Alias để tương thích với export cũ (ToastVariant)
+export type ToastVariant = ToastType;
 
 export interface ToastProps {
     id: string;
     message: string;
-    variant?: ToastVariant;
+    variant?: ToastType;
     duration?: number;
     onClose: (id: string) => void;
 }

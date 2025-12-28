@@ -1,0 +1,24 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /private/
+
+# Googlebot
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard/
+
+# Host
+Host: https://taikhoanxin.com
+
+# Sitemaps
+Sitemap: https://taikhoanxin.com/sitemap.xml
+Sitemap: https://taikhoanxin.com/sitemap_static.xml
+Sitemap: https://taikhoanxin.com/sitemap_product.xml
+Sitemap: https://taikhoanxin.com/sitemap_category.xml
+

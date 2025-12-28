@@ -1,40 +1,38 @@
-'use client';
+import type { Metadata } from 'next';
+import OrderDetailPageClient from './OrderDetailPageClient';
 
-import React from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/redux/store';
-import AccountSidebar from '@/components/AccountSidebar/AccountSidebar';
-import OrderDetail from '@/components/OrderDetail/OrderDetail';
-import classNames from 'classnames/bind';
-import styles from './page.module.scss';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taikhoanxin.com';
+const ogImage = 'https://cdn.taikhoanxin.com/seo/banner-seo.jpeg';
 
-const cx = classNames.bind(styles);
-
+export const metadata: Metadata = {
+    title: 'Chi tiết đơn hàng | TaiKhoanXin',
+    description: 'Xem chi tiết đơn hàng của bạn trên TaiKhoanXin.',
+    alternates: {
+        canonical: `${siteUrl}/account/orders`,
+    },
+    openGraph: {
+        title: 'Chi tiết đơn hàng | TaiKhoanXin',
+        description: 'Xem chi tiết đơn hàng của bạn trên TaiKhoanXin.',
+        url: `${siteUrl}/account/orders`,
+        siteName: 'TaiKhoanXin',
+        locale: 'vi_VN',
+        type: 'website',
+        images: [
+            {
+                url: ogImage,
+                width: 1200,
+                height: 630,
+                alt: 'TaiKhoanXin - Chi tiết đơn hàng',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Chi tiết đơn hàng | TaiKhoanXin',
+        description: 'Xem chi tiết đơn hàng của bạn trên TaiKhoanXin.',
+        images: [ogImage],
+    },
+};
 export default function OrderDetailPage() {
-    const params = useParams();
-    const router = useRouter();
-    const orderCode = params.orderCode as string;
-    const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
-
-    React.useEffect(() => {
-        if (!currentUser) {
-            router.push('/auth/login');
-        }
-    }, [currentUser, router]);
-
-    if (!currentUser) {
-        return null;
-    }
-
-    return (
-        <div className={cx('order-detail-page')}>
-            <div className={cx('order-detail-container')}>
-                <AccountSidebar activeItem="orders" />
-                <div className={cx('order-detail-content')}>
-                    <OrderDetail orderCode={orderCode} userId={currentUser._id} />
-                </div>
-            </div>
-        </div>
-    );
+    return <OrderDetailPageClient />;
 }

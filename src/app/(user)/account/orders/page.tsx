@@ -1,43 +1,40 @@
-'use client';
+import type { Metadata } from 'next';
+import AccountOrdersLayout from '@/layout/accountOrders';
 
-import React from 'react';
-import { useSelector } from 'react-redux';
-import { useRouter } from 'next/navigation';
-import { RootState } from '@/redux/store';
-import AccountSidebar from '@/components/AccountSidebar/AccountSidebar';
-import OrderHistory from '@/components/OrderHistory/OrderHistory';
-import classNames from 'classnames/bind';
-import styles from './page.module.scss';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taikhoanxin.com';
+const ogImage = 'https://cdn.taikhoanxin.com/seo/banner-seo.jpeg';
 
-const cx = classNames.bind(styles);
+export const metadata: Metadata = {
+    title: 'Lịch sử đơn hàng | TaiKhoanXin',
+    description: 'Theo dõi lịch sử mua hàng, trạng thái đơn và chi tiết từng đơn hàng của bạn trên TaiKhoanXin.',
+    alternates: {
+        canonical: `${siteUrl}/account/orders`,
+    },
+    openGraph: {
+        title: 'Lịch sử đơn hàng | TaiKhoanXin',
+        description: 'Theo dõi đơn hàng và trạng thái giao dịch của bạn.',
+        url: `${siteUrl}/account/orders`,
+        siteName: 'TaiKhoanXin',
+        locale: 'vi_VN',
+        type: 'website',
+        images: [
+            {
+                url: ogImage,
+                width: 1200,
+                height: 630,
+                alt: 'TaiKhoanXin - Lịch sử đơn hàng',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Lịch sử đơn hàng | TaiKhoanXin',
+        description: 'Theo dõi đơn hàng và trạng thái giao dịch của bạn.',
+        images: [ogImage],
+    },
+};
 
 export default function AccountOrdersPage() {
-    const router = useRouter();
-    const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
-
-    // Redirect to login if not authenticated
-    React.useEffect(() => {
-        if (!currentUser) {
-            router.push('/auth/login');
-        }
-    }, [currentUser, router]);
-
-    if (!currentUser) {
-        return null;
-    }
-
-    return (
-        <div className={cx('account-page')}>
-            <div className={cx('account-container')}>
-                {/* Sidebar */}
-                <AccountSidebar activeItem="orders" />
-
-                {/* Main Content */}
-                <div className={cx('account-content')}>
-                    <OrderHistory userId={currentUser._id} />
-                </div>
-            </div>
-        </div>
-    );
+    return <AccountOrdersLayout />;
 }
 

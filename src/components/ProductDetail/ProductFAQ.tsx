@@ -81,4 +81,3 @@ const ProductFAQ: React.FC<ProductFAQProps> = ({ faqs, rating, reviewCount, vari
 };
 
 export default ProductFAQ;
-

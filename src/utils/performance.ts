@@ -20,12 +20,17 @@ export const lazyLoad = <T extends ComponentType<any>>(
 ) => {
     const LazyComponent = lazy(importFunc);
 
-    return (props: ComponentProps<T>) =>
+    const LazyWrapper = (props: ComponentProps<T>) =>
         createElement(
             Suspense,
             { fallback: fallback ?? createElement('div', null, 'Loading...') },
             createElement(LazyComponent, props)
         );
+
+    LazyWrapper.displayName =
+        `Lazy(${(LazyComponent as any).displayName || (LazyComponent as any).name || 'Component'})`;
+
+    return LazyWrapper;
 };
 
 /**

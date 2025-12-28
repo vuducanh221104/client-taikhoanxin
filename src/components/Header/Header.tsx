@@ -15,8 +15,6 @@ import { useHomePage } from '@/services/homePageService';
 
 const cx = classNames.bind(styles);
 
-interface HeaderProps {}
-
 const DEFAULT_TRENDING_SEARCHES = [
     'Windows 11',
     'Office 365',
@@ -29,7 +27,7 @@ const DEFAULT_TRENDING_SEARCHES = [
 const DEFAULT_SEARCH_PLACEHOLDER = 'Tìm kiếm sản phẩm hot như Netflix Premium, Spotify...';
 const DEFAULT_TRENDING_TITLE = 'Tìm kiếm phổ biến';
 
-const Header: React.FC<HeaderProps> = () => {
+const Header: React.FC = () => {
     const [mounted, setMounted] = useState(false);
     const headerRef = useRef<HTMLDivElement | null>(null);
     const [headerHeight, setHeaderHeight] = useState(0);

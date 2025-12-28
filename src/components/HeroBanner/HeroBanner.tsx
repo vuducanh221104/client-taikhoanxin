@@ -23,7 +23,7 @@ interface HeroBannerProps {
 
 const HeroBanner: React.FC<HeroBannerProps> = ({ bannerData, priority = false }) => {
     return (
-        <Link href={bannerData.href} className={cx('hero-banner-wrapper')}>
+        <Link href={bannerData.href} className={cx('hero-banner-wrapper')} prefetch={priority}>
             <div className={cx('hero-banner')}>
                 <Image 
                     src={bannerData.image} 
@@ -31,7 +31,7 @@ const HeroBanner: React.FC<HeroBannerProps> = ({ bannerData, priority = false })
                     width={1345}
                     height={915}
                     className={cx('banner-image')}
-                    sizes="(max-width: 999px) 100vw, 32vw"
+                    sizes="(max-width: 999px) 100vw, (max-width: 1920px) 32vw, 640px"
                     priority={priority}
                     loading={priority ? 'eager' : 'lazy'}
                     fetchPriority={priority ? 'high' : 'low'}

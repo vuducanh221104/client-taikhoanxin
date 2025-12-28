@@ -1,43 +1,40 @@
-'use client';
+import type { Metadata } from 'next';
+import AccountCommentsLayout from '@/layout/accountComments';
 
-import React from 'react';
-import { useSelector } from 'react-redux';
-import { useRouter } from 'next/navigation';
-import { RootState } from '@/redux/store';
-import AccountSidebar from '@/components/AccountSidebar/AccountSidebar';
-import MyComments from '@/components/MyComments/MyComments';
-import classNames from 'classnames/bind';
-import styles from './page.module.scss';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taikhoanxin.com';
+const ogImage = 'https://cdn.taikhoanxin.com/seo/banner-seo.jpeg';
 
-const cx = classNames.bind(styles);
+export const metadata: Metadata = {
+    title: 'Bình luận & đánh giá | TaiKhoanXin',
+    description: 'Xem và quản lý các bình luận, đánh giá sản phẩm bạn đã gửi tại TaiKhoanXin.',
+    alternates: {
+        canonical: `${siteUrl}/account/comments`,
+    },
+    openGraph: {
+        title: 'Bình luận & đánh giá | TaiKhoanXin',
+        description: 'Quản lý các bình luận và đánh giá của bạn.',
+        url: `${siteUrl}/account/comments`,
+        siteName: 'TaiKhoanXin',
+        locale: 'vi_VN',
+        type: 'website',
+        images: [
+            {
+                url: ogImage,
+                width: 1200,
+                height: 630,
+                alt: 'TaiKhoanXin - Bình luận & đánh giá',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Bình luận & đánh giá | TaiKhoanXin',
+        description: 'Quản lý các bình luận và đánh giá của bạn.',
+        images: [ogImage],
+    },
+};
 
 export default function AccountCommentsPage() {
-    const router = useRouter();
-    const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
-
-    // Redirect to login if not authenticated
-    React.useEffect(() => {
-        if (!currentUser) {
-            router.push('/auth/login');
-        }
-    }, [currentUser, router]);
-
-    if (!currentUser) {
-        return null;
-    }
-
-    return (
-        <div className={cx('account-page')}>
-            <div className={cx('account-container')}>
-                {/* Sidebar */}
-                <AccountSidebar activeItem="comments" />
-
-                {/* Main Content */}
-                <div className={cx('account-content')}>
-                    <MyComments userId={currentUser._id} />
-                </div>
-            </div>
-        </div>
-    );
+    return <AccountCommentsLayout />;
 }
 

@@ -8,7 +8,7 @@ interface AuthState {
         error: boolean;
         isRefreshing: boolean; // Track if currently refreshing token
     };
-    logout: {};
+    logout: Record<string, never>;
     // Temporary storage for discount and referral codes
     discountCode: string | null;
     referralCode: string | null;

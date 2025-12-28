@@ -31,7 +31,7 @@ const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onClose }) => {
                     key={toast.id}
                     id={toast.id}
                     message={toast.message}
-                    type={toast.type}
+                    variant={toast.type}
                     duration={toast.duration}
                     onClose={onClose}
                 />

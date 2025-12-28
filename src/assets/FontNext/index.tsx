@@ -20,7 +20,7 @@ export const harmonyOS = localFont({
         },
     ],
     variable: '--font-harmony-os',
-    display: 'optional', // Thay đổi từ 'swap' sang 'optional' để tránh preload warning
+    display: 'swap', // Use swap for better performance and UX
     preload: true,
     fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
     adjustFontFallback: 'Arial',

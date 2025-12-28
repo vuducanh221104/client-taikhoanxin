@@ -134,12 +134,18 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
         : null;
     const priceOriginal = priceItem?.priceOriginal || 0;
     const discount = priceItem?.discount;
-    const finalPrice = discount?.priceDiscount 
-        ? priceOriginal - discount.priceDiscount 
+    // If priceDiscount exists, use it as the final price (not subtract from original)
+    // Example: priceDiscount = 2000đ → finalPrice = 2000đ
+    const finalPrice = discount?.priceDiscount !== undefined && discount.priceDiscount !== null
+        ? discount.priceDiscount 
         : priceOriginal;
-    const oldPrice = discount?.priceDiscount ? priceOriginal : undefined;
-    const discountPercent = discount?.priceDiscount 
-        ? Math.round((discount.priceDiscount / priceOriginal) * 100) 
+    // oldPrice = priceOriginal if there's a discount
+    const oldPrice = discount?.priceDiscount !== undefined && discount.priceDiscount !== null 
+        ? priceOriginal 
+        : undefined;
+    // discountPercent = (priceOriginal - priceDiscount) / priceOriginal * 100
+    const discountPercent = discount?.priceDiscount !== undefined && discount.priceDiscount !== null && priceOriginal > 0
+        ? Math.round(((priceOriginal - discount.priceDiscount) / priceOriginal) * 100) 
         : undefined;
 
     // Map product to component format (must be before conditional returns)
@@ -231,6 +237,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
             policy, // Chính sách bảo hành
             info, // Câu hỏi thường gặp
             description: description || product.shortDescription || '', // Chi tiết sản phẩm
+            tos: product.tos || undefined, // Terms of Service (Điều khoản và lưu ý)
         };
     }, [product, finalPrice, oldPrice, discountPercent]);
 

@@ -20,7 +20,7 @@ const routes = {
         productsSale: '/product/sale',
         productsNew: '/product/new',
         productsBestSelling: '/product/best-selling',
-        productsViewed: '/products/viewed',
+        productsViewed: '/viewed',
         category: '/categories', //slug
         // Account Routes
         account: '/account/manage',

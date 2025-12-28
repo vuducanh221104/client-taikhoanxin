@@ -1,43 +1,40 @@
-'use client';
+import type { Metadata } from 'next';
+import AccountTransactionsLayout from '@/layout/accountTransactions';
 
-import React from 'react';
-import { useSelector } from 'react-redux';
-import { useRouter } from 'next/navigation';
-import { RootState } from '@/redux/store';
-import AccountSidebar from '@/components/AccountSidebar/AccountSidebar';
-import TransactionHistory from '@/components/TransactionHistory/TransactionHistory';
-import classNames from 'classnames/bind';
-import styles from './page.module.scss';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taikhoanxin.com';
+const ogImage = 'https://cdn.taikhoanxin.com/seo/banner-seo.jpeg';
 
-const cx = classNames.bind(styles);
+export const metadata: Metadata = {
+    title: 'Lịch sử giao dịch | TaiKhoanXin',
+    description: 'Xem chi tiết nạp tiền, thanh toán, hoàn tiền và số dư ví của bạn trên TaiKhoanXin.',
+    alternates: {
+        canonical: `${siteUrl}/account/transactions`,
+    },
+    openGraph: {
+        title: 'Lịch sử giao dịch | TaiKhoanXin',
+        description: 'Theo dõi các giao dịch và biến động số dư của bạn.',
+        url: `${siteUrl}/account/transactions`,
+        siteName: 'TaiKhoanXin',
+        locale: 'vi_VN',
+        type: 'website',
+        images: [
+            {
+                url: ogImage,
+                width: 1200,
+                height: 630,
+                alt: 'TaiKhoanXin - Lịch sử giao dịch',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Lịch sử giao dịch | TaiKhoanXin',
+        description: 'Theo dõi các giao dịch và biến động số dư của bạn.',
+        images: [ogImage],
+    },
+};
 
 export default function AccountTransactionsPage() {
-    const router = useRouter();
-    const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
-
-    // Redirect to login if not authenticated
-    React.useEffect(() => {
-        if (!currentUser) {
-            router.push('/auth/login');
-        }
-    }, [currentUser, router]);
-
-    if (!currentUser) {
-        return null;
-    }
-
-    return (
-        <div className={cx('account-page')}>
-            <div className={cx('account-container')}>
-                {/* Sidebar */}
-                <AccountSidebar activeItem="transactions" />
-
-                {/* Main Content */}
-                <div className={cx('account-content')}>
-                    <TransactionHistory userId={currentUser._id} />
-                </div>
-            </div>
-        </div>
-    );
+    return <AccountTransactionsLayout />;
 }
 

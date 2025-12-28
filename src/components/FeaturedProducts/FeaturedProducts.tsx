@@ -148,7 +148,7 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
                             variant={isDarkBackground ? 'dark' : 'light'}
                         />
                     ) : displayProducts.length > 0 ? (
-                        displayProducts.map((product) => (
+                        displayProducts.map((product, index) => (
                             <ProductCard
                                 key={product.id}
                                 {...product}
@@ -156,6 +156,7 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
                                 isFavorite={isProductInWishlist(product.id)}
                                 onAddToCart={onAddToCart ? () => onAddToCart(product) : undefined}
                                 onToggleFavorite={handleToggleFavorite}
+                                index={index}
                             />
                         ))
                     ) : (

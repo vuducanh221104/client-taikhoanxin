@@ -79,11 +79,15 @@ export const useKeyboardNavigation = (options: KeyboardNavigationOptions) => {
     useEffect(() => {
         if (!enabled) return;
 
-        const element = target || document;
-        element.addEventListener('keydown', handleKeyDown);
+        const element: EventTarget = target || document;
+        const listener = (event: Event) => {
+            handleKeyDown(event as KeyboardEvent);
+        };
+
+        element.addEventListener('keydown', listener as EventListener);
 
         return () => {
-            element.removeEventListener('keydown', handleKeyDown);
+            element.removeEventListener('keydown', listener as EventListener);
         };
     }, [enabled, target, handleKeyDown]);
 };

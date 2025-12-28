@@ -1,29 +1,39 @@
-'use client';
+import type { Metadata } from 'next';
+import AccountLayout from '@/layout/account';
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/redux/store';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taikhoanxin.com';
+const ogImage = 'https://cdn.taikhoanxin.com/seo/banner-seo.jpeg';
+
+export const metadata: Metadata = {
+    title: 'Tài khoản của tôi | TaiKhoanXin',
+    description: 'Xem tổng quan tài khoản, thông tin cá nhân và trạng thái thành viên của bạn trên TaiKhoanXin.',
+    alternates: {
+        canonical: `${siteUrl}/account`,
+    },
+    openGraph: {
+        title: 'Tài khoản của tôi | TaiKhoanXin',
+        description: 'Quản lý tài khoản và thông tin cá nhân của bạn.',
+        url: `${siteUrl}/account`,
+        siteName: 'TaiKhoanXin',
+        locale: 'vi_VN',
+        type: 'website',
+        images: [
+            {
+                url: ogImage,
+                width: 1200,
+                height: 630,
+                alt: 'TaiKhoanXin - Tài khoản',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Tài khoản của tôi | TaiKhoanXin',
+        description: 'Quản lý tài khoản và thông tin cá nhân của bạn.',
+        images: [ogImage],
+    },
+};
 
 export default function AccountPage() {
-    const router = useRouter();
-    const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
-
-    React.useEffect(() => {
-        if (!currentUser) {
-            router.push('/auth/login');
-        }
-    }, [currentUser, router]);
-
-    if (!currentUser) {
-        return null;
-    }
-
-    return (
-        <div style={{ padding: '20px', minHeight: '100vh' }}>
-            <h1>Tài khoản của tôi</h1>
-            <p>Xin chào, {currentUser.user_name || currentUser.email}</p>
-            <p>Trang tài khoản đang được phát triển...</p>
-        </div>
-    );
+    return <AccountLayout />;
 }

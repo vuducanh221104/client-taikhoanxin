@@ -1,137 +1,52 @@
-'use client';
+import type { Metadata } from 'next';
+import PaymentLayout from '@/layout/payment';
 
-import React, { useState } from 'react';
-import Image from 'next/image';
-import classNames from 'classnames/bind';
-import styles from './page.module.scss';
-import { 
-    OnlineBankingQrIcon,
-} from '@/components/Icons';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taikhoanxin.com';
+const ogImage = 'https://cdn.taikhoanxin.com/seo/banner-seo.jpeg';
 
-const cx = classNames.bind(styles);
-
-interface PaymentMethod {
-    id: string;
-    icon?: React.ReactNode;
-    iconImage?: string;
-    title: string;
-    description: string;
-    fee: string;
-    iconBg?: string;
-}
-
-const paymentMethods: PaymentMethod[] = [
-    {
-        id: 'qr-bank-transfer',
-        icon: <OnlineBankingQrIcon size={56} />,
-        title: 'Nạp tự động bằng quét QR - Chuyển khoản ngân hàng',
-        description: 'Quét mã QR chuyển khoản online. Phí 0%',
-        fee: '0%',
+export const metadata: Metadata = {
+    title: 'Phương thức thanh toán | TaiKhoanXin',
+    description:
+        'Xem các phương thức thanh toán được hỗ trợ tại TaiKhoanXin: chuyển khoản ngân hàng, quét QR, thẻ ngân hàng, VNPAY-QR và nhiều hình thức khác.',
+    keywords: [
+        'phương thức thanh toán',
+        'thanh toán online',
+        'chuyển khoản ngân hàng',
+        'quét QR thanh toán',
+        'VNPAY',
+        'thẻ ngân hàng',
+        'thanh toán điện tử',
+        'tai khoan xin',
+    ],
+    openGraph: {
+        title: 'Phương thức thanh toán | TaiKhoanXin',
+        description:
+            'Danh sách các cổng thanh toán và hình thức nạp tiền, thanh toán đơn hàng tại TaiKhoanXin.',
+        url: `${siteUrl}/payment`,
+        siteName: 'TaiKhoanXin',
+        images: [
+            {
+                url: ogImage,
+                width: 1200,
+                height: 630,
+                alt: 'TaiKhoanXin - Phương thức thanh toán',
+            },
+        ],
+        type: 'website',
+        locale: 'vi_VN',
     },
-    {
-        id: 'vnpay-qr',
-        iconImage: '/payment/vnpay.png',
-        title: 'Thanh toán VNPAY-QR',
-        description: 'Quét mã QR PAY trên ứng dụng Mobile Banking, phí giao dịch 2%',
-        fee: '2%',
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Phương thức thanh toán | TaiKhoanXin',
+        description:
+            'Tìm hiểu các phương thức thanh toán an toàn và nhanh chóng tại TaiKhoanXin.',
+        images: [ogImage],
     },
-    {
-        id: 'bank-card',
-        iconImage: '/payment/atm.png',
-        title: 'Nạp số dư tự động bằng thẻ ngân hàng',
-        description: 'Phí 0.9% + 900₫',
-        fee: '0.9% + 900₫',
+    alternates: {
+        canonical: `${siteUrl}/payment`,
     },
-    {
-        id: 'master-visa-jcb',
-        iconImage: '/payment/visa.png',
-        title: 'Thanh toán bằng thẻ Master/Visa/JCB',
-        description: 'Phí 2.36% + 2.660 ₫',
-        fee: '2.36% + 2.660₫',
-    },
-];
+};
 
 export default function PaymentPage() {
-    const [selectedMethodId, setSelectedMethodId] = useState<string | null>(null);
-
-    const handleSelectMethod = (methodId: string) => {
-        if (selectedMethodId === methodId) {
-            // Nếu click lại method đã chọn thì bỏ chọn
-            setSelectedMethodId(null);
-        } else {
-            setSelectedMethodId(methodId);
-        }
-    };
-
-    const selectedMethodIndex = selectedMethodId
-        ? paymentMethods.findIndex((method) => method.id === selectedMethodId)
-        : -1;
-
-    return (
-        <div className={cx('payment-page')}>
-            <div className={cx('payment-container')}>
-                <div className={cx('payment-header')}>
-                    <h1 className={cx('payment-title')}>Các phương thức thanh toán</h1>
-                    <p className={cx('payment-subtitle')}>
-                        Bạn có thể chọn các phương thức thanh toán khả dụng bên dưới
-                    </p>
-                </div>
-
-                <div className={cx('payment-methods')}>
-                    {paymentMethods.map((method, index) => {
-                        const isSelected = selectedMethodId === method.id;
-                        const isBlurred = selectedMethodId !== null && index > selectedMethodIndex;
-
-                        return (
-                            <React.Fragment key={method.id}>
-                                <button
-                                    className={cx('payment-method', {
-                                        'is-selected': isSelected,
-                                        'is-blurred': isBlurred,
-                                    })}
-                                    onClick={() => handleSelectMethod(method.id)}
-                                    type="button"
-                                >
-                                    <div
-                                        className={cx('payment-method-icon', { 
-                                            'custom-icon': !method.iconBg && !method.iconImage,
-                                            'has-image': method.iconImage,
-                                        })}
-                                        style={method.iconBg ? { backgroundColor: method.iconBg } : undefined}
-                                    >
-                                        {method.iconImage ? (
-                                            <Image
-                                                src={method.iconImage}
-                                                alt={method.title}
-                                                width={56}
-                                                height={56}
-                                                className={cx('payment-method-icon-image')}
-                                            />
-                                        ) : (
-                                            method.icon
-                                        )}
-                                    </div>
-                                    <div className={cx('payment-method-content')}>
-                                        <h3 className={cx('payment-method-title')}>{method.title}</h3>
-                                        <p className={cx('payment-method-description')}>
-                                            {method.description}
-                                        </p>
-                                    </div>
-                                    <div className={cx('payment-method-fee')}>{method.fee}</div>
-                                </button>
-                                {index < paymentMethods.length - 1 && (
-                                    <div
-                                        className={cx('payment-method-divider', {
-                                            'is-blurred': isBlurred || (selectedMethodId !== null && index === selectedMethodIndex),
-                                        })}
-                                    />
-                                )}
-                            </React.Fragment>
-                        );
-                    })}
-                </div>
-            </div>
-        </div>
-    );
+    return <PaymentLayout />;
 }
-

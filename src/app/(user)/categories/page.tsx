@@ -1,85 +1,39 @@
-'use client';
+import type { Metadata } from 'next';
+import CategoriesLayout from '@/layout/categories';
 
-import React from 'react';
-import Link from 'next/link';
-import classNames from 'classnames/bind';
-import styles from './page.module.scss';
-import { 
-    BriefcaseIcon, 
-    BrainIcon, 
-    PlayIcon, 
-    WindowsIcon,
-    OfficeIcon,
-    GraduationIcon,
-    ImageIcon,
-    CloudIcon 
-} from '@/components/Icons';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taikhoanxin.com';
+const ogImage = 'https://cdn.taikhoanxin.com/seo/banner-seo.jpeg';
 
-const cx = classNames.bind(styles);
-
-// Icon mapping for categories
-const iconMap: Record<string, React.ReactNode> = {
-    BriefcaseIcon: <BriefcaseIcon />,
-    BrainIcon: <BrainIcon />,
-    PlayIcon: <PlayIcon />,
-    WindowsIcon: <WindowsIcon />,
-    OfficeIcon: <OfficeIcon />,
-    GraduationIcon: <GraduationIcon />,
-    ImageIcon: <ImageIcon />,
-    CloudIcon: <CloudIcon />,
+export const metadata: Metadata = {
+    title: 'Danh mục sản phẩm | TaiKhoanXin',
+    description: 'Khám phá danh mục tài khoản số đa dạng: làm việc, AI, giải trí, học tập, Office, Windows và nhiều hơn tại TaiKhoanXin.',
+    alternates: {
+        canonical: `${siteUrl}/categories`,
+    },
+    openGraph: {
+        title: 'Danh mục sản phẩm | TaiKhoanXin',
+        description: 'Danh mục tài khoản số đa dạng cho mọi nhu cầu.',
+        url: `${siteUrl}/categories`,
+        siteName: 'TaiKhoanXin',
+        locale: 'vi_VN',
+        type: 'website',
+        images: [
+            {
+                url: ogImage,
+                width: 1200,
+                height: 630,
+                alt: 'TaiKhoanXin - Danh mục sản phẩm',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Danh mục sản phẩm | TaiKhoanXin',
+        description: 'Danh mục tài khoản số đa dạng cho mọi nhu cầu.',
+        images: [ogImage],
+    },
 };
 
-interface Category {
-    id: string;
-    name: string;
-    slug: string;
-    icon: React.ReactNode;
-    description: string;
-    color: string;
-}
-
-// Load categories from mock data
-const categoriesData = require('@/data/mockCategories.json');
-const categories: Category[] = categoriesData.categories
-    .filter((cat: any) => cat.status === 'active')
-    .map((cat: any) => ({
-        id: cat.id,
-        name: cat.name,
-        slug: cat.slug,
-        icon: iconMap[cat.icon] || <BriefcaseIcon />,
-        description: cat.description,
-        color: cat.color,
-    }))
-    .sort((a: any, b: any) => a.order - b.order);
-
 export default function CategoriesPage() {
-    return (
-        <div className={cx('categories-page')}>
-            <div className="container">
-                <div className={cx('page-header')}>
-                    <h1 className={cx('page-title')}>Danh mục sản phẩm</h1>
-                    <p className={cx('page-subtitle')}>
-                        Khám phá các danh mục sản phẩm đa dạng của chúng tôi
-                    </p>
-                </div>
-
-                <div className={cx('categories-grid')}>
-                    {categories.map((category) => (
-                        <Link
-                            key={category.id}
-                            href={`/categories/${category.slug}`}
-                            className={cx('category-card')}
-                            style={{ '--category-color': category.color } as React.CSSProperties}
-                        >
-                            <div className={cx('category-icon')}>
-                                {category.icon}
-                            </div>
-                            <h3 className={cx('category-name')}>{category.name}</h3>
-                            <p className={cx('category-description')}>{category.description}</p>
-                        </Link>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
+    return <CategoriesLayout />;
 }

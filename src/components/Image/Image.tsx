@@ -116,8 +116,10 @@ const Image: React.FC<ImageProps> = ({
                 onError={handleError}
                 onLoad={handleLoad}
                 loading={lazy ? 'lazy' : 'eager'}
+                priority={!lazy} // Set priority for above-fold images
                 placeholder={blurDataURL ? 'blur' : 'empty'}
                 blurDataURL={blurDataURL}
+                quality={85} // Optimize quality for better performance
                 className={cx('image', { 'image-loading': isLoading, 'image-loaded': !isLoading })}
                 style={width && height ? {
                     width: '100%', 

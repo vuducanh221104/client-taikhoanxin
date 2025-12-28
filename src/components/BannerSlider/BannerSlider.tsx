@@ -216,4 +216,3 @@ const BannerSlider: React.FC<BannerSliderProps> = ({
 };
 
 export default BannerSlider;
-

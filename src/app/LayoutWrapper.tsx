@@ -1,10 +1,23 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import BottomNavigation from '@/components/BottomNavigation';
+import dynamic from 'next/dynamic';
 import { ToastProvider } from '@/components/Toast';
+
+// Lazy load Header, Footer, and BottomNavigation for better performance
+const Header = dynamic(() => import('@/components/Header'), {
+    ssr: true, // Keep SSR for SEO
+    loading: () => <div style={{ height: '80px' }} aria-label="Loading header" />,
+});
+
+const Footer = dynamic(() => import('@/components/Footer'), {
+    ssr: true, // Keep SSR for SEO
+    loading: () => <div style={{ height: '200px' }} aria-label="Loading footer" />,
+});
+
+const BottomNavigation = dynamic(() => import('@/components/BottomNavigation'), {
+    ssr: false, // No need for SSR on mobile nav
+});
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -19,7 +32,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     return (
         <ToastProvider>
             <Header />
-            <main id="main-content">
+            <main id="main-content" role="main" aria-label="Main content">
                 {children}
             </main>
             <Footer />

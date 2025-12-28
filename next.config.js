@@ -4,6 +4,8 @@ module.exports = {
     sassOptions: {
         includePaths: [path.join(__dirname, 'styles')],
     },
+    // Output standalone for better deployment
+    output: 'standalone',
     images: {
         remotePatterns: [
             {
@@ -35,10 +37,16 @@ module.exports = {
         formats: ['image/webp', 'image/avif'],
         deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
         imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-        minimumCacheTTL: 60,
+        minimumCacheTTL: 31536000, // 1 year cache
         dangerouslyAllowSVG: true,
         contentDispositionType: 'attachment',
         contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+        // Optimize image loading
+        unoptimized: false,
+        // Enable image optimization
+        loader: 'default',
+        // Enable image optimization for CDN
+        domains: ['cdn.taikhoanxin.com', 'res.cloudinary.com'],
     },
     // Performance optimizations
     swcMinify: true,
@@ -46,12 +54,16 @@ module.exports = {
     poweredByHeader: false,
     // Tối ưu font loading
     optimizeFonts: true,
+    // Enable static page generation
+    generateEtags: true,
     // Experimental features for better performance
     experimental: {
         optimizeCss: true,
-        optimizePackageImports: ['lucide-react', '@/components'],
+        optimizePackageImports: ['lucide-react', '@/components', 'antd'],
         // Giảm preload không cần thiết
         adjustFontFallbacksWithSizeAdjust: true,
+        // Enable server components
+        serverComponentsExternalPackages: ['sharp', 'onnxruntime-node'],
     },
     // Webpack config để tối ưu chunks
     webpack: (config, { isServer }) => {

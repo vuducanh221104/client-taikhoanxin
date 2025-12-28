@@ -18,7 +18,7 @@ export interface CategoryItem {
     color?: string;
 }
 
-interface CategoryIconsProps {
+export interface CategoryIconsProps {
     categories?: CategoryItem[];
     title?: string;
     subtitle?: string;
