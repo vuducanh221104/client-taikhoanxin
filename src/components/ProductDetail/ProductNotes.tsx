@@ -15,24 +15,27 @@ const ProductNotes: React.FC<ProductNotesProps> = ({ notes }) => {
         <div className={cx('product-notes')}>
             <h3 className={cx('notes-title')}>Lưu ý:</h3>
             <ul className={cx('notes-list')}>
-                {notes.map((note, index) => (
-                    <li key={index} className={cx('notes-item')}>
-                        {note.split('[').map((part, i) => {
-                            if (part.includes(']')) {
-                                const [linkText, rest] = part.split(']');
-                                return (
-                                    <React.Fragment key={i}>
-                                        <a href="#" className={cx('notes-link')}>
-                                            [{linkText}]
-                                        </a>
-                                        {rest}
-                                    </React.Fragment>
-                                );
-                            }
-                            return <span key={i}>{part}</span>;
-                        })}
-                    </li>
-                ))}
+                {notes.map((rawNote, index) => {
+                    const note = rawNote.replace(/^•\s*|^[-*]\s+/, ''); // Remove existing list markers safely
+                    return (
+                        <li key={index} className={cx('notes-item')}>
+                            {note.split('[').map((part, i) => {
+                                if (part.includes(']')) {
+                                    const [linkText, rest] = part.split(']');
+                                    return (
+                                        <React.Fragment key={i}>
+                                            <a href="#" className={cx('notes-link')}>
+                                                [{linkText}]
+                                            </a>
+                                            {rest}
+                                        </React.Fragment>
+                                    );
+                                }
+                                return <span key={i}>{part}</span>;
+                            })}
+                        </li>
+                    );
+                })}
             </ul>
         </div>
     );

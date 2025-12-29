@@ -34,7 +34,7 @@ const ProductBadges: React.FC<ProductBadgesProps> = ({
                     <span>-{discountPercent}%</span>
                 </div>
             )}
-            
+
             {/* Stock Badge - Show below discount badge */}
             {stock === 'out-of-stock' && (
                 <div className={cx('badge', 'badge-out-of-stock')}>

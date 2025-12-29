@@ -32,7 +32,7 @@
         height: 26px;
         flex-shrink: 0;
     }
-    
+
     .zalo-icon {
         object-fit: contain;
     }
@@ -113,13 +113,7 @@
     }
 
     .scroll-to-top {
-        width: 44px;
-        height: 44px;
-
-        svg {
-            width: 20px;
-            height: 20px;
-        }
+        display: none !important;
     }
 }
 
@@ -127,7 +121,7 @@
 @media (max-width: 999px) {
     .floating-buttons {
         // Position above bottom navigation (60px height + 16px spacing)
-        bottom: 76px;
+        bottom: 150px;
         right: 20px;
         gap: 10px;
     }
@@ -152,20 +146,14 @@
     }
 
     .scroll-to-top {
-        width: 44px;
-        height: 44px;
-
-        svg {
-            width: 20px;
-            height: 20px;
-        }
+        display: none !important;
     }
 }
 
 @media (max-width: 480px) {
     .floating-buttons {
         // Keep above bottom navigation
-        bottom: 76px;
+        bottom: 150px;
         right: 16px;
         gap: 8px;
     }

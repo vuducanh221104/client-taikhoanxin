@@ -32,16 +32,33 @@ interface ProductDetailProps {
     slug: string;
 }
 
+// Helper to process markdown content (auto-convert raw image URLs to markdown images)
+const processMarkdownContent = (content: string) => {
+    if (!content) return '';
+    return content.split('\n').map(line => {
+        // Check if line is a standalone image URL
+        const trimmedLine = line.trim();
+        const isImageUrl = /^(https?:\/\/[^\s]+(\.(png|jpg|jpeg|gif|webp|svg))?(\?[^\s]*)?)$/i.test(trimmedLine) &&
+            (/\.(png|jpg|jpeg|gif|webp|svg)($|\?)/i.test(trimmedLine) || trimmedLine.includes('images') || trimmedLine.includes('img'));
+
+        // Simple check for common image extensions or explicit image paths
+        if (isImageUrl && !trimmedLine.startsWith('![')) {
+            return `![](${trimmedLine})`;
+        }
+        return line;
+    }).join('\n');
+};
+
 const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
     const router = useRouter();
     const dispatch = useDispatch<AppDispatch>();
     const { cache, mutate: globalMutate } = useSWRConfig();
     const currentUser = useSelector((state: RootState) => state.auth.login?.currentUser);
     const lastTrackedProductId = React.useRef<string | null>(null);
-    
+
     // Fetch product from API
     const { data: productResponse, error, isLoading, mutate } = useProduct(slug);
-    
+
     // Backend returns { product, reviews }
     // Note: relatedProduct field is in product object (array of IDs)
     // Client will fetch related products separately via /products/by-ids if needed
@@ -87,20 +104,20 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
 
                             const updatedPagination = normalizedCurrent.pagination
                                 ? {
-                                      ...normalizedCurrent.pagination,
-                                      total: Math.max(
-                                          normalizedCurrent.pagination.total || 0,
-                                          updatedData.length
-                                      ),
-                                      totalPages: normalizedCurrent.pagination.limit
-                                          ? Math.ceil(
-                                                Math.max(
-                                                    normalizedCurrent.pagination.total || 0,
-                                                    updatedData.length
-                                                ) / normalizedCurrent.pagination.limit
-                                            )
-                                          : normalizedCurrent.pagination.totalPages,
-                                  }
+                                    ...normalizedCurrent.pagination,
+                                    total: Math.max(
+                                        normalizedCurrent.pagination.total || 0,
+                                        updatedData.length
+                                    ),
+                                    totalPages: normalizedCurrent.pagination.limit
+                                        ? Math.ceil(
+                                            Math.max(
+                                                normalizedCurrent.pagination.total || 0,
+                                                updatedData.length
+                                            ) / normalizedCurrent.pagination.limit
+                                        )
+                                        : normalizedCurrent.pagination.totalPages,
+                                }
                                 : normalizedCurrent.pagination;
 
                             return {
@@ -129,23 +146,23 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
     }, [product, currentUser?.accessToken, globalMutate, dispatch]);
 
     // Extract price information (must be before conditional returns)
-    const priceItem = product && Array.isArray(product.price) && product.price.length > 0 
-        ? product.price[0] 
+    const priceItem = product && Array.isArray(product.price) && product.price.length > 0
+        ? product.price[0]
         : null;
     const priceOriginal = priceItem?.priceOriginal || 0;
     const discount = priceItem?.discount;
     // If priceDiscount exists, use it as the final price (not subtract from original)
     // Example: priceDiscount = 2000đ → finalPrice = 2000đ
     const finalPrice = discount?.priceDiscount !== undefined && discount.priceDiscount !== null
-        ? discount.priceDiscount 
+        ? discount.priceDiscount
         : priceOriginal;
     // oldPrice = priceOriginal if there's a discount
-    const oldPrice = discount?.priceDiscount !== undefined && discount.priceDiscount !== null 
-        ? priceOriginal 
+    const oldPrice = discount?.priceDiscount !== undefined && discount.priceDiscount !== null
+        ? priceOriginal
         : undefined;
     // discountPercent = (priceOriginal - priceDiscount) / priceOriginal * 100
     const discountPercent = discount?.priceDiscount !== undefined && discount.priceDiscount !== null && priceOriginal > 0
-        ? Math.round(((priceOriginal - discount.priceDiscount) / priceOriginal) * 100) 
+        ? Math.round(((priceOriginal - discount.priceDiscount) / priceOriginal) * 100)
         : undefined;
 
     // Map product to component format (must be before conditional returns)
@@ -153,10 +170,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
         if (!product) {
             return null;
         }
-        
+
         // Description is now an object, not array
         const desc = product.description || {};
-        
+
         // Extract fields from description object
         const tutorial = desc.tutorial || '';
         const policy = desc.policy || '';
@@ -165,17 +182,17 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
         const note = desc.note || '';
         const platform = desc.platform || '';
         const other = desc.other || '';
-        
+
         // Parse tutorial into notes (Lưu ý)
-        const notes: string[] = tutorial 
+        const notes: string[] = tutorial
             ? tutorial.split('\n').filter((n: string) => n.trim())
             : [];
-        
+
         // Parse description into delivery steps
-        const deliverySteps: string[] = description 
+        const deliverySteps: string[] = description
             ? description.split('\n').filter((s: string) => s.trim())
             : [];
-        
+
         // Build features from title and description
         const features: Array<{ title: string; description: string }> = [];
         if (desc.title && desc.description) {
@@ -184,7 +201,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
                 description: desc.description,
             });
         }
-        
+
         // Parse FAQs from info (Câu hỏi thường gặp)
         const faqs: Array<{ question: string; answer: string }> = [];
         if (info) {
@@ -201,7 +218,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
         }
 
         // Extract warranty info from policy
-        const warranty = policy 
+        const warranty = policy
             ? {
                 period: 'Theo chính sách',
                 method: policy.split('\n').filter((m: string) => m.trim()),
@@ -213,7 +230,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
 
         // Determine stock status - check isActive and stock
         const isAvailable = product.isActive !== false && (product.stock || 0) > 0;
-        
+
         return {
             id: product._id,
             slug: product.slug,
@@ -277,11 +294,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
         }
 
         const newKey = `/api/v1/products/${variantSlug}`;
-        
+
         // Check if data already exists in SWR cache
         // SWR stores data in cache with the key, we can check if it exists
         const cacheEntry = cache.get(newKey);
-        
+
         // Preload images if we have cached data
         if (cacheEntry && cacheEntry.data) {
             const cachedProduct = cacheEntry.data?.data?.product;
@@ -307,7 +324,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
             // and automatically update the cache
             // revalidate: true means fetch new data (since it's not in cache)
             const newData = await fetcher(newKey) as any;
-            
+
             // Preload images from the fetched data
             if (newData?.data?.product?.image && Array.isArray(newData.data.product.image)) {
                 newData.data.product.image.forEach((imageSrc: string) => {
@@ -317,13 +334,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
                     }
                 });
             }
-            
+
             // Update SWR cache with the fetched data
             await swrMutate(newKey, newData, {
                 revalidate: false, // Don't revalidate, we just fetched
                 populateCache: true, // Update cache with new data
             });
-            
+
             // Update URL - component will re-render and useProduct will get cached data
             router.replace(`/product/${variantSlug}`, { scroll: false });
         } catch (error) {
@@ -396,7 +413,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
 
                 {/* Chi tiết sản phẩm Section */}
                 <h2 className={cx('section-title', 'main-title')}>Chi tiết sản phẩm</h2>
-                
+
                 <div className={cx('product-details-section')}>
                     <div className={cx('product-details-left')}>
                         {/* Description Content */}
@@ -404,12 +421,12 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
                             <div className={cx('product-detail-content')}>
                                 <div className={cx('section-description', 'markdown-body')}>
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                        {mappedProduct.description}
+                                        {processMarkdownContent(mappedProduct.description)}
                                     </ReactMarkdown>
                                 </div>
                             </div>
                         )}
-                        
+
                         {mappedProduct.features.length > 0 && (
                             <ProductFeatures features={mappedProduct.features} />
                         )}
@@ -428,10 +445,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
 
                 {/* FAQ Section - Info (Câu hỏi thường gặp) */}
                 {mappedProduct.faqs.length > 0 && (
-                    <ProductFAQ 
-                        faqs={mappedProduct.faqs} 
-                        rating={mappedProduct.rating} 
-                        reviewCount={mappedProduct.reviewCount} 
+                    <ProductFAQ
+                        faqs={mappedProduct.faqs}
+                        rating={mappedProduct.rating}
+                        reviewCount={mappedProduct.reviewCount}
                     />
                 )}
 

@@ -85,13 +85,13 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(({
         const stars = [];
         const fullStars = Math.floor(rating);
         const hasHalfStar = rating % 1 >= 0.5;
-        
+
         for (let i = 0; i < 5; i++) {
             const starStyle = { '--star-index': i } as React.CSSProperties;
             if (i < fullStars) {
                 stars.push(
-                    <span 
-                        key={i} 
+                    <span
+                        key={i}
                         className={cx('star', 'star-filled')}
                         style={starStyle}
                     >
@@ -100,8 +100,8 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(({
                 );
             } else if (i === fullStars && hasHalfStar) {
                 stars.push(
-                    <span 
-                        key={i} 
+                    <span
+                        key={i}
                         className={cx('star', 'star-half')}
                         style={starStyle}
                     >
@@ -110,8 +110,8 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(({
                 );
             } else {
                 stars.push(
-                    <span 
-                        key={i} 
+                    <span
+                        key={i}
                         className={cx('star', 'star-empty')}
                         style={starStyle}
                     >
@@ -214,6 +214,11 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(({
                 <div className={cx('stars')}>
                     {renderStars()}
                 </div>
+                {isOutOfStock && (
+                    <span className={cx('inline-stock-badge')}>
+                        Hết hàng
+                    </span>
+                )}
             </div>
 
             {/* Price Section */}

@@ -3,11 +3,11 @@
 import React, { useState, useMemo } from 'react';
 import classNames from 'classnames/bind';
 import styles from './MyComments.module.scss';
-import { 
-    getUserComments, 
-    filterUserComments, 
+import {
+    getUserComments,
+    filterUserComments,
     formatCommentDateTime,
-    UserComment 
+    UserComment
 } from '@/services/userCommentService';
 import { FilterIcon, CalendarIcon, ChevronDownIcon, RotateCcwIcon } from '@/components/Icons';
 
@@ -33,7 +33,7 @@ const quickDateFilters = [
 
 const MyComments: React.FC<MyCommentsProps> = React.memo(({ userId }) => {
     const allComments = getUserComments(userId);
-    
+
     const [filters, setFilters] = useState({
         type: 'all' as UserComment['type'] | 'all',
         content: '',
@@ -216,119 +216,119 @@ const MyComments: React.FC<MyCommentsProps> = React.memo(({ userId }) => {
 
                 <div className={cx('filter-dropdown', { 'is-open': isFilterPanelOpen })}>
                     {isFilterPanelOpen && (
-                <form onSubmit={handleFilter} className={cx('filter-form')}>
-                    {/* Row 1: Basic Filters */}
-                    <div className={cx('filter-row', 'basic-filters-row')}>
-                        <div className={cx('basic-filters-group')}>
-                            <div className={cx('filter-group')}>
-                                <label className={cx('filter-label')}>Loại</label>
-                                <div className={cx('dropdown-wrapper', { 'is-open': isTypeDropdownOpen })} ref={typeDropdownRef}>
-                                    <button
-                                        type="button"
-                                        className={cx('dropdown-button')}
-                                        onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
-                                    >
-                                        <span>{commentTypes.find(t => t.value === filters.type)?.label || 'Tất cả'}</span>
-                                        <ChevronDownIcon size={16} className={cx('dropdown-icon', { 'is-open': isTypeDropdownOpen })} />
-                                    </button>
-                                    {isTypeDropdownOpen && (
-                                        <div className={cx('dropdown-menu')}>
-                                            {commentTypes.map((type) => (
-                                                <button
-                                                    key={type.value}
-                                                    type="button"
-                                                    className={cx('dropdown-item', { 'is-active': filters.type === type.value })}
-                                                    onClick={() => {
-                                                        setFilters({ ...filters, type: type.value as UserComment['type'] | 'all' });
-                                                        setIsTypeDropdownOpen(false);
-                                                    }}
-                                                >
-                                                    {type.label}
-                                                </button>
-                                            ))}
+                        <form onSubmit={handleFilter} className={cx('filter-form')}>
+                            {/* Row 1: Basic Filters */}
+                            <div className={cx('filter-row', 'basic-filters-row')}>
+                                <div className={cx('basic-filters-group')}>
+                                    <div className={cx('filter-group')}>
+                                        <label className={cx('filter-label')}>Loại</label>
+                                        <div className={cx('dropdown-wrapper', { 'is-open': isTypeDropdownOpen })} ref={typeDropdownRef}>
+                                            <button
+                                                type="button"
+                                                className={cx('dropdown-button')}
+                                                onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
+                                            >
+                                                <span>{commentTypes.find(t => t.value === filters.type)?.label || 'Tất cả'}</span>
+                                                <ChevronDownIcon size={16} className={cx('dropdown-icon', { 'is-open': isTypeDropdownOpen })} />
+                                            </button>
+                                            {isTypeDropdownOpen && (
+                                                <div className={cx('dropdown-menu')}>
+                                                    {commentTypes.map((type) => (
+                                                        <button
+                                                            key={type.value}
+                                                            type="button"
+                                                            className={cx('dropdown-item', { 'is-active': filters.type === type.value })}
+                                                            onClick={() => {
+                                                                setFilters({ ...filters, type: type.value as UserComment['type'] | 'all' });
+                                                                setIsTypeDropdownOpen(false);
+                                                            }}
+                                                        >
+                                                            {type.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
+                                    </div>
+
+                                    <div className={cx('filter-group')}>
+                                        <label htmlFor="content" className={cx('filter-label')}>
+                                            Nội dung
+                                        </label>
+                                        <input
+                                            id="content"
+                                            type="text"
+                                            className={cx('filter-input')}
+                                            placeholder="Tìm kiếm trong bình luận..."
+                                            value={filters.content}
+                                            onChange={(e) => setFilters({ ...filters, content: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className={cx('filter-group')}>
-                                <label htmlFor="content" className={cx('filter-label')}>
-                                    Nội dung
-                                </label>
-                                <input
-                                    id="content"
-                                    type="text"
-                                    className={cx('filter-input')}
-                                    placeholder="Tìm kiếm trong bình luận..."
-                                    value={filters.content}
-                                    onChange={(e) => setFilters({ ...filters, content: e.target.value })}
-                                />
-                            </div>
-                        </div>
-                    </div>
+                            {/* Row 2: Date Range */}
+                            <div className={cx('filter-row', 'date-row')}>
+                                <div className={cx('filter-section-title')}>
+                                    <span>Thời gian</span>
+                                    <div className={cx('quick-filters-buttons')}>
+                                        {quickDateFilters.map((filter, index) => (
+                                            <button
+                                                key={index}
+                                                type="button"
+                                                className={cx('quick-filter-button')}
+                                                onClick={() => handleQuickDateFilter(filter.days)}
+                                            >
+                                                {filter.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className={cx('date-inputs-group')}>
+                                    <div className={cx('filter-group')}>
+                                        <label htmlFor="dateFrom" className={cx('filter-label')}>
+                                            Từ ngày
+                                        </label>
+                                        <div className={cx('date-input-wrapper')}>
+                                            <input
+                                                id="dateFrom"
+                                                type="date"
+                                                className={cx('filter-input', 'date-input')}
+                                                value={filters.dateFrom}
+                                                onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                                            />
+                                            <CalendarIcon className={cx('date-icon')} size={18} />
+                                        </div>
+                                    </div>
 
-                    {/* Row 2: Date Range */}
-                    <div className={cx('filter-row', 'date-row')}>
-                        <div className={cx('filter-section-title')}>
-                            <span>Thời gian</span>
-                            <div className={cx('quick-filters-buttons')}>
-                                {quickDateFilters.map((filter, index) => (
-                                    <button
-                                        key={index}
-                                        type="button"
-                                        className={cx('quick-filter-button')}
-                                        onClick={() => handleQuickDateFilter(filter.days)}
-                                    >
-                                        {filter.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                        <div className={cx('date-inputs-group')}>
-                            <div className={cx('filter-group')}>
-                                <label htmlFor="dateFrom" className={cx('filter-label')}>
-                                    Từ ngày
-                                </label>
-                                <div className={cx('date-input-wrapper')}>
-                                    <input
-                                        id="dateFrom"
-                                        type="date"
-                                        className={cx('filter-input', 'date-input')}
-                                        value={filters.dateFrom}
-                                        onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-                                    />
-                                    <CalendarIcon className={cx('date-icon')} size={18} />
+                                    <div className={cx('date-separator')}>-</div>
+
+                                    <div className={cx('filter-group')}>
+                                        <label htmlFor="dateTo" className={cx('filter-label')}>
+                                            Đến ngày
+                                        </label>
+                                        <div className={cx('date-input-wrapper')}>
+                                            <input
+                                                id="dateTo"
+                                                type="date"
+                                                className={cx('filter-input', 'date-input')}
+                                                value={filters.dateTo}
+                                                onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                                            />
+                                            <CalendarIcon className={cx('date-icon')} size={18} />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className={cx('date-separator')}>-</div>
-
-                            <div className={cx('filter-group')}>
-                                <label htmlFor="dateTo" className={cx('filter-label')}>
-                                    Đến ngày
-                                </label>
-                                <div className={cx('date-input-wrapper')}>
-                                    <input
-                                        id="dateTo"
-                                        type="date"
-                                        className={cx('filter-input', 'date-input')}
-                                        value={filters.dateTo}
-                                        onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-                                    />
-                                    <CalendarIcon className={cx('date-icon')} size={18} />
-                                </div>
+                            {/* Row 3: Filter Button */}
+                            <div className={cx('filter-actions-row')}>
+                                <button type="submit" className={cx('filter-button')}>
+                                    <FilterIcon size={18} />
+                                    Áp dụng bộ lọc
+                                </button>
                             </div>
-                        </div>
-                    </div>
-
-                    {/* Row 3: Filter Button */}
-                    <div className={cx('filter-actions-row')}>
-                        <button type="submit" className={cx('filter-button')}>
-                            <FilterIcon size={18} />
-                            Áp dụng bộ lọc
-                        </button>
-                    </div>
-                </form>
+                        </form>
                     )}
                 </div>
             </div>

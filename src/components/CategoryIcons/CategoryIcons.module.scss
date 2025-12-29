@@ -12,7 +12,7 @@
 .header {
     margin-bottom: 48px;
     padding: 0 20px;
-    
+
     @media (max-width: 999px) {
         padding: 0 16px;
     }
@@ -68,14 +68,24 @@
     @media (max-width: 768px) {
         flex-wrap: nowrap;
         justify-content: flex-start;
-        overflow: hidden; // disable swipe/drag scroll; use nav buttons
+        overflow-x: auto;
+        overflow-y: hidden;
         padding: 0 16px;
+        scroll-padding-left: 16px; // Adjust snap point to respect padding
         margin: 0;
         gap: 12px;
+        scrollbar-width: none; // Firefox
+        -ms-overflow-style: none; // IE/Edge
+        scroll-snap-type: x mandatory;
+
+        &::-webkit-scrollbar {
+            display: none; // Chrome/Safari
+        }
     }
-    
+
     @media (max-width: 480px) {
         padding: 0 12px;
+        scroll-padding-left: 12px;
         gap: 10px;
     }
 }
@@ -149,61 +159,50 @@
 
     // Slider mode trên mobile - ẩn border và shadow
     @media (max-width: 768px) {
-        flex: 0 0 130px;
-        min-width: 130px;
-        max-width: 130px;
-        scroll-snap-align: center;
+        flex: 0 0 calc((100% - 24px) / 3); // 3 items exactly with 12px gaps
+        min-width: calc((100% - 24px) / 3);
+        max-width: calc((100% - 24px) / 3);
+        scroll-snap-align: start; // Align to start (left padding)
         padding: 16px 12px;
         min-height: 130px;
         border-radius: 14px;
         border: none;
         box-shadow: none;
         background: transparent;
-        
-        &:first-child {
-            margin-left: 4px;
-        }
-        
-        &:last-child {
-            margin-right: 4px;
-        }
-        
+
+
+
         &:hover {
             transform: scale(1.05);
             box-shadow: none;
             border: none;
         }
-        
+
         &:active {
             transform: scale(0.98);
         }
     }
 
     @media (max-width: 480px) {
-        flex: 0 0 110px;
-        min-width: 110px;
-        max-width: 110px;
+        flex: 0 0 calc((100% - 20px) / 3); // 3 items exactly with 10px gaps
+        min-width: calc((100% - 20px) / 3);
+        max-width: calc((100% - 20px) / 3);
+        scroll-snap-align: start; // Align to start (left padding)
         padding: 12px 8px;
         min-height: 110px;
         border-radius: 12px;
         border: none;
         box-shadow: none;
         background: transparent;
-        
-        &:first-child {
-            margin-left: 4px;
-        }
-        
-        &:last-child {
-            margin-right: 4px;
-        }
-        
+
+
+
         &:hover {
             transform: scale(1.05);
             box-shadow: none;
             border: none;
         }
-        
+
         &:active {
             transform: scale(0.98);
         }
@@ -229,7 +228,7 @@
         border-radius: 13px;
         margin-bottom: 12px;
     }
-    
+
     @media (max-width: 768px) {
         width: 52px;
         height: 52px;
@@ -266,7 +265,7 @@
         width: 27px;
         height: 27px;
     }
-    
+
     @media (max-width: 768px) {
         width: 26px;
         height: 26px;
@@ -402,4 +401,3 @@
         font-size: 20px;
     }
 }
-

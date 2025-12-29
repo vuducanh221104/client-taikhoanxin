@@ -80,6 +80,10 @@ export interface Product {
             max?: number;
         };
     }>;
+    tos?: {
+        title?: string;
+        description?: string;
+    };
     relatedProduct?: string[]; // Array of product IDs
     relatedSettings?: {
         mode?: 'auto' | 'manual' | 'mixed';
@@ -151,7 +155,7 @@ export const useProducts = (params?: {
     }
     if (params?.sortBy) queryParams.sortBy = params.sortBy;
     if (params?.sortOrder) queryParams.sortOrder = params.sortOrder;
-    
+
     const queryString = Object.keys(queryParams).length > 0
         ? '?' + new URLSearchParams(queryParams).toString()
         : '';
@@ -215,7 +219,7 @@ export const useBestSellingProducts = (params?: {
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
 
-    const key = queryParams.toString() 
+    const key = queryParams.toString()
         ? `/api/v1/products/best-selling?${queryParams.toString()}`
         : '/api/v1/products/best-selling';
     return useSWRUser<ProductListResponse>(key);
@@ -247,7 +251,7 @@ export const useProductsByIds = (productIds?: string[]) => {
         // Use dynamic import to avoid circular dependency
         import('@/utils/httpRequest').then(({ post }) => {
             if (cancelled) return;
-            
+
             post<ProductListResponse>('/api/v1/products/by-ids', { ids: productIds })
                 .then((response) => {
                     if (!cancelled) {
@@ -337,7 +341,7 @@ export const useSearchProducts = (query: string, params?: { page?: number; limit
 export const mapProductToFeaturedProduct = (product: Product): FeaturedProduct => {
     // Handle price as array (from featured-product endpoint) or object (from other endpoints)
     let priceItem: { priceOriginal: number; currency: string; discount?: any } | null = null;
-    
+
     if (Array.isArray(product.price) && product.price.length > 0) {
         // Price is array (from featured-product endpoint)
         priceItem = product.price[0];
@@ -348,21 +352,21 @@ export const mapProductToFeaturedProduct = (product: Product): FeaturedProduct =
 
     const priceOriginal = priceItem?.priceOriginal || 0;
     const discount = priceItem?.discount;
-    
+
     // Calculate discount price
     // If priceDiscount exists, use it as the final price (not subtract from original)
     // Example: priceDiscount = 2000đ → finalPrice = 2000đ
     let finalPrice = priceOriginal;
     let oldPrice: number | undefined = undefined;
     let discountPercent: number | undefined = undefined;
-    
+
     if (discount) {
         if (discount.priceDiscount !== undefined && discount.priceDiscount !== null) {
             // Use priceDiscount as the final price directly
             finalPrice = discount.priceDiscount;
             oldPrice = priceOriginal;
             // Calculate discount percent: (priceOriginal - priceDiscount) / priceOriginal * 100
-            discountPercent = priceOriginal > 0 
+            discountPercent = priceOriginal > 0
                 ? Math.round(((priceOriginal - discount.priceDiscount) / priceOriginal) * 100)
                 : undefined;
         } else if (discount.quantity) {
@@ -401,17 +405,17 @@ export const mapProductToFeaturedProduct = (product: Product): FeaturedProduct =
  * - best-selling?page=1&limit=8
  * Returns parsed params for appropriate hook
  */
-export const parseProductQuery = (query: string): { 
-    params?: { 
-        categorySlug?: string; 
-        categoryId?: string; 
+export const parseProductQuery = (query: string): {
+    params?: {
+        categorySlug?: string;
+        categoryId?: string;
         limit?: number;
         page?: number;
         sortBy?: string;
         sortOrder?: string;
         [key: string]: any;
-    }; 
-    usePopular?: boolean; 
+    };
+    usePopular?: boolean;
     useBestSelling?: boolean;
 } => {
     if (!query || query.trim() === '') {
@@ -420,7 +424,7 @@ export const parseProductQuery = (query: string): {
 
     // Remove leading ? if present
     let cleanQuery = query.startsWith('?') ? query.slice(1) : query;
-    
+
     // Check if query starts with "best-selling"
     if (cleanQuery.startsWith('best-selling')) {
         // Remove "best-selling" prefix and leading ? or &
@@ -430,7 +434,7 @@ export const parseProductQuery = (query: string): {
         const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 8;
         return { useBestSelling: true, params: { page, limit } };
     }
-    
+
     // Check if it's a slug (no = sign)
     if (!cleanQuery.includes('=')) {
         // It's a slug, fetch by category slug with default limit
@@ -440,7 +444,7 @@ export const parseProductQuery = (query: string): {
     // Parse query string
     const params: any = {};
     const searchParams = new URLSearchParams(cleanQuery);
-    
+
     // Check for isPopular first
     if (searchParams.get('isPopular') === 'true') {
         const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 12;
@@ -513,21 +517,21 @@ export const searchProducts = (query: string, limit: number = 5): FeaturedProduc
     if (!query || query.trim().length === 0) {
         return [];
     }
-    
+
     const allProducts = getAllProducts();
     const lowerQuery = query.toLowerCase().trim();
-    
+
     // Filter products by product name
     let results = allProducts
-        .filter(product => 
+        .filter(product =>
             product.productName.toLowerCase().includes(lowerQuery)
         );
-    
+
     // Apply limit if specified and > 0
     if (limit > 0) {
         results = results.slice(0, limit);
     }
-    
+
     return results;
 };
 
@@ -569,14 +573,14 @@ export const getFeaturedProducts = (): FeaturedProduct[] => {
  */
 export const getProductCategory = (productId: string): ProductCategory | null => {
     const categories: ProductCategory[] = ['featured', 'work', 'ai', 'bestSelling', 'entertainment', 'new', 'office', 'learning', 'photo-video', 'storage'];
-    
+
     for (const category of categories) {
         const products = getProductsByCategory(category);
         if (products.some(p => p.id === productId)) {
             return category;
         }
     }
-    
+
     return null;
 };
 
@@ -585,21 +589,21 @@ export const getProductCategory = (productId: string): ProductCategory | null =>
  */
 export const detectProductGenre = (productName: string): 'account' | 'code' | 'license' | null => {
     const lowerName = productName.toLowerCase();
-    
+
     // Check for account keywords
     if (lowerName.includes('tài khoản') || lowerName.includes('account')) {
         return 'account';
     }
-    
+
     // Check for code keywords
     if (lowerName.includes('code') || lowerName.includes('kích hoạt') || lowerName.includes('activation')) {
         return 'code';
     }
-    
+
     // Check for license keywords
     if (lowerName.includes('license') || lowerName.includes('bản quyền') || lowerName.includes('key')) {
         return 'license';
     }
-    
+
     return null;
 };

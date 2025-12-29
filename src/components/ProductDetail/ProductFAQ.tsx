@@ -47,13 +47,13 @@ const ProductFAQ: React.FC<ProductFAQProps> = ({ faqs, rating, reviewCount, vari
                                 aria-controls={`faq-answer-${index}`}
                             >
                                 <span className={cx('faq-number')}>{index + 1}.</span>
-                                <span className={cx('faq-question-text')}>{faq.question}</span>
+                                <span className={cx('faq-question-text')}>{faq.question.replace(/^\d+[\.\)]\s*/, '')}</span>
                                 <span className={cx('arrow-icon')}>{expandedIndex === index ? '▲' : '▼'}</span>
                             </button>
                         ) : (
                             <div className={cx('faq-question', 'static')}>
                                 <span className={cx('faq-number')}>{index + 1}.</span>
-                                <span className={cx('faq-question-text')}>{faq.question}</span>
+                                <span className={cx('faq-question-text')}>{faq.question.replace(/^\d+[\.\)]\s*/, '')}</span>
                             </div>
                         )}
                         {isExpanded(index) && (
