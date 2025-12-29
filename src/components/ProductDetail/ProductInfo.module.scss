@@ -825,11 +825,11 @@
 
     .tos-modal {
         background: var(--bg-color);
-        border-radius: 16px;
-        padding: 24px;
+        border-radius: 60px;
+        padding: 70px;
         width: 100%;
-        max-width: 400px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        max-width: 850px;
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.25);
         animation: modalSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
@@ -846,10 +846,10 @@
     }
 
     .tos-modal-title {
-        font-size: 20px;
+        font-size: 28px;
         font-weight: 700;
         color: var(--text-color);
-        margin: 0 0 16px 0;
+        margin: 0 0 24px 0;
         text-align: center;
     }
 
@@ -857,10 +857,10 @@
         margin-bottom: 20px;
 
         p {
-            margin: 0 0 8px 0;
-            font-size: 14px;
+            margin: 0 0 12px 0;
+            font-size: 18px;
             color: var(--text-color-secondary);
-            line-height: 1.5;
+            line-height: 1.6;
 
             &:last-child {
                 margin-bottom: 0;
@@ -880,16 +880,17 @@
         border: 1px solid var(--border-color);
 
         input {
-            margin-top: 3px;
-            width: 18px;
-            height: 18px;
+            margin-top: 2px;
+            width: 24px;
+            height: 24px;
             cursor: pointer;
+            accent-color: var(--primary-color);
         }
 
         span {
-            font-size: 14px;
+            font-size: 16px;
             color: var(--text-color);
-            line-height: 1.4;
+            line-height: 1.5;
             font-weight: 500;
         }
     }
@@ -902,10 +903,10 @@
     .tos-cancel-button,
     .tos-confirm-button {
         flex: 1;
-        padding: 12px;
-        border-radius: 10px;
-        font-size: 14px;
-        font-weight: 600;
+        padding: 16px 24px;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 700;
         cursor: pointer;
         transition: all 0.2s ease;
         border: none;

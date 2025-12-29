@@ -285,7 +285,7 @@ const CartLayout: React.FC = () => {
                 // Use unitPrice from cart item (already calculated as priceDiscount if available)
                 // This is the final price that was stored when adding to cart
                 let price = item.unitPrice || 0;
-                
+
                 // If unitPrice is not available, calculate from product.price
                 if (!price && product?.price) {
                     if (Array.isArray(product.price)) {
@@ -303,7 +303,7 @@ const CartLayout: React.FC = () => {
                             : product.price.priceOriginal || product.price.original || 0;
                     }
                 }
-                
+
                 // Calculate oldPrice: if price is priceDiscount, oldPrice = priceOriginal
                 let oldPrice: number | undefined = undefined;
                 if (product?.price) {
@@ -316,9 +316,9 @@ const CartLayout: React.FC = () => {
                     // If current price is different from priceOriginal, show oldPrice
                     if (priceOriginal > 0 && price !== priceOriginal) {
                         oldPrice = priceOriginal;
+                    }
                 }
-                }
-                
+
                 const image = product?.image || [];
                 const imageSrc = Array.isArray(image) && image.length > 0 ? image[0] : '';
                 const slug = product?.slug || '';
@@ -346,7 +346,7 @@ const CartLayout: React.FC = () => {
             });
 
             // Calculate totalDiscountBefore from products if not provided by API
-            const calculatedSubtotal = mappedProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
+            const calculatedSubtotal = mappedProducts.reduce((sum: number, p: { price: number; quantity: number }) => sum + (p.price * p.quantity), 0);
             const totalDiscountBefore = apiCart.totalDiscountBefore ?? calculatedSubtotal;
 
             return {
@@ -354,7 +354,10 @@ const CartLayout: React.FC = () => {
                 // totalDiscountBefore is the subtotal before discount
                 totalDiscountBefore,
                 // totalPrice is the final price after discount code (already calculated: totalDiscountBefore - discountAmount)
-                totalPrice: apiCart.totalPrice || totalDiscountBefore,
+                totalPrice:
+                    apiCart.totalPrice !== undefined && apiCart.totalPrice !== null
+                        ? apiCart.totalPrice
+                        : totalDiscountBefore,
                 totalQuantity: apiCart.quantity || 0,
                 couponCode: apiCart.discountCode || undefined,
                 couponDiscount: apiCart.discountAmount || apiCart.totalDiscount || 0,
@@ -901,8 +904,8 @@ const CartLayout: React.FC = () => {
                                             const discountPercent =
                                                 p.oldPrice && p.oldPrice > p.price
                                                     ? Math.round(
-                                                          ((p.oldPrice - p.price) / p.oldPrice) * 100,
-                                                      )
+                                                        ((p.oldPrice - p.price) / p.oldPrice) * 100,
+                                                    )
                                                     : 0;
                                             const stockStatus = 'in-stock';
 

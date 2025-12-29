@@ -173,13 +173,13 @@
 
 
         &:hover {
-            transform: scale(1.05);
-            box-shadow: none;
-            border: none;
+            transform: none !important;
+            box-shadow: none !important;
+            border: none !important;
         }
 
         &:active {
-            transform: scale(0.98);
+            transform: none !important;
         }
     }
 
@@ -198,13 +198,13 @@
 
 
         &:hover {
-            transform: scale(1.05);
-            box-shadow: none;
-            border: none;
+            transform: none !important;
+            box-shadow: none !important;
+            border: none !important;
         }
 
         &:active {
-            transform: scale(0.98);
+            transform: none !important;
         }
     }
 }
