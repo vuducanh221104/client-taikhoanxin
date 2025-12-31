@@ -427,9 +427,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
                             </div>
                         )}
 
-                        {mappedProduct.features.length > 0 && (
+                        {/* {mappedProduct.features.length > 0 && (
                             <ProductFeatures features={mappedProduct.features} />
-                        )}
+                        )} */}
                     </div>
                     {/* <div className={cx('product-details-right')}>
                         {mappedProduct.deliverySteps.length > 0 && (

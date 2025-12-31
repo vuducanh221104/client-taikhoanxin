@@ -46,20 +46,20 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
     const toast = useToast();
     const { confirm } = useConfirm();
     const { data: ordersData, error, isLoading, mutate } = useMyOrders();
-    
+
     // Fetch all warranties to calculate progress for each order
     const { data: warrantiesData } = useMyWarranties();
-    
+
     // Create a map of orderId -> warranty progress
     const warrantyProgressMap = useMemo(() => {
         if (!warrantiesData?.data) return new Map();
         const map = new Map<string, { resolved: number; total: number }>();
         warrantiesData.data.forEach(warranty => {
-            const orderId = typeof warranty.orderId === 'object' 
-                ? warranty.orderId._id 
+            const orderId = typeof warranty.orderId === 'object'
+                ? warranty.orderId._id
                 : warranty.orderId;
             if (!orderId) return;
-            
+
             const current = map.get(orderId) || { resolved: 0, total: 0 };
             current.total += 1;
             // Count as resolved: warranty_resolved, resolved (old), closed (old)
@@ -71,34 +71,34 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
         });
         return map;
     }, [warrantiesData]);
-    
+
     // Map API response to component format
     const allOrders = useMemo(() => {
         if (!ordersData?.data) return [];
         return ordersData.data.map((order: Order) => {
             const products = order.items.map((item) => {
                 // Get product ID - support both productId and product_id
-                const productId = item.productId?._id || 
-                                 (typeof item.product_id === 'object' ? item.product_id?._id : item.product_id) || 
-                                 '';
-                
+                const productId = item.productId?._id ||
+                    (typeof item.product_id === 'object' ? item.product_id?._id : item.product_id) ||
+                    '';
+
                 // Get product name - prioritize fullName, then product_id, then productId
-                const productName = item.fullName || 
-                                   (typeof item.product_id === 'object' ? item.product_id?.name : null) ||
-                                   item.productId?.name || 
-                                   'Sản phẩm đã xóa';
-                
+                const productName = item.fullName ||
+                    (typeof item.product_id === 'object' ? item.product_id?.name : null) ||
+                    item.productId?.name ||
+                    'Sản phẩm đã xóa';
+
                 // Get product image - support both productId and product_id
-                const productImage = item.productId?.image?.[0] || 
-                                    (typeof item.product_id === 'object' ? item.product_id?.image?.[0] : null) ||
-                                    '';
-                
+                const productImage = item.productId?.image?.[0] ||
+                    (typeof item.product_id === 'object' ? item.product_id?.image?.[0] : null) ||
+                    '';
+
                 // Xác định trạng thái của từng item: 'completed' nếu đã có account, 'processing' nếu chưa
                 const accountEntries = item.keys?.entries && Array.isArray(item.keys.entries) && item.keys.entries.length > 0
                     ? item.keys.entries.filter((entry: string) => entry && entry.trim())
                     : undefined;
                 const itemStatus = accountEntries && accountEntries.length > 0 ? 'completed' : 'processing';
-                
+
                 return {
                     id: productId,
                     productName: productName,
@@ -113,19 +113,23 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
             const itemsCompleted = products.filter(p => p.itemStatus === 'completed').length;
             const itemsProcessing = products.filter(p => p.itemStatus === 'processing').length;
             const totalItems = products.length;
-            
+
             // Nếu có items đang xử lý → order status là "processing"
             // Chỉ hiển thị "completed" khi TẤT CẢ items đều đã xử lý
             let displayStatus = order.orderStatus;
-            if (itemsProcessing > 0 && itemsCompleted > 0) {
-                // Có cả 2 loại → hiển thị "Đang xử lý" với thông tin chi tiết
-                displayStatus = 'processing';
-            } else if (itemsCompleted === totalItems && totalItems > 0) {
-                // Tất cả items đều đã xử lý → hiển thị "Đã xử lý"
-                displayStatus = 'completed';
-            } else if (itemsProcessing === totalItems && totalItems > 0) {
-                // Tất cả items đều đang xử lý → hiển thị "Đang xử lý"
-                displayStatus = 'processing';
+
+            // Chỉ tính toán lại trạng thái dựa trên items nếu đơn hàng không ở trạng thái đặc biệt (Hủy, Chờ thanh toán)
+            if (displayStatus !== 'cancelled' && displayStatus !== 'pending_payment') {
+                if (itemsProcessing > 0 && itemsCompleted > 0) {
+                    // Có cả 2 loại → hiển thị "Đang xử lý" với thông tin chi tiết
+                    displayStatus = 'processing';
+                } else if (itemsCompleted === totalItems && totalItems > 0) {
+                    // Tất cả items đều đã xử lý → hiển thị "Đã xử lý"
+                    displayStatus = 'completed';
+                } else if (itemsProcessing === totalItems && totalItems > 0) {
+                    // Tất cả items đều đang xử lý → hiển thị "Đang xử lý"
+                    displayStatus = 'processing';
+                }
             }
 
             return {
@@ -143,7 +147,7 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
             };
         });
     }, [ordersData]);
-    
+
     const [filters, setFilters] = useState({
         status: 'all' as Order['orderStatus'] | 'all',
         orderCode: '',
@@ -247,8 +251,8 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
     };
 
     const handleQuickAmount = (amount: number) => {
-        setFilters({ 
-            ...filters, 
+        setFilters({
+            ...filters,
             amountFrom: '0',
             amountTo: amount.toLocaleString('vi-VN')
         });
@@ -274,7 +278,7 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
             // Filter by amount range
             const amountFrom = appliedFilters.amountFrom ? parsePriceInput(appliedFilters.amountFrom) : null;
             const amountTo = appliedFilters.amountTo ? parsePriceInput(appliedFilters.amountTo) : null;
-            
+
             if (amountFrom !== null && order.totalAmount < amountFrom) {
                 return false;
             }
@@ -510,243 +514,243 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
                 >
                     {isFilterPanelOpen && (
                         <form onSubmit={handleFilter} className={cx('filter-form')}>
-                    {/* Row 1: Basic Filters */}
-                    <div className={cx('filter-row', 'basic-filters-row')}>
-                        <div className={cx('basic-filters-group')}>
-                            <div className={cx('filter-group')}>
-                                <label className={cx('filter-label')}>Trạng thái</label>
-                                <div className={cx('dropdown-wrapper', { 'is-open': isStatusDropdownOpen })} ref={statusDropdownRef}>
-                                    <button
-                                        type="button"
-                                        className={cx('dropdown-button')}
-                                        onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
-                                    >
-                                        <span>{orderStatuses.find(s => s.value === filters.status)?.label || 'Tất cả'}</span>
-                                        <ChevronDownIcon size={16} className={cx('dropdown-icon', { 'is-open': isStatusDropdownOpen })} />
-                                    </button>
-                                    {isStatusDropdownOpen && (
-                                        <div className={cx('dropdown-menu')}>
-                                            {orderStatuses.map((status) => (
-                                                <button
-                                                    key={status.value}
-                                                    type="button"
-                                                    className={cx('dropdown-item', { 'is-active': filters.status === status.value })}
-                                                    onClick={() => {
-                                                        setFilters({ ...filters, status: status.value as Order['orderStatus'] | 'all' });
-                                                        setIsStatusDropdownOpen(false);
-                                                    }}
-                                                >
-                                                    {status.label}
-                                                </button>
-                                            ))}
+                            {/* Row 1: Basic Filters */}
+                            <div className={cx('filter-row', 'basic-filters-row')}>
+                                <div className={cx('basic-filters-group')}>
+                                    <div className={cx('filter-group')}>
+                                        <label className={cx('filter-label')}>Trạng thái</label>
+                                        <div className={cx('dropdown-wrapper', { 'is-open': isStatusDropdownOpen })} ref={statusDropdownRef}>
+                                            <button
+                                                type="button"
+                                                className={cx('dropdown-button')}
+                                                onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                                            >
+                                                <span>{orderStatuses.find(s => s.value === filters.status)?.label || 'Tất cả'}</span>
+                                                <ChevronDownIcon size={16} className={cx('dropdown-icon', { 'is-open': isStatusDropdownOpen })} />
+                                            </button>
+                                            {isStatusDropdownOpen && (
+                                                <div className={cx('dropdown-menu')}>
+                                                    {orderStatuses.map((status) => (
+                                                        <button
+                                                            key={status.value}
+                                                            type="button"
+                                                            className={cx('dropdown-item', { 'is-active': filters.status === status.value })}
+                                                            onClick={() => {
+                                                                setFilters({ ...filters, status: status.value as Order['orderStatus'] | 'all' });
+                                                                setIsStatusDropdownOpen(false);
+                                                            }}
+                                                        >
+                                                            {status.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
+                                    </div>
+
+                                    <div className={cx('filter-group')}>
+                                        <label htmlFor="orderCode" className={cx('filter-label')}>
+                                            Mã đơn hàng
+                                        </label>
+                                        <input
+                                            id="orderCode"
+                                            type="text"
+                                            className={cx('filter-input')}
+                                            placeholder="Nhập mã đơn hàng"
+                                            value={filters.orderCode}
+                                            onChange={(e) => setFilters({ ...filters, orderCode: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className={cx('filter-group')}>
-                                <label htmlFor="orderCode" className={cx('filter-label')}>
-                                    Mã đơn hàng
-                                </label>
-                                <input
-                                    id="orderCode"
-                                    type="text"
-                                    className={cx('filter-input')}
-                                    placeholder="Nhập mã đơn hàng"
-                                    value={filters.orderCode}
-                                    onChange={(e) => setFilters({ ...filters, orderCode: e.target.value })}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Row 2: Amount Range */}
-                    <div className={cx('filter-row', 'amount-row')}>
-                        <div className={cx('filter-section-title')}>
-                            <span>Số tiền</span>
-                            <div className={cx('quick-amount-buttons')}>
-                                <button
-                                    type="button"
-                                    className={cx('quick-amount-button')}
-                                    onClick={() => handleQuickAmount(100000)}
-                                >
-                                    Dưới 100k
-                                </button>
-                                <button
-                                    type="button"
-                                    className={cx('quick-amount-button')}
-                                    onClick={() => handleQuickAmount(500000)}
-                                >
-                                    Dưới 500k
-                                </button>
-                                <button
-                                    type="button"
-                                    className={cx('quick-amount-button')}
-                                    onClick={() => handleQuickAmount(1000000)}
-                                >
-                                    Dưới 1M
-                                </button>
-                                <button
-                                    type="button"
-                                    className={cx('quick-amount-button')}
-                                    onClick={() => handleQuickAmount(5000000)}
-                                >
-                                    Dưới 5M
-                                </button>
-                            </div>
-                        </div>
-                        <div className={cx('amount-inputs-group')}>
-                            <div className={cx('filter-group', 'amount-group')}>
-                                <label htmlFor="amountFrom" className={cx('filter-label')}>
-                                    Từ
-                                </label>
-                                <div className={cx('amount-input-wrapper')}>
-                                    <input
-                                        id="amountFrom"
-                                        type="text"
-                                        className={cx('filter-input', 'amount-input', { 'has-error': amountError })}
-                                        placeholder="VD: 1.000.000"
-                                        value={filters.amountFrom}
-                                        onChange={(e) => {
-                                            const formatted = formatPriceInput(e.target.value);
-                                            setFilters({ ...filters, amountFrom: formatted });
-                                        }}
-                                        onBlur={(e) => {
-                                            if (e.target.value) {
-                                                const formatted = formatPriceInput(e.target.value);
-                                                setFilters({ ...filters, amountFrom: formatted });
-                                            }
-                                        }}
-                                    />
-                                    {filters.amountFrom && (
+                            {/* Row 2: Amount Range */}
+                            <div className={cx('filter-row', 'amount-row')}>
+                                <div className={cx('filter-section-title')}>
+                                    <span>Số tiền</span>
+                                    <div className={cx('quick-amount-buttons')}>
                                         <button
                                             type="button"
-                                            className={cx('amount-clear-button')}
-                                            onClick={() => handleClearAmount('amountFrom')}
-                                            aria-label="Xóa"
+                                            className={cx('quick-amount-button')}
+                                            onClick={() => handleQuickAmount(100000)}
                                         >
-                                            <CloseIcon size={14} />
+                                            Dưới 100k
                                         </button>
-                                    )}
-                                    <span className={cx('amount-suffix')}>VND</span>
-                                </div>
-                            </div>
-
-                            <div className={cx('amount-separator')}>-</div>
-
-                            <div className={cx('filter-group', 'amount-group')}>
-                                <label htmlFor="amountTo" className={cx('filter-label')}>
-                                    Đến
-                                </label>
-                                <div className={cx('amount-input-wrapper')}>
-                                    <input
-                                        id="amountTo"
-                                        type="text"
-                                        className={cx('filter-input', 'amount-input', { 'has-error': amountError })}
-                                        placeholder="VD: 10.000.000"
-                                        value={filters.amountTo}
-                                        onChange={(e) => {
-                                            const formatted = formatPriceInput(e.target.value);
-                                            setFilters({ ...filters, amountTo: formatted });
-                                        }}
-                                        onBlur={(e) => {
-                                            if (e.target.value) {
-                                                const formatted = formatPriceInput(e.target.value);
-                                                setFilters({ ...filters, amountTo: formatted });
-                                            }
-                                        }}
-                                    />
-                                    {filters.amountTo && (
                                         <button
                                             type="button"
-                                            className={cx('amount-clear-button')}
-                                            onClick={() => handleClearAmount('amountTo')}
-                                            aria-label="Xóa"
+                                            className={cx('quick-amount-button')}
+                                            onClick={() => handleQuickAmount(500000)}
                                         >
-                                            <CloseIcon size={14} />
+                                            Dưới 500k
                                         </button>
-                                    )}
-                                    <span className={cx('amount-suffix')}>VND</span>
+                                        <button
+                                            type="button"
+                                            className={cx('quick-amount-button')}
+                                            onClick={() => handleQuickAmount(1000000)}
+                                        >
+                                            Dưới 1M
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className={cx('quick-amount-button')}
+                                            onClick={() => handleQuickAmount(5000000)}
+                                        >
+                                            Dưới 5M
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className={cx('amount-inputs-group')}>
+                                    <div className={cx('filter-group', 'amount-group')}>
+                                        <label htmlFor="amountFrom" className={cx('filter-label')}>
+                                            Từ
+                                        </label>
+                                        <div className={cx('amount-input-wrapper')}>
+                                            <input
+                                                id="amountFrom"
+                                                type="text"
+                                                className={cx('filter-input', 'amount-input', { 'has-error': amountError })}
+                                                placeholder="VD: 1.000.000"
+                                                value={filters.amountFrom}
+                                                onChange={(e) => {
+                                                    const formatted = formatPriceInput(e.target.value);
+                                                    setFilters({ ...filters, amountFrom: formatted });
+                                                }}
+                                                onBlur={(e) => {
+                                                    if (e.target.value) {
+                                                        const formatted = formatPriceInput(e.target.value);
+                                                        setFilters({ ...filters, amountFrom: formatted });
+                                                    }
+                                                }}
+                                            />
+                                            {filters.amountFrom && (
+                                                <button
+                                                    type="button"
+                                                    className={cx('amount-clear-button')}
+                                                    onClick={() => handleClearAmount('amountFrom')}
+                                                    aria-label="Xóa"
+                                                >
+                                                    <CloseIcon size={14} />
+                                                </button>
+                                            )}
+                                            <span className={cx('amount-suffix')}>VND</span>
+                                        </div>
+                                    </div>
+
+                                    <div className={cx('amount-separator')}>-</div>
+
+                                    <div className={cx('filter-group', 'amount-group')}>
+                                        <label htmlFor="amountTo" className={cx('filter-label')}>
+                                            Đến
+                                        </label>
+                                        <div className={cx('amount-input-wrapper')}>
+                                            <input
+                                                id="amountTo"
+                                                type="text"
+                                                className={cx('filter-input', 'amount-input', { 'has-error': amountError })}
+                                                placeholder="VD: 10.000.000"
+                                                value={filters.amountTo}
+                                                onChange={(e) => {
+                                                    const formatted = formatPriceInput(e.target.value);
+                                                    setFilters({ ...filters, amountTo: formatted });
+                                                }}
+                                                onBlur={(e) => {
+                                                    if (e.target.value) {
+                                                        const formatted = formatPriceInput(e.target.value);
+                                                        setFilters({ ...filters, amountTo: formatted });
+                                                    }
+                                                }}
+                                            />
+                                            {filters.amountTo && (
+                                                <button
+                                                    type="button"
+                                                    className={cx('amount-clear-button')}
+                                                    onClick={() => handleClearAmount('amountTo')}
+                                                    aria-label="Xóa"
+                                                >
+                                                    <CloseIcon size={14} />
+                                                </button>
+                                            )}
+                                            <span className={cx('amount-suffix')}>VND</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {amountError && (
+                                    <div className={cx('amount-error-wrapper')}>
+                                        <span className={cx('amount-error')}>{amountError}</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Row 3: Date Range */}
+                            <div className={cx('filter-row', 'date-row')}>
+                                <div className={cx('filter-section-title')}>
+                                    <span>Thời gian</span>
+                                    <div className={cx('quick-filters-buttons')}>
+                                        {quickDateFilters.map((filter, index) => (
+                                            <button
+                                                key={index}
+                                                type="button"
+                                                className={cx('quick-filter-button')}
+                                                onClick={() => handleQuickDateFilter(filter.days)}
+                                            >
+                                                {filter.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className={cx('date-inputs-group')}>
+                                    <div className={cx('filter-group')}>
+                                        <label htmlFor="dateFrom" className={cx('filter-label')}>
+                                            Từ ngày
+                                        </label>
+                                        <div className={cx('date-input-wrapper')}>
+                                            <input
+                                                id="dateFrom"
+                                                type="date"
+                                                className={cx('filter-input', 'date-input')}
+                                                value={filters.dateFrom}
+                                                onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                                            />
+                                            <CalendarIcon className={cx('date-icon')} size={18} />
+                                        </div>
+                                    </div>
+
+                                    <div className={cx('date-separator')}>-</div>
+
+                                    <div className={cx('filter-group')}>
+                                        <label htmlFor="dateTo" className={cx('filter-label')}>
+                                            Đến ngày
+                                        </label>
+                                        <div className={cx('date-input-wrapper')}>
+                                            <input
+                                                id="dateTo"
+                                                type="date"
+                                                className={cx('filter-input', 'date-input')}
+                                                value={filters.dateTo}
+                                                onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                                            />
+                                            <CalendarIcon className={cx('date-icon')} size={18} />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        {amountError && (
-                            <div className={cx('amount-error-wrapper')}>
-                                <span className={cx('amount-error')}>{amountError}</span>
-                            </div>
-                        )}
-                    </div>
 
-                    {/* Row 3: Date Range */}
-                    <div className={cx('filter-row', 'date-row')}>
-                        <div className={cx('filter-section-title')}>
-                            <span>Thời gian</span>
-                            <div className={cx('quick-filters-buttons')}>
-                                {quickDateFilters.map((filter, index) => (
+                            {/* Row 4: Filter Button */}
+                            <div className={cx('filter-actions-row')}>
+                                {hasActiveFilters && (
                                     <button
-                                        key={index}
                                         type="button"
-                                        className={cx('quick-filter-button')}
-                                        onClick={() => handleQuickDateFilter(filter.days)}
+                                        className={cx('clear-filter-button')}
+                                        onClick={handleReset}
                                     >
-                                        {filter.label}
+                                        Xoá bộ lọc
                                     </button>
-                                ))}
+                                )}
+                                <button type="submit" className={cx('filter-button')}>
+                                    <FilterIcon size={18} />
+                                    Áp dụng bộ lọc
+                                </button>
                             </div>
-                        </div>
-                        <div className={cx('date-inputs-group')}>
-                            <div className={cx('filter-group')}>
-                                <label htmlFor="dateFrom" className={cx('filter-label')}>
-                                    Từ ngày
-                                </label>
-                                <div className={cx('date-input-wrapper')}>
-                                    <input
-                                        id="dateFrom"
-                                        type="date"
-                                        className={cx('filter-input', 'date-input')}
-                                        value={filters.dateFrom}
-                                        onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-                                    />
-                                    <CalendarIcon className={cx('date-icon')} size={18} />
-                                </div>
-                            </div>
-
-                            <div className={cx('date-separator')}>-</div>
-
-                            <div className={cx('filter-group')}>
-                                <label htmlFor="dateTo" className={cx('filter-label')}>
-                                    Đến ngày
-                                </label>
-                                <div className={cx('date-input-wrapper')}>
-                                    <input
-                                        id="dateTo"
-                                        type="date"
-                                        className={cx('filter-input', 'date-input')}
-                                        value={filters.dateTo}
-                                        onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-                                    />
-                                    <CalendarIcon className={cx('date-icon')} size={18} />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Row 4: Filter Button */}
-                    <div className={cx('filter-actions-row')}>
-                        {hasActiveFilters && (
-                            <button
-                                type="button"
-                                className={cx('clear-filter-button')}
-                                onClick={handleReset}
-                            >
-                                Xoá bộ lọc
-                            </button>
-                        )}
-                        <button type="submit" className={cx('filter-button')}>
-                            <FilterIcon size={18} />
-                            Áp dụng bộ lọc
-                        </button>
-                    </div>
                         </form>
                     )}
                 </div>
@@ -827,13 +831,13 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
                                                 <span className={cx('status-main')}>
                                                     {getStatusLabel(order.status as string)}
                                                 </span>
-                                                {order.itemsStatusInfo && 
-                                                 order.itemsStatusInfo.completed > 0 && 
-                                                 order.itemsStatusInfo.processing > 0 && (
-                                                    <span className={cx('status-detail')}>
-                                                        ({order.itemsStatusInfo.completed}/{order.itemsStatusInfo.total} đã xử lý)
-                                                    </span>
-                                                )}
+                                                {order.itemsStatusInfo &&
+                                                    order.itemsStatusInfo.completed > 0 &&
+                                                    order.itemsStatusInfo.processing > 0 && (
+                                                        <span className={cx('status-detail')}>
+                                                            ({order.itemsStatusInfo.completed}/{order.itemsStatusInfo.total} đã xử lý)
+                                                        </span>
+                                                    )}
                                                 {(() => {
                                                     const warrantyProgress = warrantyProgressMap.get(order.id);
                                                     if (warrantyProgress && warrantyProgress.total > 0) {

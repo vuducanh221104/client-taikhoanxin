@@ -87,10 +87,10 @@ const mapOrderToViewModel = (apiOrder?: Order): OrderDetailViewModel | null => {
     const products: OrderProductViewModel[] = apiOrder.items.map((item, index) => {
         const productRef = typeof item.productId === 'object' ? item.productId : item.product_id;
         const normalizedProduct = normalizeProductRef(productRef);
-        
+
         // Lấy _id của item (order item có _id)
         const itemId = (item as any)._id?.toString();
-        
+
         // Lấy trực tiếp từ keys.entries (array of strings), không parse
         const accountEntries = item.keys?.entries && Array.isArray(item.keys.entries) && item.keys.entries.length > 0
             ? item.keys.entries.filter((entry: string) => entry && entry.trim())
@@ -135,7 +135,7 @@ const mapOrderToViewModel = (apiOrder?: Order): OrderDetailViewModel | null => {
     const itemsCompleted = products.filter(p => p.itemStatus === 'completed').length;
     const itemsProcessing = products.filter(p => p.itemStatus === 'processing').length;
     const totalItems = products.length;
-    
+
     // Nếu có items đang xử lý → order status là "processing"
     // Chỉ hiển thị "completed" khi TẤT CẢ items đều đã xử lý
     let displayStatus = apiOrder.orderStatus;
@@ -182,28 +182,28 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         () => mapOrderToViewModel(rawOrder),
         [rawOrder]
     );
-    
+
     // Fetch warranties for warranty progress display and item mapping
     const { data: warrantiesData } = useMyWarranties();
-    
+
     // Map warranties to order items and calculate progress
     const { warrantyProgress, productsWithWarranty } = useMemo(() => {
         if (!warrantiesData?.data || !rawOrder?._id) {
             return { warrantyProgress: null, productsWithWarranty: order?.products || [] };
         }
-        
+
         // Filter warranties for this order
         const orderWarranties = warrantiesData.data.filter(w => {
-            const warrantyOrderId = typeof w.orderId === 'object' 
-                ? w.orderId._id 
+            const warrantyOrderId = typeof w.orderId === 'object'
+                ? w.orderId._id
                 : w.orderId;
             return warrantyOrderId === rawOrder._id;
         });
-        
+
         if (orderWarranties.length === 0) {
             return { warrantyProgress: null, productsWithWarranty: order?.products || [] };
         }
-        
+
         // Calculate warranty progress
         // Count warranties that are resolved (both old 'resolved' and new 'warranty_resolved')
         const total = orderWarranties.length;
@@ -213,27 +213,27 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
             return status === 'warranty_resolved' || status === 'resolved' || status === 'closed';
         }).length;
         const warrantyProgress = { resolved, total };
-        
+
         // Map warranties to products by itemOrderId
         const productsWithWarranty = (order?.products || []).map(product => {
             // Find warranty for this item
             const itemWarranty = orderWarranties.find(w => {
                 if (!w.itemOrderId || !product.itemId) return false;
-                const warrantyItemId = typeof w.itemOrderId === 'string' 
-                    ? w.itemOrderId 
+                const warrantyItemId = typeof w.itemOrderId === 'string'
+                    ? w.itemOrderId
                     : String(w.itemOrderId);
                 return warrantyItemId === product.itemId;
             });
-            
+
             return {
                 ...product,
                 warrantyStatus: itemWarranty ? itemWarranty.status : null,
             };
         });
-        
+
         return { warrantyProgress, productsWithWarranty };
     }, [warrantiesData, rawOrder?._id, order?.products]);
-    
+
     const [copiedField, setCopiedField] = useState<string | null>(null);
     const [revealedFields, setRevealedFields] = useState<Set<string>>(new Set());
     const isGuestMode = mode === 'guest';
@@ -308,7 +308,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
             if (!revealedFields.has(fieldName)) {
                 handleReveal(fieldName);
             }
-            
+
             await navigator.clipboard.writeText(text);
             setCopiedField(fieldName);
             showToast('Đã sao chép vào clipboard', 'success');
@@ -346,7 +346,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 
     const handleExportReceipt = () => {
         if (!order) return;
-        
+
         // Create receipt content
         const receiptContent = `
 ===========================================
@@ -445,13 +445,13 @@ Email: support@taikhoanxin.com
                             <span className={cx('info-label')}>Trạng thái đơn hàng:</span>
                             <span className={cx('status-badge', getStatusColor(order.status))}>
                                 {getStatusLabel(order.status)}
-                                {order.itemsStatusInfo && 
-                                 order.itemsStatusInfo.completed > 0 && 
-                                 order.itemsStatusInfo.processing > 0 && (
-                                    <span className={cx('status-detail')}>
-                                        {' '}({order.itemsStatusInfo.completed}/{order.itemsStatusInfo.total} đã xử lý)
-                                    </span>
-                                )}
+                                {order.itemsStatusInfo &&
+                                    order.itemsStatusInfo.completed > 0 &&
+                                    order.itemsStatusInfo.processing > 0 && (
+                                        <span className={cx('status-detail')}>
+                                            {' '}({order.itemsStatusInfo.completed}/{order.itemsStatusInfo.total} đã xử lý)
+                                        </span>
+                                    )}
                                 {warrantyProgress && warrantyProgress.total > 0 && (
                                     <span className={cx('status-detail', 'warranty-progress')}>
                                         {' '}({warrantyProgress.resolved}/{warrantyProgress.total} đã bảo hành)
@@ -529,82 +529,82 @@ Email: support@taikhoanxin.com
 
                         {/* Account Info - Show for items that have been processed (have account) */}
                         {product.itemStatus === 'completed' && product.accountEntries && product.accountEntries.length > 0 && (
-                                <div className={cx('account-info')}>
-                                    <div className={cx('account-title-row')}>
-                                        <div>
-                                            <h4 className={cx('account-title')}>
-                                                {product.accountDescription || 'Thông tin tài khoản'}
-                                            </h4>
-                                            <p className={cx('account-description')}>
-                                                Nhấn vào nội dung để copy nhanh thông tin đăng nhập
-                                            </p>
-                                        </div>
+                            <div className={cx('account-info')}>
+                                <div className={cx('account-title-row')}>
+                                    <div>
+                                        <h4 className={cx('account-title')}>
+                                            {product.accountDescription || 'Thông tin tài khoản'}
+                                        </h4>
+                                        <p className={cx('account-description')}>
+                                            Nhấn vào nội dung để copy nhanh thông tin đăng nhập
+                                        </p>
                                     </div>
-                                    {product.accountEntries.map((entry, index) => (
-                                        <div key={index} className={cx('account-item')}>
-                                            <div className={cx('account-field-single')}>
-                                                <button
-                                                    className={cx('copy-icon-button')}
-                                                    onClick={() => {
-                                                        handleCopy(entry, `entry-${product.id}-${index}`);
-                                                    }}
-                                                    title="Click để copy toàn bộ"
+                                </div>
+                                {product.accountEntries.map((entry, index) => (
+                                    <div key={index} className={cx('account-item')}>
+                                        <div className={cx('account-field-single')}>
+                                            <button
+                                                className={cx('copy-icon-button')}
+                                                onClick={() => {
+                                                    handleCopy(entry, `entry-${product.id}-${index}`);
+                                                }}
+                                                title="Click để copy toàn bộ"
+                                            >
+                                                <CopyIcon size={24} className={cx('copy-icon-main')} />
+                                            </button>
+                                            <div className={cx('account-credentials')}>
+                                                <span
+                                                    className={cx('credential-value', 'clickable', {
+                                                        'blurred': !revealedFields.has(`entry-${product.id}-${index}`)
+                                                    })}
+                                                    onClick={() => handleCopy(entry, `entry-${product.id}-${index}`)}
+                                                    title="Click để copy"
                                                 >
-                                                    <CopyIcon size={24} className={cx('copy-icon-main')} />
-                                                </button>
-                                                <div className={cx('account-credentials')}>
-                                                    <span 
-                                                        className={cx('credential-value', 'clickable', {
-                                                            'blurred': !revealedFields.has(`entry-${product.id}-${index}`)
-                                                        })}
-                                                        onClick={() => handleCopy(entry, `entry-${product.id}-${index}`)}
-                                                        title="Click để copy"
-                                                    >
-                                                        {entry}
-                                                    </span>
-                                                </div>
+                                                    {entry}
+                                                </span>
                                             </div>
                                         </div>
-                                    ))}
-
-                                    <div className={cx('copy-hint')}>
-                                        <span className={cx('hint-icon')}>ⓘ</span>
-                                        <span>Click vào text để copy.</span>
                                     </div>
+                                ))}
 
-                                    {/* Chỉ hiển thị note khi có value và đã có account được gán */}
-                                    {product.note && 
-                                     product.note.trim() && 
-                                     product.accountEntries && 
-                                     product.accountEntries.length > 0 && (
+                                <div className={cx('copy-hint')}>
+                                    <span className={cx('hint-icon')}>ⓘ</span>
+                                    <span>Click vào text để copy.</span>
+                                </div>
+
+                                {/* Chỉ hiển thị note khi có value và đã có account được gán */}
+                                {product.note &&
+                                    product.note.trim() &&
+                                    product.accountEntries &&
+                                    product.accountEntries.length > 0 && (
                                         <div className={cx('product-note')}>
                                             <AlertCircleIcon size={20} className={cx('note-icon')} />
                                             <span className={cx('note-text')}>{product.note}</span>
                                         </div>
                                     )}
-                                </div>
+                            </div>
                         )}
 
                         {/* Help Button - Chỉ hiển thị khi có CẢ text VÀ href và đã có account được gán */}
-                        {product.itemStatus === 'completed' && 
-                         product.help && 
-                         product.help.text && 
-                         product.help.text.trim() && 
-                         product.help.href && 
-                         product.help.href.trim() && 
-                         product.accountEntries && 
-                         product.accountEntries.length > 0 && (
-                            <div className={cx('help-button-wrapper')}>
-                                <a
-                                    href={product.help.href}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={cx('login-button')}
-                                >
-                                    {product.help.text}
-                                </a>
-                            </div>
-                        )}
+                        {product.itemStatus === 'completed' &&
+                            product.help &&
+                            product.help.text &&
+                            product.help.text.trim() &&
+                            product.help.href &&
+                            product.help.href.trim() &&
+                            product.accountEntries &&
+                            product.accountEntries.length > 0 && (
+                                <div className={cx('help-button-wrapper')}>
+                                    <a
+                                        href={product.help.href}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={cx('login-button')}
+                                    >
+                                        {product.help.text}
+                                    </a>
+                                </div>
+                            )}
                     </div>
                 ))}
             </div>
