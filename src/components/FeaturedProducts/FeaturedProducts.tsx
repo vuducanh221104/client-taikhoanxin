@@ -105,11 +105,11 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
 
     const sectionStyle = backgroundImage
         ? {
-              backgroundImage: `url(${backgroundImage})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-          }
+            backgroundImage: `url(${backgroundImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+        }
         : {};
 
     return (
@@ -143,8 +143,8 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
                 {/* Products Grid */}
                 <div className={cx('products-grid')}>
                     {isLoading ? (
-                        <ProductListSkeleton 
-                            count={skeletonCount} 
+                        <ProductListSkeleton
+                            count={skeletonCount}
                             variant={isDarkBackground ? 'dark' : 'light'}
                         />
                     ) : displayProducts.length > 0 ? (
@@ -156,7 +156,6 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
                                 isFavorite={isProductInWishlist(product.id)}
                                 onAddToCart={onAddToCart ? () => onAddToCart(product) : undefined}
                                 onToggleFavorite={handleToggleFavorite}
-                                index={index}
                             />
                         ))
                     ) : (

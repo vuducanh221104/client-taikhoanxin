@@ -5,17 +5,16 @@
     color: var(--text-color-white);
     margin-top: 60px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: var(--safe-area-bottom);
 }
 
 .footer-container {
     // Sử dụng container từ globals.scss
     // Có thể override nếu cần custom cho footer
-    @include container-base(
-        var(--container-max-width-pc),
+    @include container-base(var(--container-max-width-pc),
         var(--container-max-width-large),
         var(--container-padding-pc),
-        var(--container-padding-large)
-    );
+        var(--container-padding-large));
 }
 
 .footer-content {
@@ -220,7 +219,7 @@
     &:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
-        }
+    }
 
     img {
         width: 100%;
@@ -287,7 +286,7 @@
 @media (max-width: 1200px) {
     .footer-content {
         grid-template-columns: 1.5fr 1fr 1fr 1fr;
-        
+
         .footer-column:nth-child(5) {
             grid-column: 1 / -1;
             margin-top: 8px;
@@ -436,9 +435,9 @@
             svg {
                 width: 16px;
                 height: 16px;
+            }
         }
     }
-}
 
     .payment-methods {
         gap: 8px;
