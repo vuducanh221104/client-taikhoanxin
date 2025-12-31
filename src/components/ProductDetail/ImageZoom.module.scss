@@ -74,14 +74,21 @@
 // Mobile: Touch zoom
 @media (max-width: 999px) {
     .image-zoom-container {
-        cursor: pointer;
+        cursor: default;
 
         .zoom-image {
-            transition: transform 0.2s ease;
+            transition: none;
         }
 
+        /* 
         &:active .zoom-image {
             transform: scale(1.1);
+        }
+        */
+
+        // Disable inline style transform on mobile (from JS state)
+        .image-wrapper {
+            transform: none !important;
         }
     }
 }

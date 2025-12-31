@@ -25,8 +25,8 @@ interface CartDropdownProps {
     onMouseLeave?: () => void;
 }
 
-const CartDropdown: React.FC<CartDropdownProps> = ({ 
-    isOpen: controlledIsOpen, 
+const CartDropdown: React.FC<CartDropdownProps> = ({
+    isOpen: controlledIsOpen,
     setIsOpen: controlledSetIsOpen,
     onOverlayChange,
     onMouseEnter: onMouseEnterProp,
@@ -38,24 +38,24 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
     const reduxCart = useSelector((state: RootState) => state.cart);
     const { mutate: globalMutate } = useSWRConfig();
     const { showError } = useToast();
-    
+
     // Fetch cart from API if user is logged in
     const { data: cartData } = useCart();
-    
+
     // Track pending quantity updates - store oldCartData from first click and expected quantity
     const pendingUpdatesRef = React.useRef<Map<string, { oldCartData: any; productId: string; quantity: number; expectedQuantity: number }>>(new Map());
-    
+
     // API call function for quantity update
     const updateQuantityAPI = React.useCallback(async (productId: string, quantity: number) => {
         if (!currentUser) return;
-        
+
         const pendingUpdate = pendingUpdatesRef.current.get(productId);
         const oldCartData = pendingUpdate?.oldCartData;
         const expectedQuantity = pendingUpdate?.expectedQuantity;
-        
+
         try {
             const response = await updateCartItemAPI(productId, quantity);
-            
+
             // Only update cache if this response is for the latest expected quantity
             // This prevents old API responses from overwriting newer optimistic updates
             const currentPendingUpdate = pendingUpdatesRef.current.get(productId);
@@ -80,7 +80,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                 }
                 const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra. Vui lòng thử lại!';
                 showError(errorMessage);
-                
+
                 // Remove from pending updates only if this is still the latest
                 if (currentPendingUpdate.expectedQuantity === expectedQuantity) {
                     pendingUpdatesRef.current.delete(productId);
@@ -88,10 +88,10 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
             }
         }
     }, [currentUser, globalMutate, showError]);
-    
+
     // Debounced API call for quantity update (200ms delay)
     const debouncedUpdateQuantity = useDebounceCallback(updateQuantityAPI, 600);
-    
+
     // Use API cart if available, otherwise use Redux cart (for backward compatibility)
     const cart = React.useMemo(() => {
         if (currentUser && cartData?.data) {
@@ -102,11 +102,11 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                 const product = item.productId || item.product_id;
                 const productId = product?._id || product?.id || '';
                 const productName = product?.name || '';
-                
+
                 // Use unitPrice from cart item (already calculated as priceDiscount if available)
                 // This is the final price that was stored when adding to cart
                 let price = item.unitPrice || 0;
-                
+
                 // If unitPrice is not available, calculate from product.price
                 if (!price && product?.price) {
                     if (Array.isArray(product.price)) {
@@ -124,7 +124,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                             : product.price.priceOriginal || product.price.original || 0;
                     }
                 }
-                
+
                 // Calculate oldPrice: if price is priceDiscount, oldPrice = priceOriginal
                 let oldPrice: number | undefined = undefined;
                 if (product?.price) {
@@ -139,20 +139,20 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                         oldPrice = priceOriginal;
                     }
                 }
-                
+
                 const image = product?.image || [];
                 const imageSrc = Array.isArray(image) && image.length > 0 ? image[0] : '';
                 const slug = product?.slug || '';
                 const min = product?.min || 1;
                 const max = product?.max || 100;
                 const stock = product?.stock || 0;
-                
+
                 // Always use slug for product link, never use id
                 const productHref = slug ? `/product/${slug}` : `#`;
-                
+
                 // Get options from cart item
                 const options = item.options || [];
-                
+
                 return {
                     id: productId,
                     productName,
@@ -168,7 +168,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                     options: Array.isArray(options) ? options : [], // Ensure options is an array
                 };
             });
-            
+
             return {
                 products: mappedProducts,
                 // totalPrice is the final price after discount code (already calculated from unitPrice which is priceDiscount if available)
@@ -180,7 +180,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
         }
         return reduxCart;
     }, [cartData, currentUser, reduxCart]);
-    
+
     const [internalIsOpen, setInternalIsOpen] = useState(false);
     const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
     const setIsOpen = controlledSetIsOpen || setInternalIsOpen;
@@ -202,7 +202,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
     // Detect mobile
     useEffect(() => {
         if (!mounted) return;
-        
+
         const checkMobile = () => {
             setIsMobile(window.innerWidth <= 999);
         };
@@ -213,10 +213,10 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
 
     const handleDropdownMouseEnter = () => {
         if (isMobile) return;
-        
+
         // Call parent handler first
         onMouseEnterProp?.();
-        
+
         if (closeTimeoutRef.current) {
             clearTimeout(closeTimeoutRef.current);
             closeTimeoutRef.current = null;
@@ -225,10 +225,10 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
 
     const handleDropdownMouseLeave = () => {
         if (isMobile) return;
-        
+
         // Call parent handler
         onMouseLeaveProp?.();
-        
+
         // Also handle internal close if needed
         if (controlledIsOpen === undefined) {
             closeTimeoutRef.current = setTimeout(() => {
@@ -238,7 +238,8 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
         }
     };
 
-    // Close dropdown when scrolling the page (mobile)
+    // Close dropdown when scrolling the page (mobile) - Disabled to fix issue where scrolling inside dropdown closes it
+    /*
     useEffect(() => {
         if (!mounted || !isOpen || !isMobile) return;
 
@@ -255,6 +256,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
             window.removeEventListener('scroll', handleScroll);
         };
     }, [isOpen, isMobile, onOverlayChange, setIsOpen, mounted]);
+    */
 
     // Cleanup timeouts
     useEffect(() => {
@@ -301,26 +303,26 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
             if (isOpeningRef.current) {
                 return;
             }
-            
+
             // Nếu đang trong quá trình navigate hoặc vừa đóng, bỏ qua
             if (isNavigatingRef.current || justClosedRef.current) {
                 return;
             }
-            
+
             const target = event.target as HTMLElement;
-            
+
             // Kiểm tra xem có phải click vào overlay không
             if (target.hasAttribute('data-cart-overlay')) {
                 // Overlay sẽ tự xử lý trong onClick handler
                 return;
             }
-            
+
             // Kiểm tra xem có phải click vào button không
             const buttonElement = document.querySelector('[data-cart-button]');
             if (buttonElement && buttonElement.contains(target)) {
                 return; // Không đóng nếu click vào button
             }
-            
+
             // Kiểm tra xem có click vào dropdown không
             if (dropdownRef.current && dropdownRef.current.contains(target)) {
                 // Kiểm tra nếu click vào close button
@@ -337,7 +339,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                 }
                 return; // Không đóng nếu click vào dropdown
             }
-            
+
             // Đóng dropdown nếu click ra ngoài (backup handler)
             setIsOpen(false);
             onOverlayChange?.(false);
@@ -374,7 +376,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
     const handleRemove = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
         e.preventDefault();
-        
+
         if (currentUser) {
             // Optimistic update - remove item immediately from UI
             const oldCartData = cartData;
@@ -391,10 +393,10 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                     totalPrice: ((cartData?.data?.totalDiscountBefore || 0) - ((cart.products.find(p => p.id === id)?.price || 0) * (cart.products.find(p => p.id === id)?.quantity || 0))) - (cartData?.data?.totalDiscount || 0),
                 }
             };
-            
+
             // Update cache optimistically (no revalidate, just update data)
             globalMutate('/api/v1/cart', optimisticCart, { revalidate: false });
-            
+
             try {
                 const response = await removeFromCartAPI(id);
                 // Update cache with actual response data (no revalidate)
@@ -415,36 +417,36 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
     const handleIncrease = (e: React.MouseEvent, id: string, currentQuantity: number) => {
         e.stopPropagation();
         e.preventDefault();
-        
+
         // Find product in cart to check max
         const product = cart.products.find(p => p.id === id);
         const max = (product as any)?.max || 100;
         const stock = (product as any)?.stock || 0;
         const newQuantity = currentQuantity + 1;
-        
+
         // Client-side validation
         if (newQuantity > max) {
             showError(`Số lượng tối đa là ${max}`);
             return;
         }
-        
+
         if (newQuantity > stock) {
             showError(`Sản phẩm chỉ còn ${stock} sản phẩm trong kho`);
             return;
         }
-        
+
         if (currentUser) {
             // Get current cart data (may be from previous optimistic update)
             const currentCartData = cartData;
             const pendingUpdate = pendingUpdatesRef.current.get(id);
-            
+
             // Get oldCartData only on first click (if not already saved)
             const oldCartData = pendingUpdate?.oldCartData || cartData;
-            
+
             // Get current quantity from pending update if exists, otherwise use currentQuantity from props
             // This ensures we use the latest quantity from previous optimistic update
             const actualCurrentQuantity = pendingUpdate?.quantity || currentQuantity;
-            
+
             // Save oldCartData only on first click (if not already saved)
             if (!pendingUpdate) {
                 pendingUpdatesRef.current.set(id, { oldCartData: cartData, productId: id, quantity: actualCurrentQuantity, expectedQuantity: newQuantity });
@@ -452,11 +454,11 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                 // Update with new expected quantity
                 pendingUpdatesRef.current.set(id, { ...pendingUpdate, expectedQuantity: newQuantity });
             }
-            
+
             // Calculate price difference based on actual current quantity
             const priceDiff = ((product as any)?.price || 0) * (newQuantity - actualCurrentQuantity);
             const quantityDiff = newQuantity - actualCurrentQuantity;
-            
+
             // Optimistic update - update UI immediately using current cart data
             const optimisticCart = {
                 ...currentCartData,
@@ -474,13 +476,13 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                     totalPrice: ((currentCartData?.data?.totalDiscountBefore || 0) + priceDiff) - (currentCartData?.data?.totalDiscount || 0),
                 }
             };
-            
+
             // Update cache optimistically (no revalidate, just update data)
             globalMutate('/api/v1/cart', optimisticCart, { revalidate: false });
-            
+
             // Update pending update with new quantity and expected quantity
             pendingUpdatesRef.current.set(id, { oldCartData, productId: id, quantity: newQuantity, expectedQuantity: newQuantity });
-            
+
             // Debounced API call (200ms delay)
             debouncedUpdateQuantity(id, newQuantity);
         } else {
@@ -491,30 +493,30 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
     const handleDecrease = (e: React.MouseEvent, id: string, currentQuantity: number) => {
         e.stopPropagation();
         e.preventDefault();
-        
+
         // Find product in cart to check min
         const product = cart.products.find(p => p.id === id);
         const min = (product as any)?.min || 1;
-        
+
         if (currentQuantity <= min) {
             showError(`Số lượng tối thiểu là ${min}`);
             return;
         }
-        
+
         const newQuantity = currentQuantity - 1;
-        
+
         if (currentUser) {
             // Get current cart data (may be from previous optimistic update)
             const currentCartData = cartData;
             const pendingUpdate = pendingUpdatesRef.current.get(id);
-            
+
             // Get oldCartData only on first click (if not already saved)
             const oldCartData = pendingUpdate?.oldCartData || cartData;
-            
+
             // Get current quantity from pending update if exists, otherwise use currentQuantity from props
             // This ensures we use the latest quantity from previous optimistic update
             const actualCurrentQuantity = pendingUpdate?.quantity || currentQuantity;
-            
+
             // Save oldCartData only on first click (if not already saved)
             if (!pendingUpdate) {
                 pendingUpdatesRef.current.set(id, { oldCartData: cartData, productId: id, quantity: actualCurrentQuantity, expectedQuantity: newQuantity });
@@ -522,11 +524,11 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                 // Update with new expected quantity
                 pendingUpdatesRef.current.set(id, { ...pendingUpdate, expectedQuantity: newQuantity });
             }
-            
+
             // Calculate price difference based on actual current quantity
             const priceDiff = ((product as any)?.price || 0) * (newQuantity - actualCurrentQuantity);
             const quantityDiff = newQuantity - actualCurrentQuantity;
-            
+
             // Optimistic update - update UI immediately using current cart data
             const optimisticCart = {
                 ...currentCartData,
@@ -544,13 +546,13 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                     totalPrice: ((currentCartData?.data?.totalDiscountBefore || 0) + priceDiff) - (currentCartData?.data?.totalDiscount || 0),
                 }
             };
-            
+
             // Update cache optimistically (no revalidate, just update data)
             globalMutate('/api/v1/cart', optimisticCart, { revalidate: false });
-            
+
             // Update pending update with new quantity and expected quantity
             pendingUpdatesRef.current.set(id, { oldCartData, productId: id, quantity: newQuantity, expectedQuantity: newQuantity });
-            
+
             // Debounced API call (200ms delay)
             debouncedUpdateQuantity(id, newQuantity);
         } else {
@@ -567,7 +569,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
     // Disable body scroll when dropdown is open on mobile
     useEffect(() => {
         if (!mounted) return;
-        
+
         if (isOpen && isMobile) {
             document.body.style.overflow = 'hidden';
         } else {
@@ -587,7 +589,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
             ref={dropdownRef}
         >
             {mounted && isOpen && isMobile && (
-                <div 
+                <div
                     className={cx('cart-dropdown-overlay')}
                     onClick={(e) => {
                         e.stopPropagation();
@@ -673,7 +675,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                                         </div>
                                         <div className={cx('cart-item-content')}>
                                             <div className={cx('cart-item-header')}>
-                                                <Link 
+                                                <Link
                                                     href={product.href || '#'}
                                                     className={cx('cart-item-name-link')}
                                                     onClick={(e) => {
@@ -821,8 +823,8 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                             <p className={cx('cart-empty-text')}>
                                 Chưa có sản phẩm trong giỏ hàng
                             </p>
-                            <Link 
-                                href="/products" 
+                            <Link
+                                href="/products"
                                 className={cx('cart-return-button')}
                                 onClick={(e) => {
                                     e.stopPropagation();
