@@ -38,6 +38,7 @@
         "recharts": "^3.4.1",
         "redux": "^5.0.1",
         "redux-persist": "^6.0.0",
+        "rehype-raw": "^7.0.0",
         "remark-gfm": "^4.0.1",
         "swr": "^2.2.5",
         "typescript": "^5.6.3",

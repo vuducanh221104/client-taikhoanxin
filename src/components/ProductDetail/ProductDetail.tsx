@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import classNames from 'classnames/bind';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import styles from './ProductDetail.module.scss';
 import ProductImageGallery from './ProductImageGallery';
 import ProductInfo from './ProductInfo';
@@ -420,7 +421,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
                         {mappedProduct.description && (
                             <div className={cx('product-detail-content')}>
                                 <div className={cx('section-description', 'markdown-body')}>
-                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    <ReactMarkdown
+                                        remarkPlugins={[remarkGfm]}
+                                        rehypePlugins={[rehypeRaw]}
+                                    >
                                         {processMarkdownContent(mappedProduct.description)}
                                     </ReactMarkdown>
                                 </div>
