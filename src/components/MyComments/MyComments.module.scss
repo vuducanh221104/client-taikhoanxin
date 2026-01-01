@@ -49,7 +49,7 @@
     flex-direction: column;
     gap: 8px;
 
-    > span {
+    >span {
         font-weight: 600;
         color: var(--text-color);
         font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -139,7 +139,7 @@
     background: #fff;
 }
 
-.filter-count + .toggle-icon {
+.filter-count+.toggle-icon {
     margin-left: 4px;
 }
 
@@ -152,6 +152,7 @@
         opacity: 0;
         transform: translateY(-6px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -233,7 +234,7 @@
     flex-wrap: wrap;
     gap: 12px;
 
-    > span {
+    >span {
         font-size: 14px;
         font-weight: 700;
         color: var(--text-color);
@@ -370,6 +371,7 @@
         opacity: 0;
         transform: translateY(-8px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -657,7 +659,7 @@
     }
 
     .filter-section-title {
-        > span {
+        >span {
             font-size: 13px;
         }
     }
@@ -695,22 +697,29 @@
     }
 
     .comment-card-mobile {
-        background: var(--bg-color);
+        background: #fff;
         border: 1px solid var(--border-color-light);
-        border-radius: 8px;
+        border-radius: 16px;
         padding: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
     }
 
     .comment-card-header {
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 12px;
+        align-items: center;
+        margin-bottom: 0;
         gap: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border-color-lighter);
     }
 
     .comment-card-time {
-        font-size: 12px;
+        font-size: 13px;
+        font-weight: 500;
         color: var(--text-color-secondary);
         font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
@@ -719,17 +728,25 @@
         font-size: 14px;
         color: var(--text-color);
         line-height: 1.6;
-        margin-bottom: 8px;
+        margin: 0;
         font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         word-break: break-word;
     }
 
     .comment-card-product {
-        font-size: 12px;
-        color: var(--text-color-secondary);
-        font-style: italic;
-        margin-top: 8px;
+        font-size: 13px;
+        color: var(--primary-color);
+        background: var(--bg-color-secondary);
+        padding: 8px 12px;
+        border-radius: 8px;
+        margin-top: 4px;
         font-family: var(--font-harmony-os), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-style: normal;
+        font-weight: 500;
+    }
+
+    .reply-badge {
+        font-size: 11px;
+        padding: 2px 8px;
     }
 }
-

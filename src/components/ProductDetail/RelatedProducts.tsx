@@ -30,7 +30,7 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({ product }) => {
      * 1. If product has relatedProduct field in database → Call POST /api/v1/products/by-ids
      * 2. If no relatedProduct → Call GET /api/v1/products/:slug/related?limit=8 (advanced related)
      */
-    
+
     // Detect mobile
     useEffect(() => {
         const checkMobile = () => {
@@ -46,7 +46,7 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({ product }) => {
         if (!product?.relatedProduct || product.relatedProduct.length === 0) {
             return [];
         }
-        
+
         // Convert to string array (handle both string[] and object[] formats)
         return product.relatedProduct.map((item: string | { _id?: string; $oid?: string }) => {
             if (typeof item === 'string') {
@@ -59,10 +59,10 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({ product }) => {
             return String(item);
         }).filter((id: string) => id && id.trim() !== '');
     }, [product?.relatedProduct]);
-    
+
     // Check if product has relatedProduct field with values (PRIORITY)
     const hasRelatedProductIds = relatedProductIds.length > 0;
-    
+
 
     // Fetch products by IDs if relatedProduct exists (PRIORITY: relatedProduct from database)
     const productsByIdsQuery = useProductsByIds(
@@ -118,6 +118,37 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({ product }) => {
     const canGoPrev = currentIndex > 0;
     const canGoNext = currentIndex < maxIndex;
 
+    // Touch handling state
+    const [touchStart, setTouchStart] = useState<number | null>(null);
+    const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+    // Min swipe distance (in px)
+    const minSwipeDistance = 50;
+
+    const onTouchStart = (e: React.TouchEvent) => {
+        setTouchEnd(null);
+        setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const onTouchMove = (e: React.TouchEvent) => {
+        setTouchEnd(e.targetTouches[0].clientX);
+    };
+
+    const onTouchEnd = () => {
+        if (!touchStart || !touchEnd) return;
+
+        const distance = touchStart - touchEnd;
+        const isLeftSwipe = distance > minSwipeDistance;
+        const isRightSwipe = distance < -minSwipeDistance;
+
+        if (isLeftSwipe && canGoNext) {
+            handleNext();
+        }
+        if (isRightSwipe && canGoPrev) {
+            handlePrev();
+        }
+    };
+
     // Don't render if no product data
     if (!product) {
         return null;
@@ -140,12 +171,15 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({ product }) => {
     return (
         <ProductSectionLayout title="Sản phẩm liên quan">
             <div className={cx('related-slider-wrapper')}>
-                <div 
+                <div
                     ref={sliderRef}
                     className={cx('related-slider')}
                     style={{
                         transform: `translateX(-${currentIndex * 100}%)`,
                     }}
+                    onTouchStart={onTouchStart}
+                    onTouchMove={onTouchMove}
+                    onTouchEnd={onTouchEnd}
                 >
                     {slides.map((slideProducts, slideIndex) => (
                         <div key={slideIndex} className={cx('slider-slide')}>
@@ -169,7 +203,7 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({ product }) => {
                         </div>
                     ))}
                 </div>
-                
+
                 {/* Navigation Buttons */}
                 {slides.length > 1 && (
                     <div className={cx('slider-navigation')}>

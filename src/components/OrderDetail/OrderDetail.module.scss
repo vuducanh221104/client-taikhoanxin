@@ -221,20 +221,16 @@
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    padding: 1.75rem;
-    background: linear-gradient(135deg, #f0f7ff 0%, #fff 100%);
-    border-radius: 18px;
-    border: 1px solid #dbeafe;
-    box-shadow: 0 12px 30px rgba(59, 130, 246, 0.08);
+    padding: 1.5rem;
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .product-main {
     display: flex;
     gap: 1.5rem;
-    background: #fff;
-    border-radius: 16px;
-    padding: 1.25rem;
-    border: 1px solid #e0edff;
 }
 
 .product-image-wrapper {
@@ -411,37 +407,37 @@
     font-weight: 600;
     display: inline-block;
     font-size: 0.95rem;
-    
+
     &.clickable {
         cursor: pointer;
         transition: all 0.2s;
         padding: 0.125rem 0.25rem;
         border-radius: 3px;
-        
+
         &.blurred {
             filter: blur(5px);
             user-select: none;
-            
+
             &:hover {
                 filter: blur(3px);
             }
         }
-        
+
         &.copied {
             color: #22c55e;
             background: #d1fae5;
-            
+
             &:hover {
                 background: #bbf7d0;
                 color: #16a34a;
             }
         }
-        
+
         &:not(.blurred):not(.copied):hover {
             background: #e5e7eb;
             color: #3b82f6;
         }
-        
+
         &:active {
             background: #d1d5db;
         }
@@ -524,7 +520,7 @@
 // Account item for multiple accounts
 .account-item {
     margin-bottom: 1rem;
-    
+
     &:last-of-type {
         margin-bottom: 0;
     }

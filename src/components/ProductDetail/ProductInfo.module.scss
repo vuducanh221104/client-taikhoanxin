@@ -1165,9 +1165,9 @@
     }
 
     @media (max-width: 480px) {
-        padding: 20px 16px;
+        padding: 16px 12px;
         border-radius: 14px;
-        width: 92%;
+        width: 90%;
     }
 }
 
@@ -1184,15 +1184,21 @@
     }
 
     @media (max-width: 480px) {
-        font-size: 18px;
-        margin: 0 0 12px;
+        font-size: 16px;
+        margin: 0 0 4px;
     }
 }
 
 .tos-modal-message {
-    text-align: center;
+    text-align: left;
     margin-bottom: 24px;
     line-height: 1.6;
+    color: #ea5455;
+    font-weight: 600;
+
+    div {
+        color: #ea5455;
+    }
 
     p {
         margin: 8px 0;
@@ -1206,8 +1212,8 @@
         }
 
         @media (max-width: 480px) {
-            font-size: 13px;
-            margin: 5px 0;
+            font-size: 12px;
+            margin: 4px 0;
         }
     }
 
@@ -1217,7 +1223,8 @@
     }
 
     @media (max-width: 480px) {
-        margin-bottom: 14px;
+        margin-bottom: 10px;
+        line-height: 1.4;
     }
 }
 
@@ -1254,9 +1261,9 @@
     }
 
     @media (max-width: 480px) {
-        font-size: 11px;
+        font-size: 10px;
         gap: 6px;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
     }
 }
 
@@ -1285,6 +1292,8 @@
 
     @media (max-width: 480px) {
         gap: 8px;
+        width: 100%; // Ensure full width usage on mobile
+        margin-top: 6px;
     }
 }
 
@@ -1298,21 +1307,23 @@
     border: none;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    white-space: nowrap; // Prevent text wrapping
 
     @media (max-width: 999px) {
-        min-width: 80px;
-        height: 34px;
-        font-size: 12px;
+        min-width: 0; // Remove strict min-width to allow flex to work better
+        flex: 1; // Make buttons share width equally
+        height: 38px;
+        font-size: 13px;
         border-radius: 8px;
-        padding: 0 12px;
+        padding: 0 8px;
     }
 
     @media (max-width: 480px) {
-        min-width: 70px;
-        height: 32px;
-        font-size: 11px;
-        border-radius: 6px;
-        padding: 0 10px;
+        // min-width: 70px; // Handled by flex: 1
+        height: 36px; // Larger touch target
+        font-size: 12px;
+        border-radius: 8px;
+        padding: 0 4px;
     }
 }
 
