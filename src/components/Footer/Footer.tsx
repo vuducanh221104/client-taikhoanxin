@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import classNames from 'classnames/bind';
 import styles from './Footer.module.scss';
-import { MailIcon, PhoneIcon, ClockIcon, FacebookIcon, InstagramIcon, YoutubeIcon, TelegramIcon } from '@/components/Icons';
+import { MailIcon, PhoneIcon, ClockIcon, FacebookIcon, InstagramIcon, YoutubeIcon, TelegramIcon, ZaloIcon } from '@/components/Icons';
 
 const cx = classNames.bind(styles);
 
@@ -26,7 +26,7 @@ const Footer: React.FC = () => {
                             />
                         </Link>
                         <p className={cx('footer-description')}>
-                            Tài Khoản Xịn - Nền tảng cung cấp tài khoản số uy tín hàng đầu Việt Nam. 
+                            Tài Khoản Xịn - Nền tảng cung cấp tài khoản số uy tín hàng đầu Việt Nam.
                             Cam kết chất lượng, giá cả hợp lý và dịch vụ chuyên nghiệp.
                         </p>
                         {/* Social Media */}
@@ -147,6 +147,12 @@ const Footer: React.FC = () => {
                                 <span>Hotline: 0377775528</span>
                             </li>
                             <li>
+                                <span className={cx('contact-icon', 'zalo')}>
+                                    <ZaloIcon />
+                                </span>
+                                <span>Zalo: 0377775528</span>
+                            </li>
+                            <li>
                                 <span className={cx('contact-icon', 'clock')}>
                                     <ClockIcon />
                                 </span>
@@ -166,10 +172,10 @@ const Footer: React.FC = () => {
                     <div className={cx('footer-payment-section')}>
                         <div className={cx('payment-methods')}>
                             <div className={cx('payment-method')} title="VNPay">
-                                <Image 
-                                    src="/payment/vnpay.png" 
-                                    alt="VNPay" 
-                                    width={48} 
+                                <Image
+                                    src="/payment/vnpay.png"
+                                    alt="VNPay"
+                                    width={48}
                                     height={32}
                                     onError={(e) => {
                                         (e.target as HTMLImageElement).style.display = 'none';
@@ -178,10 +184,10 @@ const Footer: React.FC = () => {
                                 />
                             </div>
                             <div className={cx('payment-method')} title="Momo">
-                                <Image 
-                                    src="/payment/momo.png" 
-                                    alt="Momo" 
-                                    width={48} 
+                                <Image
+                                    src="/payment/momo.png"
+                                    alt="Momo"
+                                    width={48}
                                     height={32}
                                     onError={(e) => {
                                         (e.target as HTMLImageElement).style.display = 'none';
@@ -190,10 +196,10 @@ const Footer: React.FC = () => {
                                 />
                             </div>
                             <div className={cx('payment-method')} title="ZaloPay">
-                                <Image 
-                                    src="/payment/zalopay.png" 
-                                    alt="ZaloPay" 
-                                    width={48} 
+                                <Image
+                                    src="/payment/zalopay.png"
+                                    alt="ZaloPay"
+                                    width={48}
                                     height={32}
                                     onError={(e) => {
                                         (e.target as HTMLImageElement).style.display = 'none';
@@ -202,10 +208,10 @@ const Footer: React.FC = () => {
                                 />
                             </div>
                             <div className={cx('payment-method')} title="Visa">
-                                <Image 
-                                    src="/payment/visa.png" 
-                                    alt="Visa" 
-                                    width={48} 
+                                <Image
+                                    src="/payment/visa.png"
+                                    alt="Visa"
+                                    width={48}
                                     height={32}
                                     onError={(e) => {
                                         (e.target as HTMLImageElement).style.display = 'none';
@@ -214,10 +220,10 @@ const Footer: React.FC = () => {
                                 />
                             </div>
                             <div className={cx('payment-method')} title="Mastercard">
-                                <Image 
-                                    src="/payment/mastercard.png" 
-                                    alt="Mastercard" 
-                                    width={48} 
+                                <Image
+                                    src="/payment/mastercard.png"
+                                    alt="Mastercard"
+                                    width={48}
                                     height={32}
                                     onError={(e) => {
                                         (e.target as HTMLImageElement).style.display = 'none';
@@ -226,10 +232,10 @@ const Footer: React.FC = () => {
                                 />
                             </div>
                             <div className={cx('payment-method')} title="JCB">
-                                <Image 
-                                    src="/payment/jcb.png" 
-                                    alt="JCB" 
-                                    width={48} 
+                                <Image
+                                    src="/payment/jcb.png"
+                                    alt="JCB"
+                                    width={48}
                                     height={32}
                                     onError={(e) => {
                                         (e.target as HTMLImageElement).style.display = 'none';
