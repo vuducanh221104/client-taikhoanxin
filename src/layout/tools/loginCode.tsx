@@ -48,7 +48,7 @@ export default function LoginCodeLayout() {
 
         try {
             await new Promise((resolve) => setTimeout(resolve, 1500));
-            showSuccess('Mã đăng nhập đã được gửi đến email của bạn!');
+            showSuccess('Mã đăng nhập đã được gửi đến email của bạn! Nếu không nhận được, vui lòng kiểm tra thư spam.');
             setEmail('');
             setOrderId('');
             setMethod('email');

@@ -63,6 +63,9 @@ const WishlistLayout: React.FC = () => {
             imageSrc: item.imageSrc || '',
             imageAlt: item.imageAlt || item.productName,
             href: item.href || `/product/${item.productId}`,
+            stock: (item as any).stock,
+            min: (item as any).min,
+            max: (item as any).max,
         }));
         showSuccess(`Đã thêm "${item.productName}" vào giỏ hàng`);
     };
@@ -129,7 +132,7 @@ const WishlistLayout: React.FC = () => {
                             title="Chưa có sản phẩm yêu thích"
                             description="Hãy thêm các sản phẩm bạn yêu thích vào danh sách này để dễ dàng tìm lại sau."
                             actionLabel="Khám phá sản phẩm"
-                            actionHref="/products"
+                            actionHref="/"
                         />
                     </div>
                 ) : null}

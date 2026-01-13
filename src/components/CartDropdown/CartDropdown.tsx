@@ -111,32 +111,60 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                 if (!price && product?.price) {
                     if (Array.isArray(product.price)) {
                         const priceItem = product.price[0];
+                        const priceOriginal = priceItem?.priceOriginal || priceItem?.original || 0;
                         const discount = priceItem?.discount;
-                        // Use priceDiscount if available, otherwise use priceOriginal
-                        price = discount?.priceDiscount !== undefined && discount.priceDiscount !== null
+                        
+                        // Only use priceDiscount if it's valid (> 0 and < priceOriginal)
+                        const hasValidDiscount = discount?.priceDiscount !== undefined &&
+                            discount.priceDiscount !== null &&
+                            discount.priceDiscount > 0 &&
+                            discount.priceDiscount < priceOriginal;
+                        
+                        price = hasValidDiscount
                             ? discount.priceDiscount
-                            : priceItem?.priceOriginal || priceItem?.original || 0;
+                            : priceOriginal;
                     } else if (typeof product.price === 'object') {
+                        const priceOriginal = product.price.priceOriginal || product.price.original || 0;
                         const discount = product.price.discount;
-                        // Use priceDiscount if available, otherwise use priceOriginal
-                        price = discount?.priceDiscount !== undefined && discount.priceDiscount !== null
+                        
+                        // Only use priceDiscount if it's valid (> 0 and < priceOriginal)
+                        const hasValidDiscount = discount?.priceDiscount !== undefined &&
+                            discount.priceDiscount !== null &&
+                            discount.priceDiscount > 0 &&
+                            discount.priceDiscount < priceOriginal;
+                        
+                        price = hasValidDiscount
                             ? discount.priceDiscount
-                            : product.price.priceOriginal || product.price.original || 0;
+                            : priceOriginal;
                     }
                 }
 
-                // Calculate oldPrice: if price is priceDiscount, oldPrice = priceOriginal
+                // Calculate oldPrice: only show if there's a valid discount
                 let oldPrice: number | undefined = undefined;
                 if (product?.price) {
                     let priceOriginal = 0;
                     if (Array.isArray(product.price)) {
                         priceOriginal = product.price[0]?.priceOriginal || product.price[0]?.original || 0;
+                        const discount = product.price[0]?.discount;
+                        // Only show oldPrice if there's a valid discount
+                        const hasValidDiscount = discount?.priceDiscount !== undefined &&
+                            discount.priceDiscount !== null &&
+                            discount.priceDiscount > 0 &&
+                            discount.priceDiscount < priceOriginal;
+                        if (hasValidDiscount && priceOriginal > 0 && price !== priceOriginal) {
+                            oldPrice = priceOriginal;
+                        }
                     } else if (typeof product.price === 'object') {
                         priceOriginal = product.price.priceOriginal || product.price.original || 0;
-                    }
-                    // If current price is different from priceOriginal, show oldPrice
-                    if (priceOriginal > 0 && price !== priceOriginal) {
-                        oldPrice = priceOriginal;
+                        const discount = product.price.discount;
+                        // Only show oldPrice if there's a valid discount
+                        const hasValidDiscount = discount?.priceDiscount !== undefined &&
+                            discount.priceDiscount !== null &&
+                            discount.priceDiscount > 0 &&
+                            discount.priceDiscount < priceOriginal;
+                        if (hasValidDiscount && priceOriginal > 0 && price !== priceOriginal) {
+                            oldPrice = priceOriginal;
+                        }
                     }
                 }
 
@@ -759,7 +787,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                             {/* Cart Summary */}
                             <div className={cx('cart-summary')}>
                                 <div className={cx('cart-subtotal')}>
-                                    <span className={cx('cart-subtotal-label')}>Tổng số phụ:</span>
+                                    <span className={cx('cart-subtotal-label')}>Tổng tiền:</span>
                                     <span className={cx('cart-subtotal-value')}>
                                         {formatPrice(cart.totalPrice)} ₫
                                     </span>
@@ -824,7 +852,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                                 Chưa có sản phẩm trong giỏ hàng
                             </p>
                             <Link
-                                href="/products"
+                                href="/"
                                 className={cx('cart-return-button')}
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -839,7 +867,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                                     const delay = isMobile ? 250 : 100;
                                     setTimeout(() => {
                                         isNavigatingRef.current = false;
-                                        router.push('/products');
+                                        router.push('/');
                                     }, delay);
                                 }}
                             >

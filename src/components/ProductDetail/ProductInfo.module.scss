@@ -645,11 +645,16 @@
         list-style: none;
         padding: 0;
         margin: 0;
+        line-height: 2rem;
+        @media (max-width: 999px) {
+            font-size: 12px;
+            line-height: 1.5rem;
+        }
 
         li {
             font-size: 14px;
             color: var(--text-color-secondary);
-            line-height: 1.6;
+           
 
             @media (max-width: 999px) {
                 font-size: 12px;

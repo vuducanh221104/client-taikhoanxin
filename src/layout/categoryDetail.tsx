@@ -5,11 +5,11 @@ import { useParams } from 'next/navigation';
 import classNames from 'classnames/bind';
 import styles from '@/app/(user)/categories/[slug]/page.module.scss';
 import ProductCard from '@/components/ProductCard/ProductCard';
-import { SortIcon, FilterIcon, CloseIcon } from '@/components/Icons';
+import { SortIcon, FilterIcon, CloseIcon, PlusIcon } from '@/components/Icons';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import Breadcrumbs from '@/components/Breadcrumbs/Breadcrumbs';
 import { useCategory } from '@/services/categoryService';
-import { useProducts, mapProductToFeaturedProduct } from '@/services/productService';
+import { useProducts, usePopularProducts, useBestSellingProducts, useBadgeProducts, useOnSaleProducts, mapProductToFeaturedProduct } from '@/services/productService';
 import type { FeaturedProduct } from '@/components/FeaturedProducts';
 
 const cx = classNames.bind(styles);
@@ -61,10 +61,24 @@ const parseCurrency = (value: string): number => {
 };
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
+const getSpecialPathName = (slug: string): string => {
+    const nameMap: Record<string, string> = {
+        'san-pham-noi-bat': 'Sản phẩm nổi bật',
+        'san-pham-ban-chay': 'Sản phẩm bán chạy',
+        'san-pham-co-huy-hieu': 'Sản phẩm có huy hiệu',
+        'san-pham-con-hang': 'Sản phẩm còn hàng',
+        'san-pham-dang-giam-gia': 'Sản phẩm đang giảm giá',
+    };
+    return nameMap[slug] || 'Danh mục';
+};
+
 export default function CategoryDetailLayout() {
     const params = useParams();
     const slug = params.slug as string;
-    const categoryFallbackName = categoryNames[slug] || 'Danh mục';
+    
+    // Check if slug is a special path parameter (san-pham-noi-bat, san-pham-ban-chay, etc.)
+    const isSpecialPath = ['san-pham-noi-bat', 'san-pham-ban-chay', 'san-pham-co-huy-hieu', 'san-pham-con-hang', 'san-pham-dang-giam-gia'].includes(slug);
+    const categoryFallbackName = categoryNames[slug] || (isSpecialPath ? getSpecialPathName(slug) : 'Danh mục');
 
     const [sortBy, setSortBy] = useState('default');
     const [priceRange, setPriceRange] = useState<[number, number]>(DEFAULT_PRICE_RANGE);
@@ -76,12 +90,13 @@ export default function CategoryDetailLayout() {
     const [focusedInput, setFocusedInput] = useState<0 | 1 | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [loadedProducts, setLoadedProducts] = useState<FeaturedProduct[]>([]);
-    const itemsPerPage = 30;
+    const itemsPerPage = 9;
     const [isSortOpen, setIsSortOpen] = useState(false);
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
     const sortDropdownRef = useRef<HTMLDivElement | null>(null);
 
-    const { data: categoryData } = useCategory(slug);
+    // Only fetch category if it's not a special path
+    const { data: categoryData } = useCategory(isSpecialPath ? null : slug);
 
     const sortConfig = React.useMemo(() => {
         switch (sortBy) {
@@ -100,15 +115,56 @@ export default function CategoryDetailLayout() {
         }
     }, [sortBy]);
 
-    const { data: productsData, error: productsError, isLoading: isProductsLoading } = useProducts({
+    // Use different hooks based on slug type
+    const popularProductsQuery = usePopularProducts({
         page: currentPage,
         limit: itemsPerPage,
-        categorySlug: slug,
+    });
+    const bestSellingProductsQuery = useBestSellingProducts({
+        page: currentPage,
+        limit: itemsPerPage,
+    });
+    const badgeProductsQuery = useBadgeProducts({
+        page: currentPage,
+        limit: itemsPerPage,
+    });
+    const onSaleProductsQuery = useOnSaleProducts({
+        page: currentPage,
+        limit: itemsPerPage,
+    });
+    const regularProductsQuery = useProducts({
+        page: currentPage,
+        limit: itemsPerPage,
+        categorySlug: isSpecialPath ? undefined : slug,
         minPrice: priceRange[0],
         maxPrice: priceRange[1],
         sortBy: sortConfig.sortField,
         sortOrder: sortConfig.sortOrder,
     });
+
+    // Select the appropriate query based on slug
+    let productsData, productsError, isProductsLoading;
+    if (slug === 'san-pham-noi-bat') {
+        productsData = popularProductsQuery.data;
+        productsError = popularProductsQuery.error;
+        isProductsLoading = popularProductsQuery.isLoading;
+    } else if (slug === 'san-pham-ban-chay') {
+        productsData = bestSellingProductsQuery.data;
+        productsError = bestSellingProductsQuery.error;
+        isProductsLoading = bestSellingProductsQuery.isLoading;
+    } else if (slug === 'san-pham-co-huy-hieu') {
+        productsData = badgeProductsQuery.data;
+        productsError = badgeProductsQuery.error;
+        isProductsLoading = badgeProductsQuery.isLoading;
+    } else if (slug === 'san-pham-dang-giam-gia') {
+        productsData = onSaleProductsQuery.data;
+        productsError = onSaleProductsQuery.error;
+        isProductsLoading = onSaleProductsQuery.isLoading;
+    } else {
+        productsData = regularProductsQuery.data;
+        productsError = regularProductsQuery.error;
+        isProductsLoading = regularProductsQuery.isLoading;
+    }
 
     const products = React.useMemo<FeaturedProduct[]>(() => {
         if (!productsData?.data) return [];
@@ -224,6 +280,7 @@ export default function CategoryDetailLayout() {
     const hasMoreProducts = currentPage < totalPages;
     const isLoadMoreLoading = isProductsLoading && currentPage > 1;
     const currentProducts = loadedProducts;
+    const remainingProducts = productCount - currentProducts.length;
 
     useEffect(() => {
         if (!productsData?.data) {
@@ -570,11 +627,13 @@ export default function CategoryDetailLayout() {
                                             onClick={handleLoadMore}
                                             disabled={isLoadMoreLoading}
                                         >
-                                            {isLoadMoreLoading ? 'Đang tải...' : 'Xem thêm sản phẩm'}
+                                            <span>
+                                                {isLoadMoreLoading 
+                                                    ? 'Đang tải...' 
+                                                    : `Xem thêm ${Math.min(itemsPerPage, remainingProducts)} sản phẩm`}
+                                            </span>
+                                            {!isLoadMoreLoading && <PlusIcon size={20} />}
                                         </button>
-                                        <p className={cx('load-more-hint')}>
-                                            Đang hiển thị {currentProducts.length} / {productCount} sản phẩm
-                                        </p>
                                     </div>
                                 )}
                             </>

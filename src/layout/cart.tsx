@@ -23,7 +23,6 @@ import {
     clearReferralCode,
 } from '@/redux/authSlice';
 import EmptyState from '@/components/EmptyState';
-import mockCouponsData from '@/data/mockCoupons.json';
 import { useConfirm } from '@/components/ConfirmDialog';
 import {
     useCart,
@@ -37,84 +36,12 @@ import {
     applyReferralCode as applyReferralCodeAPI,
     removeReferralCode as removeReferralCodeAPI,
 } from '@/services/referralCodeService';
+import { validateDiscountCode } from '@/services/discountCodeService';
 import { useSWRConfig } from 'swr';
 import { useToast } from '@/hooks/useToast';
 import { useDebounceCallback } from '@/hooks/useDebounceCallback';
 
 const cx = classNames.bind(styles);
-
-interface Coupon {
-    code: string;
-    discount: number;
-    type: 'percentage' | 'fixed';
-    description: string;
-    minOrderValue: number;
-    maxDiscount: number | null;
-    expiryDate: string;
-    usageLimit: number | null;
-    isActive: boolean;
-}
-
-// Mock coupon validation - In production, this would be an API call
-const validateCoupon = (
-    code: string,
-    orderTotal: number,
-): { valid: boolean; discount: number; discountAmount: number; message: string } => {
-    const coupon = mockCouponsData.coupons.find(
-        (c) => c.code.toUpperCase() === code.toUpperCase() && c.isActive,
-    ) as Coupon | undefined;
-
-    if (!coupon) {
-        return {
-            valid: false,
-            discount: 0,
-            discountAmount: 0,
-            message: 'Mã giảm giá không hợp lệ hoặc đã hết hạn',
-        };
-    }
-
-    // Check expiry date
-    const expiryDate = new Date(coupon.expiryDate);
-    const today = new Date();
-    if (expiryDate < today) {
-        return {
-            valid: false,
-            discount: 0,
-            discountAmount: 0,
-            message: 'Mã giảm giá đã hết hạn',
-        };
-    }
-
-    // Check minimum order value
-    if (orderTotal < coupon.minOrderValue) {
-        return {
-            valid: false,
-            discount: 0,
-            discountAmount: 0,
-            message: `Đơn hàng tối thiểu ${coupon.minOrderValue.toLocaleString('vi-VN')}₫`,
-        };
-    }
-
-    // Calculate discount amount
-    let discountAmount = 0;
-    if (coupon.type === 'percentage') {
-        discountAmount = Math.round((orderTotal * coupon.discount) / 100);
-        // Apply max discount if exists
-        if (coupon.maxDiscount && discountAmount > coupon.maxDiscount) {
-            discountAmount = coupon.maxDiscount;
-        }
-    } else {
-        // Fixed discount
-        discountAmount = coupon.discount;
-    }
-
-    return {
-        valid: true,
-        discount: coupon.discount,
-        discountAmount,
-        message: coupon.description,
-    };
-};
 
 const CartLayout: React.FC = () => {
     const dispatch = useDispatch();
@@ -210,6 +137,31 @@ const CartLayout: React.FC = () => {
         }
     }, [cartData, currentUser, savedDiscountCode, savedReferralCode, dispatch, showError, couponError]);
 
+    // Xóa mã giảm giá khi cart rỗng (guest user)
+    useEffect(() => {
+        if (!currentUser && reduxCart.products.length === 0 && savedDiscountCode) {
+            // Cart is empty, remove discount code
+            dispatch(clearDiscountCode());
+            dispatch(removeCoupon());
+        }
+    }, [reduxCart.products.length, currentUser, savedDiscountCode, dispatch]);
+
+    // Xóa mã giảm giá khi cart rỗng (user - API cart)
+    useEffect(() => {
+        if (currentUser && cartData?.data) {
+            const apiCart = cartData.data as any;
+            const cartItems = apiCart.items || [];
+            if (cartItems.length === 0 && savedDiscountCode) {
+                // Cart is empty, remove discount code
+                dispatch(clearDiscountCode());
+                // Remove from API cart
+                removeDiscountCodeAPI().catch(() => {
+                    // Ignore error
+                });
+            }
+        }
+    }, [cartData?.data, currentUser, savedDiscountCode, dispatch]);
+
     // Sync coupon input with Redux when it changes
     useEffect(() => {
         if (savedDiscountCode) {
@@ -290,32 +242,60 @@ const CartLayout: React.FC = () => {
                 if (!price && product?.price) {
                     if (Array.isArray(product.price)) {
                         const priceItem = product.price[0];
+                        const priceOriginal = priceItem?.priceOriginal || priceItem?.original || 0;
                         const discount = priceItem?.discount;
-                        // Use priceDiscount if available, otherwise use priceOriginal
-                        price = discount?.priceDiscount !== undefined && discount.priceDiscount !== null
+                        
+                        // Only use priceDiscount if it's valid (> 0 and < priceOriginal)
+                        const hasValidDiscount = discount?.priceDiscount !== undefined &&
+                            discount.priceDiscount !== null &&
+                            discount.priceDiscount > 0 &&
+                            discount.priceDiscount < priceOriginal;
+                        
+                        price = hasValidDiscount
                             ? discount.priceDiscount
-                            : priceItem?.priceOriginal || priceItem?.original || 0;
+                            : priceOriginal;
                     } else if (typeof product.price === 'object') {
+                        const priceOriginal = product.price.priceOriginal || product.price.original || 0;
                         const discount = product.price.discount;
-                        // Use priceDiscount if available, otherwise use priceOriginal
-                        price = discount?.priceDiscount !== undefined && discount.priceDiscount !== null
+                        
+                        // Only use priceDiscount if it's valid (> 0 and < priceOriginal)
+                        const hasValidDiscount = discount?.priceDiscount !== undefined &&
+                            discount.priceDiscount !== null &&
+                            discount.priceDiscount > 0 &&
+                            discount.priceDiscount < priceOriginal;
+                        
+                        price = hasValidDiscount
                             ? discount.priceDiscount
-                            : product.price.priceOriginal || product.price.original || 0;
+                            : priceOriginal;
                     }
                 }
 
-                // Calculate oldPrice: if price is priceDiscount, oldPrice = priceOriginal
+                // Calculate oldPrice: only show if there's a valid discount
                 let oldPrice: number | undefined = undefined;
                 if (product?.price) {
                     let priceOriginal = 0;
                     if (Array.isArray(product.price)) {
                         priceOriginal = product.price[0]?.priceOriginal || product.price[0]?.original || 0;
+                        const discount = product.price[0]?.discount;
+                        // Only show oldPrice if there's a valid discount
+                        const hasValidDiscount = discount?.priceDiscount !== undefined &&
+                            discount.priceDiscount !== null &&
+                            discount.priceDiscount > 0 &&
+                            discount.priceDiscount < priceOriginal;
+                        if (hasValidDiscount && priceOriginal > 0 && price !== priceOriginal) {
+                            oldPrice = priceOriginal;
+                        }
                     } else if (typeof product.price === 'object') {
                         priceOriginal = product.price.priceOriginal || product.price.original || 0;
-                    }
-                    // If current price is different from priceOriginal, show oldPrice
-                    if (priceOriginal > 0 && price !== priceOriginal) {
-                        oldPrice = priceOriginal;
+                        const discount = product.price.discount;
+                        // Only show oldPrice if there's a valid discount
+                        const hasValidDiscount = discount?.priceDiscount !== undefined &&
+                            discount.priceDiscount !== null &&
+                            discount.priceDiscount > 0 &&
+                            discount.priceDiscount < priceOriginal;
+                        if (hasValidDiscount && priceOriginal > 0 && price !== priceOriginal) {
+                            oldPrice = priceOriginal;
+                        }
                     }
                 }
 
@@ -364,14 +344,20 @@ const CartLayout: React.FC = () => {
                 couponError: apiCart.discountError || undefined,
             };
         }
-        // Calculate totalDiscountBefore from products for Redux cart
+        // Calculate totalDiscountBefore from products for Redux cart (guest)
         const totalDiscountBefore = reduxCart.products.reduce((sum, product) => {
             return sum + (product.price || 0) * (product.quantity || 1);
         }, 0);
 
+        // Calculate totalPrice after discount for guest cart
+        const couponDiscount = reduxCart.couponDiscount || 0;
+        const totalPrice = Math.max(0, totalDiscountBefore - couponDiscount);
+
         return {
             ...reduxCart,
             totalDiscountBefore,
+            totalPrice, // Total after discount
+            couponDiscount,
         };
     }, [cartData, currentUser, reduxCart]);
 
@@ -381,8 +367,20 @@ const CartLayout: React.FC = () => {
         if (currentUser) {
             try {
                 await removeFromCartAPI(id);
-                mutateCart();
+                const updatedCart = await mutateCart();
                 showSuccess('Đã xóa sản phẩm khỏi giỏ hàng');
+                
+                // Check if cart is empty after removal - if so, remove discount code
+                const cartItems = (updatedCart?.data as any)?.items || [];
+                if (cartItems.length === 0) {
+                    // Cart is empty, remove discount code
+                    dispatch(clearDiscountCode());
+                    try {
+                        await removeDiscountCodeAPI();
+                    } catch (err) {
+                        // Ignore error if removeDiscountCode fails
+                    }
+                }
             } catch (error: any) {
                 const errorMessage =
                     error?.response?.data?.message || error?.message || 'Có lỗi xảy ra. Vui lòng thử lại!';
@@ -390,13 +388,14 @@ const CartLayout: React.FC = () => {
             }
         } else {
             dispatch(removeFromCart(id));
+            showSuccess('Đã xóa sản phẩm khỏi giỏ hàng');
         }
     };
 
     const handleIncrease = (id: string, qty: number) => {
         const product = cart.products.find((p: any) => p.id === id);
         const max = (product as any)?.max || 100;
-        const stock = (product as any)?.stock || 0;
+        const stock = (product as any)?.stock;
 
         const newQuantity = qty + 1;
 
@@ -405,7 +404,8 @@ const CartLayout: React.FC = () => {
             return;
         }
 
-        if (newQuantity > stock) {
+        // Chỉ validate stock nếu stock có giá trị (không phải undefined hoặc null)
+        if (stock !== undefined && stock !== null && newQuantity > stock) {
             showError(`Sản phẩm chỉ còn ${stock} sản phẩm trong kho`);
             return;
         }
@@ -601,22 +601,56 @@ const CartLayout: React.FC = () => {
                 showError(errorMessage);
             }
         } else {
-            const result = validateCoupon(couponInput, cart.totalPrice);
+            // Guest user: validate discount code via API
+            try {
+                // Calculate order value from cart
+                const orderValue = cart?.totalDiscountBefore || cart?.totalPrice || 0;
+                
+                // Get product IDs from cart products
+                const productIds = cart?.products?.map((product: any) => {
+                    return product.id;
+                }).filter(Boolean) || [];
 
-            if (result.valid) {
+                // Validate discount code via API
+                const response = await validateDiscountCode({
+                    code: couponInput.toUpperCase(),
+                    orderValue,
+                    productIds,
+                });
+
+                if (response.success && response.data?.discountAmount !== undefined) {
+                    const discountAmount = response.data.discountAmount || 0;
+                    const discountCode = response.data.code || couponInput.toUpperCase();
+                    
                 dispatch(
                     applyCoupon({
-                        code: couponInput.toUpperCase(),
-                        discount: result.discountAmount,
+                            code: discountCode,
+                            discount: discountAmount,
                     }),
                 );
 
-                setCouponSuccess(result.message);
+                    dispatch(setDiscountCode(discountCode));
+
+                    setCouponSuccess(response.message || 'Áp dụng mã giảm giá thành công');
                 setCouponError('');
                 setCouponInput('');
+                    showSuccess('Áp dụng mã giảm giá thành công');
             } else {
-                setCouponError(result.message);
+                    const errorMessage = response.message || 'Mã giảm giá không hợp lệ hoặc đã hết hạn';
+                    setCouponError(errorMessage);
                 setCouponSuccess('');
+                    dispatch(clearDiscountCode());
+                    dispatch(removeCoupon());
+                    showError(errorMessage);
+                }
+            } catch (error: any) {
+                const errorMessage =
+                    error?.response?.data?.message || error?.message || 'Mã giảm giá không hợp lệ hoặc đã hết hạn';
+                setCouponError(errorMessage);
+                setCouponSuccess('');
+                dispatch(clearDiscountCode());
+                dispatch(removeCoupon());
+                showError(errorMessage);
             }
         }
     };
@@ -781,6 +815,13 @@ const CartLayout: React.FC = () => {
                                                 try {
                                                     await clearCartAPI();
                                                     mutateCart();
+                                                    // Xóa mã giảm giá khi clear cart
+                                                    dispatch(clearDiscountCode());
+                                                    try {
+                                                        await removeDiscountCodeAPI();
+                                                    } catch (err) {
+                                                        // Ignore error
+                                                    }
                                                     showSuccess('Đã xóa tất cả sản phẩm khỏi giỏ hàng');
                                                 } catch (error: any) {
                                                     const errorMessage =
@@ -791,6 +832,9 @@ const CartLayout: React.FC = () => {
                                                 }
                                             } else {
                                                 dispatch(clearCart());
+                                                // Xóa mã giảm giá khi clear cart (guest)
+                                                dispatch(clearDiscountCode());
+                                                dispatch(removeCoupon());
                                             }
                                         }
                                     }}
@@ -816,7 +860,7 @@ const CartLayout: React.FC = () => {
                                             title="Giỏ hàng trống"
                                             description="Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy khám phá các sản phẩm tuyệt vời của chúng tôi!"
                                             actionLabel="Tiếp tục mua sắm"
-                                            actionHref="/products"
+                                            actionHref="/"
                                         />
                                     </div>
                                 ) : (

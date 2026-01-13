@@ -240,8 +240,12 @@
     justify-content: center;
 
     svg {
-        width: 48px;
-        height: 48px;
+        width: 150px;
+        height: 150px;
+    }
+    img {
+        width: 100px;
+        height: 100px;
     }
     
     @media (max-width: 480px) {

@@ -7,7 +7,6 @@ import { useSelector } from 'react-redux';
 import styles from './ProductComments.module.scss';
 import {
     SendIcon,
-    CheckCircleIcon,
     DiamondIcon,
     MessageCircleIcon,
     StarIcon,
@@ -528,7 +527,6 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
                                     />
                                 </svg>
                             )}
-                            {commentItem.isVerified && !commentItem.isCustomerService && <CheckCircleIcon size={16} className={cx('verified-icon')} />}
                             {commentItem.hasPurchased && (
                                 <span className={cx('purchased-badge')}>
                                     <DiamondIcon size={12} />
@@ -675,7 +673,7 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
         : 'Thời gian phản hồi trung bình: 5 phút!';
 
     return (
-        <section className={cx('product-comments')}>
+        <section id="reviews" className={cx('product-comments')}>
             {/* Form bình luận ở đầu */}
             <div className={cx('composer-section')}>
                 <div className={cx('composer-card')}>
@@ -691,23 +689,23 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
                                         <StarIcon size={18} />
                                     </div>
                                     <div className={cx('metric-content')}>
-                                        <span className={cx('metric-label')}>Điểm đánh giá</span>
+                                        <span className={cx('metric-label')}>Tổng Điểm đánh giá</span>
                                         <strong className={cx('metric-value')}>
                                             {averageRating ? averageRating.toFixed(1) : '5.0'}
                                         </strong>
-                                        <p>{totalReviews} lượt đánh giá</p>
+                                        <p>Có {totalReviews} lượt đánh giá từ người dùng</p>
                                     </div>
                                 </div>
-                                <div className={cx('metric-card', 'metric-verified')}>
+                                {/* <div className={cx('metric-card', 'metric-verified')}>
                                     <div className={cx('metric-icon')}>
                                         <ShieldCheckIcon size={18} />
                                     </div>
                                     <div className={cx('metric-content')}>
-                                        <span className={cx('metric-label')}>Khách mua xác nhận</span>
+                                        <span className={cx('metric-label')}>Tổng Số Đánh Giá</span>
                                         <strong className={cx('metric-value')}>{verifiedPurchaseCount}</strong>
-                                        <p>Đánh giá đã mua hàng</p>
+                                        <p>Đánh giá của người dùng đã mua hàng</p>
                                     </div>
-                                </div>
+                                </div> */}
                                 <div className={cx('metric-card', 'metric-response')}>
                                     <div className={cx('metric-icon')}>
                                         <ClockIcon size={18} />

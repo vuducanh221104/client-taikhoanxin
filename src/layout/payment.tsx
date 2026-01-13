@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import classNames from 'classnames/bind';
 import styles from '@/app/(user)/payment/page.module.scss';
-import { OnlineBankingQrIcon } from '@/components/Icons';
 
 const cx = classNames.bind(styles);
 
@@ -21,7 +20,7 @@ interface PaymentMethod {
 const paymentMethods: PaymentMethod[] = [
     {
         id: 'qr-bank-transfer',
-        icon: <OnlineBankingQrIcon size={56} />,
+        iconImage: '/payment/vietQR.png',
         title: 'Nạp tự động bằng quét QR - Chuyển khoản ngân hàng',
         description: 'Quét mã QR chuyển khoản online. Phí 0%',
         fee: '0%',

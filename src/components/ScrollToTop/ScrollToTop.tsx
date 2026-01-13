@@ -34,7 +34,7 @@ const ScrollToTop: React.FC = () => {
 
     const handleZaloClick = () => {
         // Mở Zalo chat hoặc link Zalo
-        window.open('https://zalo.me/taikhoanxin', '_blank');
+        window.open('https://zalo.me/0377775528', '_blank');
     };
 
     return (

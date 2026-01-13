@@ -88,7 +88,7 @@ export default function SupportFAQPage() {
                     <ul>
                         <li>💬 <strong>Live Chat:</strong> Trên website (góc phải màn hình)</li>
                         <li>📧 <strong>Email:</strong> support@taikhoanxin.com</li>
-                        <li>📞 <strong>Hotline:</strong> 1900 xxxx</li>
+                        <li>📞 <strong>Hotline:</strong> 0377775528</li>
                         <li>💙 <strong>Facebook:</strong> m.me/taikhoanxincom</li>
                         <li>📱 <strong>Zalo:</strong> 0xxx xxx xxx</li>
                     </ul>

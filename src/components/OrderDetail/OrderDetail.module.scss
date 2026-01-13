@@ -233,6 +233,16 @@
     gap: 1.5rem;
 }
 
+.product-image-wrapper-link {
+    display: block;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    
+    &:hover {
+        opacity: 0.8;
+    }
+}
+
 .product-image-wrapper {
     flex-shrink: 0;
     width: 200px;
@@ -274,11 +284,26 @@
     font-weight: 700;
     color: #0f172a;
     margin: 0;
+    
+    &.product-name-link {
+        cursor: pointer;
+        transition: color 0.2s;
+        
+        &:hover {
+            color: #3b82f6;
+        }
+    }
 }
 
 .product-quantity {
     font-size: 0.9375rem;
     color: #6b7280;
+}
+
+.status-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
 .product-item-status {
@@ -514,6 +539,57 @@
 
     &:active {
         transform: translateY(0);
+    }
+}
+
+.help-button-wrapper {
+    margin-top: 1rem;
+}
+
+.review-button-wrapper {
+    margin-top: 1rem;
+}
+
+.review-button-wrapper:last-child {
+    margin-top: 0rem;
+}
+
+.review-thank-you {
+    font-size: 0.8125rem;
+    color: #059669;
+    font-weight: 500;
+    margin-top: 0.125rem;
+}
+
+.review-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.85rem 1.5rem;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+        background: linear-gradient(135deg, #d97706, #b45309);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+
+    svg {
+        flex-shrink: 0;
     }
 }
 

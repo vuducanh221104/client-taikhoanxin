@@ -11,7 +11,7 @@ import styles from '@/app/(user)/checkout/success/bill.module.scss';
 import bankInfo from '@/data/mockBankInfo.json';
 import { CloseIcon, LockIcon, AlertCircleIcon } from '@/components/Icons';
 import { createPortal } from 'react-dom';
-import { useCheckoutOrder } from '@/services/orderService';
+import { useCheckoutOrder, autoCreateLookupToken } from '@/services/orderService';
 
 const cx = classNames.bind(styles);
 const BANK_INFO = bankInfo;
@@ -189,11 +189,38 @@ const CheckoutSuccessLayout: React.FC = () => {
                             checkoutTokenParam &&
                             submittedEmail
                         ) {
+                            // Tự động tạo lookupToken từ checkoutToken khi thanh toán thành công
+                            autoCreateLookupToken({
+                                orderCode: targetOrderCode,
+                                checkoutToken: checkoutTokenParam,
+                                email: submittedEmail,
+                            })
+                                .then((lookupResponse) => {
+                                    if (lookupResponse.success && lookupResponse.data.token) {
+                                        // Redirect với lookupToken mới
+                                        const params = new URLSearchParams({
+                                            token: lookupResponse.data.token,
+                                            email: submittedEmail,
+                                        });
+                                        router.push(`/orders/lookup/${targetOrderCode}?${params.toString()}`);
+                                    } else {
+                                        // Fallback: redirect với checkoutToken (sẽ cần tra cứu lại)
                             const params = new URLSearchParams({
                                 token: checkoutTokenParam,
                                 email: submittedEmail,
                             });
                             router.push(`/orders/lookup/${targetOrderCode}?${params.toString()}`);
+                                    }
+                                })
+                                .catch((error) => {
+                                    // Nếu auto-verify thất bại, fallback về checkoutToken
+                                    console.error('Failed to auto-create lookup token:', error);
+                                    const params = new URLSearchParams({
+                                        token: checkoutTokenParam,
+                                        email: submittedEmail,
+                                    });
+                                    router.push(`/orders/lookup/${targetOrderCode}?${params.toString()}`);
+                                });
                         }
                     }
                 } catch (err) {
@@ -286,7 +313,7 @@ const CheckoutSuccessLayout: React.FC = () => {
                       }
                     : null,
             total: (order as any).totalPrice,
-            paymentMethodLabel: 'Chuyển khoản ngân hàng (VietQR)',
+            paymentMethodLabel: 'Chuyển khoản ngân hàng',
             vietQR: (order as any).vietQR,
         };
     }, [order]);
@@ -433,7 +460,7 @@ const CheckoutSuccessLayout: React.FC = () => {
                                 Vui lòng đặt lại đơn hàng để tiếp tục.
                             </p>
                             <div className={cx('expired-actions')}>
-                                <Link href="/products" className={cx('btn', 'primary')}>
+                                <Link href="/" className={cx('btn', 'primary')}>
                                     Đặt lại đơn hàng
                                 </Link>
                                 <Link href="/" className={cx('btn', 'ghost')}>
@@ -442,7 +469,7 @@ const CheckoutSuccessLayout: React.FC = () => {
                             </div>
                             <p className={cx('expired-helper')}>
                                 Cần hỗ trợ?{' '}
-                                <Link href="/help/faq/support">Liên hệ đội ngũ CSKH</Link>
+                                <Link href="https://zalo.me/0377775528">Liên hệ Zalo</Link>
                             </p>
                         </div>
                     </div>
@@ -692,12 +719,12 @@ const CheckoutSuccessLayout: React.FC = () => {
                                     <div className={cx('bill-footer')}>
                                         <p>
                                             Cảm ơn bạn một lần nữa! Nếu cần hỗ trợ về đơn hàng, vui lòng liên
-                                            hệ với chúng tôi qua email{' '}
+                                            hệ với chúng tôi qua{' '}
                                             <a
-                                                href="mailto:support@taikhoanxin.com"
+                                                href="https://zalo.me/0377775528"
                                                 className={cx('bill-email-link')}
                                             >
-                                                support@taikhoanxin.com
+                                                Zalo
                                             </a>
                                             .
                                         </p>
@@ -710,7 +737,7 @@ const CheckoutSuccessLayout: React.FC = () => {
                             <Link href="/" className={cx('btn', 'primary')}>
                                 Về trang chủ
                             </Link>
-                            <Link href="/products" className={cx('btn')}>
+                            <Link href="/" className={cx('btn')}>
                                 Tiếp tục mua sắm
                             </Link>
                         </div>

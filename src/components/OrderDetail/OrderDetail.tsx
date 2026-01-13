@@ -4,14 +4,21 @@ import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import Image from 'next/image';
+import Link from 'next/link';
 import classNames from 'classnames/bind';
 import styles from './OrderDetail.module.scss';
 import { useOrder, getStatusLabel, getStatusColor, Order, OrderItem } from '@/services/orderService';
 import { useMyWarranties } from '@/services/warrantyService';
+import { useMyReviews } from '@/services/reviewService';
+import { addToCart as addToCartAPI, removeDiscountCode } from '@/services/cartService';
 import EmptyState from '@/components/EmptyState';
-import { PackageIcon, CopyIcon, CheckIcon, ShoppingCartIcon, DownloadIcon, AlertCircleIcon } from '@/components/Icons';
+import { PackageIcon, CopyIcon, CheckIcon, ShoppingCartIcon, DownloadIcon, AlertCircleIcon, StarIcon } from '@/components/Icons';
 import { useToast } from '@/components/Toast';
-import { addToCart } from '@/redux/cartSlice';
+import { addToCart, removeCoupon } from '@/redux/cartSlice';
+import { clearDiscountCode } from '@/redux/authSlice';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
+import { useSWRConfig } from 'swr';
 
 const cx = classNames.bind(styles);
 
@@ -26,6 +33,8 @@ interface OrderProductViewModel {
     id: string;
     itemId?: string; // _id của order item để map với warranty
     productName: string;
+    productSlug?: string; // Slug của sản phẩm để tạo link
+    productId?: string; // Product ID để check review
     quantity: number;
     price: number;
     image?: string;
@@ -39,6 +48,7 @@ interface OrderProductViewModel {
     note?: string;
     itemStatus?: 'completed' | 'processing'; // Trạng thái riêng của từng sản phẩm
     warrantyStatus?: 'pending' | 'processing' | 'resolved' | 'rejected' | 'closed' | 'warranty_processing' | 'warranty_resolved' | 'warranty_rejected' | null; // Trạng thái warranty của item
+    hasReviewed?: boolean; // Đánh dấu user đã đánh giá sản phẩm này
 }
 
 interface OrderDetailViewModel {
@@ -59,17 +69,18 @@ const PRODUCT_IMAGE_FALLBACK = '/images/placeholder.png';
 
 const normalizeProductRef = (product: OrderItem['productId'] | OrderItem['product_id']) => {
     if (!product) {
-        return { id: '', name: '', image: '' };
+        return { id: '', name: '', image: '', slug: '' };
     }
 
     if (typeof product === 'string') {
-        return { id: product, name: '', image: '' };
+        return { id: product, name: '', image: '', slug: '' };
     }
 
     return {
         id: product._id,
         name: product.name,
         image: product.image?.[0] || '',
+        slug: product.slug || '',
     };
 };
 
@@ -117,6 +128,8 @@ const mapOrderToViewModel = (apiOrder?: Order): OrderDetailViewModel | null => {
             id: normalizedProduct.id || `${apiOrder._id}-${index}`,
             itemId,
             productName: normalizedProduct.name || item.fullName || 'Sản phẩm',
+            productSlug: normalizedProduct.slug,
+            productId: normalizedProduct.id, // Product ID để check review
             quantity: item.quantity,
             price: item.price,
             image: normalizedProduct.image,
@@ -127,6 +140,7 @@ const mapOrderToViewModel = (apiOrder?: Order): OrderDetailViewModel | null => {
             note,
             itemStatus,
             warrantyStatus: null, // Sẽ được set sau khi map với warranties
+            hasReviewed: false, // Sẽ được set sau khi map với reviews
         };
     });
 
@@ -175,6 +189,8 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     const router = useRouter();
     const dispatch = useDispatch();
     const { showToast } = useToast();
+    const { mutate: globalMutate } = useSWRConfig();
+    const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
     const shouldFetch = !guestOrder;
     const { data: orderResponse, error, isLoading } = useOrder(shouldFetch ? orderCode : null);
     const rawOrder = guestOrder ?? orderResponse?.data?.order;
@@ -185,6 +201,9 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 
     // Fetch warranties for warranty progress display and item mapping
     const { data: warrantiesData } = useMyWarranties();
+    
+    // Fetch reviews to check if user has reviewed products
+    const { data: reviewsData } = useMyReviews({ limit: 100 });
 
     // Map warranties to order items and calculate progress
     const { warrantyProgress, productsWithWarranty } = useMemo(() => {
@@ -215,7 +234,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         const warrantyProgress = { resolved, total };
 
         // Map warranties to products by itemOrderId
-        const productsWithWarranty = (order?.products || []).map(product => {
+        let productsWithWarranty = (order?.products || []).map(product => {
             // Find warranty for this item
             const itemWarranty = orderWarranties.find(w => {
                 if (!w.itemOrderId || !product.itemId) return false;
@@ -233,6 +252,38 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 
         return { warrantyProgress, productsWithWarranty };
     }, [warrantiesData, rawOrder?._id, order?.products]);
+    
+    // Map reviews to products to check if user has reviewed
+    const productsWithReviews = useMemo(() => {
+        if (!reviewsData?.data || !order?.products) {
+            return productsWithWarranty;
+        }
+        
+        // reviewsData.data có thể là array hoặc object có property reviews
+        const reviews = Array.isArray(reviewsData.data) 
+            ? reviewsData.data 
+            : (reviewsData.data.reviews || []);
+        const orderId = rawOrder?._id?.toString();
+        
+        return productsWithWarranty.map(product => {
+            // Check if user has reviewed this product for this order
+            const hasReviewed = reviews.some((review: any) => {
+                const reviewProductId = typeof review.productId === 'object' 
+                    ? review.productId._id?.toString() 
+                    : review.productId?.toString();
+                const reviewOrderId = typeof review.orderId === 'object'
+                    ? review.orderId._id?.toString()
+                    : review.orderId?.toString();
+                
+                return reviewProductId === product.productId && reviewOrderId === orderId;
+            });
+            
+            return {
+                ...product,
+                hasReviewed: hasReviewed || false,
+            };
+        });
+    }, [reviewsData, productsWithWarranty, rawOrder?._id]);
 
     const [copiedField, setCopiedField] = useState<string | null>(null);
     const [revealedFields, setRevealedFields] = useState<Set<string>>(new Set());
@@ -318,30 +369,148 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         }
     };
 
-    const handleReorder = () => {
+    const handleReorder = async () => {
         if (isGuestMode) {
             showToast('Vui lòng đăng nhập để mua lại đơn hàng này', 'info');
             router.push('/auth/login');
             return;
         }
-        if (!order) return;
+        if (!order || !rawOrder) return;
 
+        const isLoggedIn = !!currentUser?.accessToken;
+        let addedCount = 0;
+
+        try {
         // Add all products from order to cart
-        order.products.forEach((product) => {
-            for (let i = 0; i < product.quantity; i++) {
+            for (const item of rawOrder.items) {
+                // Get productId from item - ensure it's always a string
+                let productId: string | null = null;
+                
+                if (item.productId) {
+                    if (typeof item.productId === 'object') {
+                        // If it's an object, get _id and convert to string
+                        const id = (item.productId as any)._id;
+                        productId = id ? String(id) : null;
+                    } else {
+                        // If it's already a string or number, convert to string
+                        productId = String(item.productId);
+                    }
+                } else if (item.product_id) {
+                    // Fallback to product_id
+                    if (typeof item.product_id === 'object') {
+                        const id = (item.product_id as any)._id;
+                        productId = id ? String(id) : null;
+                    } else {
+                        productId = String(item.product_id);
+                    }
+                }
+                
+                // Also try to get from normalized product if available
+                if (!productId) {
+                    const productRef = typeof item.productId === 'object' ? item.productId : item.product_id;
+                    const normalizedProduct = normalizeProductRef(productRef);
+                    productId = normalizedProduct.id ? String(normalizedProduct.id) : null;
+                }
+                
+                if (!productId || productId === 'null' || productId === 'undefined') {
+                    console.warn('Skipping item with invalid productId:', item);
+                    continue;
+                }
+
+                // Get options from item if available
+                const options = item.options && Array.isArray(item.options) && item.options.length > 0
+                    ? item.options.filter((opt: any) => opt?.title && opt?.value)
+                    : undefined;
+
+                if (isLoggedIn) {
+                    // Use API cart for logged-in users
+                    try {
+                        await addToCartAPI({
+                            productId,
+                            quantity: item.quantity,
+                            options,
+                        });
+                        addedCount += item.quantity;
+                    } catch (error: any) {
+                        console.error('Failed to add item to cart:', error);
+                        // Extract error message from API response (same as product details)
+                        const errorMessage = error?.response?.data?.message || error?.message || 'Không thể thêm sản phẩm vào giỏ hàng';
+                        showToast(errorMessage, 'error');
+                        // Continue to next item even if this one failed
+                    }
+                } else {
+                    // Use Redux cart for non-logged-in users
+                    const product = order.products.find(p => p.productId === productId || p.id === productId);
+                    if (product) {
+                        for (let i = 0; i < item.quantity; i++) {
                 dispatch(addToCart({
-                    id: product.id,
+                                id: productId,
+                                slug: product.productSlug,
                     productName: product.productName,
                     price: product.price,
                     imageSrc: product.image || product.imageSrc || PRODUCT_IMAGE_FALLBACK,
                     imageAlt: product.productName,
-                    href: `/product/${product.id}`,
+                                href: product.productSlug ? `/product/${product.productSlug}` : `/product/${productId}`,
+                                options,
+                                stock: (product as any).stock,
+                                min: (product as any).min,
+                                max: (product as any).max,
                 }));
+                            addedCount++;
             }
-        });
+                    }
+                }
+            }
 
-        showToast(`Đã thêm ${order.products.length} sản phẩm vào giỏ hàng`, 'success');
+            // Xóa mã giảm giá sau khi thêm sản phẩm vào cart
+            if (addedCount > 0) {
+                dispatch(clearDiscountCode());
+                if (isLoggedIn) {
+                    // Remove discount code from API cart
+                    try {
+                        await removeDiscountCode();
+                    } catch (err) {
+                        // Ignore error if removeDiscountCode fails
+                    }
+                } else {
+                    dispatch(removeCoupon());
+                }
+            }
+
+            // Always mutate cart cache and redirect to cart page
+            // Mutate cart cache to refresh cart dropdown and cart page immediately
+            if (isLoggedIn) {
+                // Revalidate all cart-related API caches for logged-in users
+                // This ensures cart dropdown and cart page update immediately
+                globalMutate(
+                    (key) => typeof key === 'string' && key.startsWith('/api/v1/cart'),
+                    undefined,
+                    { revalidate: true }
+                );
+            }
+            // For non-logged-in users, Redux cart is already updated via dispatch
+            // Redux will automatically trigger re-renders for components using cart state
+            
+            if (addedCount > 0) {
+                showToast(`Đã thêm ${addedCount} sản phẩm vào giỏ hàng`, 'success');
+            }
+            
+            // Always redirect to cart page (even if some items failed)
+            // Small delay to ensure cache is updated before redirect
+            setTimeout(() => {
+                router.push('/cart');
+            }, 100);
+        } catch (error: any) {
+            console.error('Reorder error:', error);
+            // Extract error message from API response
+            const errorMessage = error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi mua lại đơn hàng';
+            showToast(errorMessage, 'error');
+            
+            // Still redirect to cart page even on error
+            setTimeout(() => {
         router.push('/cart');
+            }, 100);
+        }
     };
 
     const handleExportReceipt = () => {
@@ -410,10 +579,10 @@ Email: support@taikhoanxin.com
                             <ShoppingCartIcon size={18} />
                             Mua lại đơn hàng
                         </button>
-                        <button className={cx('export-button')} onClick={handleExportReceipt}>
+                        {/* <button className={cx('export-button')} onClick={handleExportReceipt}>
                             <DownloadIcon size={18} />
                             Xuất biên lai
-                        </button>
+                        </button> */}
                     </div>
                 )}
             </div>
@@ -479,9 +648,29 @@ Email: support@taikhoanxin.com
 
             {/* Products Section */}
             <div className={cx('products-section')}>
-                {productsWithWarranty.map((product) => (
+                {productsWithReviews.map((product) => {
+                    const productLink = product.productSlug 
+                        ? `/product/${product.productSlug}` 
+                        : product.id 
+                            ? `/product/${product.id}` 
+                            : null;
+
+                    return (
                     <div key={product.id} className={cx('product-card')}>
                         <div className={cx('product-main')}>
+                            {productLink ? (
+                                <Link href={productLink} className={cx('product-image-wrapper-link')}>
+                                    <div className={cx('product-image-wrapper')}>
+                                        <Image
+                                            src={product.image || '/images/placeholder.png'}
+                                            alt={product.productName}
+                                            width={200}
+                                            height={120}
+                                            className={cx('product-image')}
+                                        />
+                                    </div>
+                                </Link>
+                            ) : (
                             <div className={cx('product-image-wrapper')}>
                                 <Image
                                     src={product.image || '/images/placeholder.png'}
@@ -491,10 +680,17 @@ Email: support@taikhoanxin.com
                                     className={cx('product-image')}
                                 />
                             </div>
+                            )}
 
                             <div className={cx('product-info')}>
                                 <div className={cx('product-details')}>
+                                    {productLink ? (
+                                        <Link href={productLink}>
+                                            <h3 className={cx('product-name', 'product-name-link')}>{product.productName}</h3>
+                                        </Link>
+                                    ) : (
                                     <h3 className={cx('product-name')}>{product.productName}</h3>
+                                    )}
                                     <span className={cx('product-quantity')}>Số lượng: {product.quantity}</span>
                                     {/* Hiển thị trạng thái riêng cho từng sản phẩm */}
                                     <div className={cx('product-status-group')}>
@@ -514,12 +710,20 @@ Email: support@taikhoanxin.com
                                                 {product.warrantyStatus === 'closed' && '✅ Đã bảo hành (hoàn tất)'}
                                             </span>
                                         ) : (
+                                            <div className={cx('status-wrapper')}>
                                             <span className={cx('product-item-status', {
                                                 'status-completed': product.itemStatus === 'completed',
                                                 'status-processing': product.itemStatus === 'processing'
                                             })}>
                                                 {product.itemStatus === 'completed' ? '✓ Đã xử lý' : '⏳ Đang xử lý'}
                                             </span>
+                                                {/* Hiển thị text cảm ơn nếu đã đánh giá */}
+                                                {product.itemStatus === 'completed' && product.hasReviewed && (
+                                                    <div className={cx('review-thank-you')}>
+                                                        <span>Cảm ơn bạn đã đánh giá sản phẩm này</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -605,8 +809,22 @@ Email: support@taikhoanxin.com
                                     </a>
                                 </div>
                             )}
+
+                        {/* Review Button - Chỉ hiển thị khi đã xử lý đơn hàng (completed) và chưa đánh giá */}
+                        {product.itemStatus === 'completed' && product.productSlug && !product.hasReviewed && (
+                            <div className={cx('review-button-wrapper')}>
+                                <a
+                                    href={`/product/${product.productSlug}#reviews`}
+                                    className={cx('review-button')}
+                                >
+                                    <StarIcon size={18} />
+                                    <span>Đánh giá sản phẩm</span>
+                                </a>
+                            </div>
+                        )}
                     </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );

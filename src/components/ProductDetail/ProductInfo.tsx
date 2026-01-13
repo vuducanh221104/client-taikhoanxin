@@ -6,12 +6,14 @@ import styles from './ProductInfo.module.scss';
 import { CreditCardIcon, CartIcon, HeartIcon } from '@/components/Icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
-import { addToCart } from '@/redux/cartSlice';
+import { addToCart, removeCoupon } from '@/redux/cartSlice';
+import { clearDiscountCode } from '@/redux/authSlice';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/useToast';
 import { addToCart as addToCartAPI } from '@/services/cartService';
 import { useSWRConfig } from 'swr';
+import { useHomePage } from '@/services/homePageService';
 
 const cx = classNames.bind(styles);
 
@@ -35,6 +37,7 @@ interface Product {
     slug?: string;
     imageSrc?: string;
     image?: string[];
+    paymentpromo?: string; // Ưu đãi thanh toán riêng cho sản phẩm (ưu tiên hơn homepage)
     tos?: {
         title?: string;
         description?: string;
@@ -100,6 +103,11 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
     const [isAddingToCart, setIsAddingToCart] = React.useState(false);
     const { mutate: globalMutate } = useSWRConfig();
+    const { data: homePageData } = useHomePage();
+    // Ưu tiên paymentpromo của product, nếu không có thì lấy từ homepage
+    // Kiểm tra cả product.paymentpromo và (product as any).paymentpromo để đảm bảo
+    const productPaymentPromo = product.paymentpromo || (product as any).paymentpromo;
+    const paymentpromo = productPaymentPromo || homePageData?.data?.paymentpromo || '';
     const [isTosModalOpen, setIsTosModalOpen] = React.useState(false);
     const [tosCheckboxChecked, setTosCheckboxChecked] = React.useState(false);
     const [tosAccepted, setTosAccepted] = React.useState(false);
@@ -263,8 +271,14 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                     imageSrc,
                     imageAlt: product.productName,
                     options: allOptions,
+                    stock: (product as any).stock,
+                    min: (product as any).min,
+                    max: (product as any).max,
                 })
             );
+            // Xóa mã giảm giá khi thêm sản phẩm mới vào cart (guest)
+            dispatch(removeCoupon());
+            dispatch(clearDiscountCode());
             showSuccess(`Đã thêm "${product.productName}" vào giỏ hàng`);
             return true;
         }
@@ -280,6 +294,16 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
             });
 
             if (response.success) {
+                // Xóa mã giảm giá khi thêm sản phẩm mới vào cart (user)
+                dispatch(clearDiscountCode());
+                // Remove discount code from API cart
+                try {
+                    const { removeDiscountCode } = await import('@/services/cartService');
+                    await removeDiscountCode();
+                } catch (err) {
+                    // Ignore error if removeDiscountCode fails
+                }
+                
                 await globalMutate('/api/v1/cart', undefined, { revalidate: true });
                 showSuccess(`Đã thêm "${product.productName}" vào giỏ hàng`);
                 isSuccess = true;
@@ -762,17 +786,12 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                 </button>
             </div>
 
-            <div className={cx('payment-offers')}>
-                <h3 className={cx('offers-title')}>Ưu đãi thanh toán</h3>
-                <ul className={cx('offers-list')}>
-                    <li>
-                        Giảm 10k khi thanh toán bằng MoMo Payment.{' '}
-                        <a href="#momo-details" className={cx('details-link')}>
-                            Chi tiết
-                        </a>
-                    </li>
-                </ul>
-            </div>
+            {paymentpromo && (
+                <div className={cx('payment-offers')}>
+                    <h3 className={cx('offers-title')}>Ưu đãi thanh toán</h3>
+                    <div className={cx('offers-list')} dangerouslySetInnerHTML={{ __html: paymentpromo }} />
+                </div>
+            )}
 
             {isTosModalOpen && hasTos && (
                 <div className={cx('tos-modal-backdrop')} role="dialog" aria-modal="true">

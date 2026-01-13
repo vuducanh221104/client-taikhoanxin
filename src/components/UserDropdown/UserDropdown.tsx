@@ -9,7 +9,7 @@ import classNames from 'classnames/bind';
 import styles from './UserDropdown.module.scss';
 import { RootState } from '@/redux/store';
 import { logoutUser } from '@/redux/authActions';
-import { LockIcon, LogOutIcon, SettingsIcon, HistoryIcon } from '@/components/Icons';
+import { LogOutIcon, SettingsIcon, HistoryIcon } from '@/components/Icons';
 import { useToast } from '@/hooks/useToast';
 
 const cx = classNames.bind(styles);
@@ -166,10 +166,11 @@ const UserDropdown: React.FC<UserDropdownProps> = ({
         return null;
     }
 
-    const displayName = currentUser?.full_name?.trim() || currentUser?.user_name || currentUser.email;
+    const displayName = currentUser?.fullName?.trim() || currentUser?.full_name?.trim() || currentUser.email;
     const avatarSrc = currentUser.avatar?.trim() || '';
     const isMissingAvatar = !avatarSrc;
-    const avatarInitials = getInitials(currentUser.full_name, currentUser.email);
+    const userFullName = currentUser?.fullName?.trim() || currentUser?.full_name?.trim();
+    const avatarInitials = getInitials(userFullName, currentUser.email);
 
     return (
         <div
@@ -203,26 +204,18 @@ const UserDropdown: React.FC<UserDropdownProps> = ({
                             />
                             )}
                         </div>
-                        <div className={cx('user-email')}>
-                            {displayName}
+                        <div className={cx('user-info')}>
+                            <div className={cx('user-name')}>
+                                {displayName}
+                            </div>
+                            <div className={cx('user-email')}>
+                                {currentUser.email}
+                            </div>
                         </div>
                     </div>
 
                     {/* Menu Items */}
                     <div className={cx('menu-items')}>
-                        <Link 
-                            href="/account/password" 
-                            className={cx('menu-item')}
-                            onClick={() => {
-                                if (isMobile) {
-                                    setIsOpen(false);
-                                    onOverlayChange?.(false);
-                                }
-                            }}
-                        >
-                            <LockIcon size={18} />
-                            <span>Mật khẩu & bảo mật</span>
-                        </Link>
                         <Link 
                             href="/account/manage" 
                             className={cx('menu-item')}

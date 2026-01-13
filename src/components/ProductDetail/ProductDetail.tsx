@@ -152,17 +152,22 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
         : null;
     const priceOriginal = priceItem?.priceOriginal || 0;
     const discount = priceItem?.discount;
-    // If priceDiscount exists, use it as the final price (not subtract from original)
-    // Example: priceDiscount = 2000đ → finalPrice = 2000đ
-    const finalPrice = discount?.priceDiscount !== undefined && discount.priceDiscount !== null
+    // Check if there's a valid discount (priceDiscount > 0 and < priceOriginal)
+    const hasValidDiscount = discount?.priceDiscount !== undefined && 
+                             discount.priceDiscount !== null && 
+                             discount.priceDiscount > 0 && 
+                             discount.priceDiscount < priceOriginal;
+    // If priceDiscount exists and is valid, use it as the final price
+    // Otherwise, use priceOriginal (no discount)
+    const finalPrice = hasValidDiscount
         ? discount.priceDiscount
         : priceOriginal;
-    // oldPrice = priceOriginal if there's a discount
-    const oldPrice = discount?.priceDiscount !== undefined && discount.priceDiscount !== null
+    // oldPrice = priceOriginal if there's a valid discount
+    const oldPrice = hasValidDiscount
         ? priceOriginal
         : undefined;
     // discountPercent = (priceOriginal - priceDiscount) / priceOriginal * 100
-    const discountPercent = discount?.priceDiscount !== undefined && discount.priceDiscount !== null && priceOriginal > 0
+    const discountPercent = hasValidDiscount && priceOriginal > 0
         ? Math.round(((priceOriginal - discount.priceDiscount) / priceOriginal) * 100)
         : undefined;
 
@@ -218,14 +223,32 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
             });
         }
 
-        // Extract warranty info from policy
+        // Extract warranty info from policy and warrantyPeriod
+        const warrantyPeriod = product.warrantyPeriod || 0;
+        let warrantyPeriodText = 'Theo chính sách';
+        if (warrantyPeriod > 0) {
+            if (warrantyPeriod < 30) {
+                warrantyPeriodText = `${warrantyPeriod} ngày`;
+            } else if (warrantyPeriod === 30) {
+                warrantyPeriodText = '1 tháng';
+            } else if (warrantyPeriod < 365) {
+                const months = Math.floor(warrantyPeriod / 30);
+                warrantyPeriodText = `${months} tháng`;
+            } else {
+                const years = Math.floor(warrantyPeriod / 365);
+                warrantyPeriodText = `${years} năm`;
+            }
+        } else {
+            warrantyPeriodText = 'Không bảo hành';
+        }
+
         const warranty = policy
             ? {
-                period: 'Theo chính sách',
+                period: warrantyPeriod > 0 ? warrantyPeriodText : 'Theo chính sách',
                 method: policy.split('\n').filter((m: string) => m.trim()),
             }
             : {
-                period: 'Theo chính sách',
+                period: warrantyPeriod > 0 ? warrantyPeriodText : 'Theo chính sách',
                 method: [],
             };
 
@@ -256,6 +279,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
             info, // Câu hỏi thường gặp
             description: description || product.shortDescription || '', // Chi tiết sản phẩm
             tos: product.tos || undefined, // Terms of Service (Điều khoản và lưu ý)
+            paymentpromo: product.paymentpromo || undefined, // Ưu đãi thanh toán riêng cho sản phẩm
         };
     }, [product, finalPrice, oldPrice, discountPercent]);
 

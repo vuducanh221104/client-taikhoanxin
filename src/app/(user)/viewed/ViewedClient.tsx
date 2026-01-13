@@ -160,6 +160,9 @@ export default function ViewedProductsPage() {
             imageSrc: product.imageSrc,
             imageAlt: product.imageAlt,
             href: product.href,
+            stock: product.stock,
+            min: product.min,
+            max: product.max,
         }));
     };
 

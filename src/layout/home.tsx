@@ -221,6 +221,9 @@ export default function Home() {
             imageSrc: product.imageSrc,
             imageAlt: product.imageAlt,
             href: product.href,
+            stock: product.stock,
+            min: product.min,
+            max: product.max,
         }));
         showSuccess(`Đã thêm "${product.productName}" vào giỏ hàng`);
     };
@@ -303,16 +306,16 @@ export default function Home() {
             {/* Category Icons Section */}
             <CategoryIcons />
 
-            {/* Featured Product Sections from API */}
-            {featuredProductSections.map((section) => (
+            {/* Featured Product Section đầu tiên (nếu có) - Vị trí 1 */}
+            {featuredProductSections.length > 0 && (
                 <FeaturedProductSection
-                    key={section._id || `section-${section.numberSort}`}
-                    section={section}
+                    key={featuredProductSections[0]._id || `section-${featuredProductSections[0].numberSort}`}
+                    section={featuredProductSections[0]}
                     onAddToCart={handleAddToCart}
                 />
-            ))}
+            )}
 
-            {/* Best Selling Products Section from API */}
+            {/* Best Selling Products Section - Luôn ở vị trí 2 */}
             {bestSellingSection && (
                 <FeaturedProducts
                     title={bestSellingSection.title || "Sản phẩm bán chạy nhất"}
@@ -327,6 +330,15 @@ export default function Home() {
                     onAddToCart={handleAddToCart}
                 />
             )}
+
+            {/* Các Featured Product Sections còn lại (từ index 1 trở đi) - Sau Best Selling */}
+            {featuredProductSections.slice(1).map((section) => (
+                <FeaturedProductSection
+                    key={section._id || `section-${section.numberSort}`}
+                    section={section}
+                    onAddToCart={handleAddToCart}
+                />
+            ))}
         </div>
     );
 }

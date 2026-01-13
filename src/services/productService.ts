@@ -175,11 +175,26 @@ export const useProduct = (slug: string, config?: SWRConfiguration<ProductRespon
 
 /**
  * Get popular products
- * @param limit - Number of products to return (default: 10)
+ * @param params - Query parameters: page and limit (or number for backward compatibility as limit)
  * @returns SWR hook for popular products
  */
-export const usePopularProducts = (limit: number = 10) => {
-    const key = `/api/v1/products/popular?limit=${limit}`;
+export const usePopularProducts = (params?: {
+    page?: number;
+    limit?: number;
+} | number) => {
+    const queryParams = new URLSearchParams();
+    
+    // Backward compatibility: if params is a number, treat it as limit
+    if (typeof params === 'number') {
+        queryParams.append('limit', params.toString());
+    } else {
+        if (params?.page) queryParams.append('page', params.page.toString());
+        if (params?.limit) queryParams.append('limit', params.limit.toString());
+    }
+
+    const key = queryParams.toString()
+        ? `/api/v1/categories/san-pham-noi-bat?${queryParams.toString()}`
+        : '/api/v1/categories/san-pham-noi-bat';
     return useSWRUser<ProductListResponse>(key);
 };
 
@@ -220,8 +235,46 @@ export const useBestSellingProducts = (params?: {
     if (params?.limit) queryParams.append('limit', params.limit.toString());
 
     const key = queryParams.toString()
-        ? `/api/v1/products/best-selling?${queryParams.toString()}`
-        : '/api/v1/products/best-selling';
+        ? `/api/v1/categories/san-pham-ban-chay?${queryParams.toString()}`
+        : '/api/v1/categories/san-pham-ban-chay';
+    return useSWRUser<ProductListResponse>(key);
+};
+
+/**
+ * Get products with badge
+ * @param params - Query parameters: page and limit
+ * @returns SWR hook for products with badge
+ */
+export const useBadgeProducts = (params?: {
+    page?: number;
+    limit?: number;
+}) => {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+
+    const key = queryParams.toString()
+        ? `/api/v1/categories/san-pham-co-huy-hieu?${queryParams.toString()}`
+        : '/api/v1/categories/san-pham-co-huy-hieu';
+    return useSWRUser<ProductListResponse>(key);
+};
+
+/**
+ * Get products on sale
+ * @param params - Query parameters: page and limit
+ * @returns SWR hook for products on sale
+ */
+export const useOnSaleProducts = (params?: {
+    page?: number;
+    limit?: number;
+}) => {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+
+    const key = queryParams.toString()
+        ? `/api/v1/categories/san-pham-dang-giam-gia?${queryParams.toString()}`
+        : '/api/v1/categories/san-pham-dang-giam-gia';
     return useSWRUser<ProductListResponse>(key);
 };
 
@@ -394,6 +447,9 @@ export const mapProductToFeaturedProduct = (product: Product): FeaturedProduct =
         href: `/product/${product.slug}`,
         imageSrc: product.image?.[0] || '',
         imageAlt: product.name,
+        stock: product.stock,
+        min: product.min,
+        max: product.max,
     };
 };
 

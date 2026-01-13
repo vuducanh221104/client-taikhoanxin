@@ -106,7 +106,7 @@ export default function WarrantyPolicyPage() {
                         <ul>
                             <li>Live chat trên website</li>
                             <li>Email: support@taikhoanxin.com</li>
-                            <li>Hotline: 1900 xxxx</li>
+                            <li>Hotline: 0377775528</li>
                         </ul>
                     </div>
                 </div>

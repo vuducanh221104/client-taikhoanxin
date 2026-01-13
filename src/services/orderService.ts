@@ -271,6 +271,22 @@ export const verifyOrderLookupOtp = async (payload: VerifyOrderLookupOtpPayload)
     return response.data;
 };
 
+export interface AutoCreateLookupTokenPayload {
+    orderCode?: string;
+    orderId?: string;
+    checkoutToken: string;
+    email: string;
+}
+
+/**
+ * Auto create lookup token from checkout token when payment is successful
+ * This allows users to access order lookup directly after payment without OTP
+ */
+export const autoCreateLookupToken = async (payload: AutoCreateLookupTokenPayload) => {
+    const response = await post<OrderLookupVerifyResponse>('/api/v1/orders/lookup/auto-verify', payload);
+    return response.data;
+};
+
 // ============================================
 // UTILITY FUNCTIONS
 // ============================================

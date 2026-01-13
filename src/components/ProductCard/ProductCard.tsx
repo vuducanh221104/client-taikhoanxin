@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Image } from '@/components/Image';
 import classNames from 'classnames/bind';
 import styles from './ProductCard.module.scss';
@@ -67,6 +68,7 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(({
     soldCount,
     isHot,
 }) => {
+    const router = useRouter();
     const [internalIsFavorite, setInternalIsFavorite] = useState(false);
     const isFavorite = externalIsFavorite !== undefined ? externalIsFavorite : internalIsFavorite;
 
@@ -123,11 +125,21 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(({
         return stars;
     };
 
+    // Comment lại logic add to cart cũ - giờ sẽ redirect vào product details
+    // const handleAddToCart = (e: React.MouseEvent) => {
+    //     e.preventDefault();
+    //     e.stopPropagation();
+    //     if (onAddToCart) {
+    //         onAddToCart();
+    //     }
+    // };
+
+    // Redirect vào product details page khi click add to cart
     const handleAddToCart = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        if (onAddToCart) {
-            onAddToCart();
+        if (href && href !== '#') {
+            router.push(href);
         }
     };
 

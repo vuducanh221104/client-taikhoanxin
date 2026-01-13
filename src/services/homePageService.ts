@@ -77,6 +77,7 @@ export interface HomePage {
     featuredProduct: FeaturedProductSection[];
     productBestSelling: ProductSection;
     other: ProductSection;
+    paymentpromo?: string; // Ưu đãi thanh toán hiển thị trên tất cả sản phẩm
     createdAt: string;
     updatedAt: string;
 }

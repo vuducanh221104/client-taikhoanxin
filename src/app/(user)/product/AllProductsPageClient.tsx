@@ -141,6 +141,9 @@ export default function AllProductsPageClient() {
             imageSrc: product.imageSrc,
             imageAlt: product.imageAlt,
             href: product.href,
+            stock: product.stock,
+            min: product.min,
+            max: product.max,
         }));
         showSuccess(`Đã thêm "${product.productName}" vào giỏ hàng`);
     };

@@ -11,6 +11,9 @@ export interface CartProduct {
     href?: string;
     quantity: number;
     options?: Array<{ title: string; value: any }>;
+    stock?: number;
+    min?: number;
+    max?: number;
 }
 
 /**
@@ -47,6 +50,7 @@ const cartSlice = createSlice({
         /**
          * Add product to cart (only for non-logged-in users)
          * When user is logged in, use API addToCart instead
+         * Xóa mã giảm giá khi thêm sản phẩm mới vào cart
          */
         addToCart: (state, action: PayloadAction<Omit<CartProduct, 'quantity'>>) => {
             const product = action.payload;
@@ -55,6 +59,10 @@ const cartSlice = createSlice({
             if (existingProduct) {
                 existingProduct.quantity += 1;
             } else {
+                // Thêm sản phẩm mới vào cart - xóa mã giảm giá
+                state.couponCode = undefined;
+                state.couponDiscount = 0;
+                
                 state.products.push({
                     ...product,
                     quantity: 1,

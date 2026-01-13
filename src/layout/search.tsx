@@ -20,8 +20,8 @@ import categoryStyles from '@/app/(user)/categories/[slug]/page.module.scss';
 const cx = classNames.bind(styles);
 const categoryCx = classNames.bind(categoryStyles);
 
-const INITIAL_DISPLAY_LIMIT = 8;
-const LOAD_MORE_INCREMENT = 8;
+const INITIAL_DISPLAY_LIMIT = 9;
+const LOAD_MORE_INCREMENT = 9;
 
 const DEFAULT_PRICE_RANGE: [number, number] = [0, 10_000_000];
 const PRICE_SLIDER_STEP = 50_000;
@@ -306,6 +306,9 @@ const SearchLayout: React.FC = () => {
             imageSrc: product.imageSrc,
             imageAlt: product.imageAlt,
             href: product.href,
+            stock: product.stock,
+            min: product.min,
+            max: product.max,
         }));
         showSuccess(`Đã thêm "${product.productName}" vào giỏ hàng`);
     };
@@ -691,7 +694,7 @@ const SearchLayout: React.FC = () => {
                         title={`Không tìm thấy sản phẩm cho "${query}"`}
                         description="Thử tìm kiếm với từ khóa khác hoặc khám phá các sản phẩm phổ biến"
                         actionLabel="Khám phá sản phẩm"
-                        actionHref="/products"
+                        actionHref="/"
                     />
                 ) : shouldShowFilteredEmpty ? (
                     <EmptyState

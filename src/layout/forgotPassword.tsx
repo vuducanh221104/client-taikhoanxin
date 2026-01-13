@@ -230,7 +230,7 @@ export default function ForgotPasswordLayout() {
             // Lưu thời gian gửi OTP
             setLastOTPSentTime(Date.now());
             setRateLimitCountdown(60);
-            showSuccess('Mã OTP đã được gửi đến email của bạn.');
+            showSuccess('Mã OTP đã được gửi đến email của bạn. Nếu không nhận được OTP, vui lòng kiểm tra thư spam.');
             setStep('otp');
             resetTurnstile();
         } catch (error) {

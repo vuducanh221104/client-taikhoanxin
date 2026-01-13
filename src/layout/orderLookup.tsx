@@ -286,6 +286,9 @@ const OrderLookupPage: React.FC<LookupPageProps> = ({ initialOrderCode, initialE
             <p>
                 Mã OTP đã được gửi tới <strong>{submittedEmail}</strong>. Nhập mã gồm 6 chữ số để tiếp tục.
             </p>
+            <p style={{ marginTop: '8px', fontSize: '14px', color: '#666' }}>
+                💡 Nếu không nhận được OTP, vui lòng kiểm tra thư spam.
+            </p>
             {otpError && (
                 <div className={cx('alert')}>
                     <AlertCircleIcon size={18} />

@@ -50,7 +50,7 @@ const Footer: React.FC = () => {
                                 <InstagramIcon />
                             </a>
                             <a
-                                href="https://youtube.com"
+                                href="https://www.youtube.com/@helloducanh"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={cx('social-link')}
@@ -59,7 +59,7 @@ const Footer: React.FC = () => {
                                 <YoutubeIcon />
                             </a>
                             <a
-                                href="https://t.me/taikhoanxin"
+                                href="http://t.me/taikhoanxincom"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={cx('social-link')}
@@ -144,7 +144,7 @@ const Footer: React.FC = () => {
                                 <span className={cx('contact-icon', 'phone')}>
                                     <PhoneIcon />
                                 </span>
-                                <span>Hotline: 1900 1234</span>
+                                <span>Hotline: 0377775528</span>
                             </li>
                             <li>
                                 <span className={cx('contact-icon', 'clock')}>

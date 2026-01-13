@@ -39,7 +39,7 @@ const PurchaseToastListener: React.FC = () => {
             return variants[randomIndex];
         };
 
-        const showAtIndex = (index: number) => {
+        const showAtIndex = (index: number, isInitialDelay: boolean = false) => {
             if (!items.length) return;
 
             // Cập nhật index hiện tại
@@ -62,7 +62,8 @@ const PurchaseToastListener: React.FC = () => {
             }, 5000);
 
             // Random delay cho lần hiển thị tiếp theo: 1–5 phút
-            const minDelay = 60_000; // 1 phút
+            // Nếu là lần hiển thị đầu tiên (sau refresh), delay ngắn hơn: 2-5 phút
+            const minDelay = isInitialDelay ? 120_000 : 60_000; // 2 phút cho lần đầu, 1 phút cho các lần sau
             const maxDelay = 300_000; // 5 phút
             const randomDelay =
                 Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
@@ -71,12 +72,20 @@ const PurchaseToastListener: React.FC = () => {
                 clearTimeout(nextTimerRef.current);
             }
             nextTimerRef.current = setTimeout(() => {
-                showAtIndex(indexRef.current + 1);
+                showAtIndex(indexRef.current + 1, false);
             }, randomDelay);
         };
 
-        // Bắt đầu từ item đầu tiên
-        showAtIndex(0);
+        // Delay ban đầu trước khi hiển thị item đầu tiên: 30 giây cố định
+        // Điều này đảm bảo khi refresh trang, hiển thị sau 30 giây
+        const initialDelay = 30_000; // 30 giây
+
+        if (nextTimerRef.current) {
+            clearTimeout(nextTimerRef.current);
+        }
+        nextTimerRef.current = setTimeout(() => {
+            showAtIndex(0, true);
+        }, initialDelay);
 
         return () => {
             if (hideTimerRef.current) {

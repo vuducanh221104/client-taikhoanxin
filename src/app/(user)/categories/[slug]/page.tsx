@@ -33,9 +33,32 @@ async function fetchCategoryResponse(slug: string) {
 }
 
 const DEFAULT_PRICE_RANGE: [number, number] = [0, 10_000_000];
-const DEFAULT_ITEMS_PER_PAGE = 30;
+const DEFAULT_ITEMS_PER_PAGE = 9;
+
+// Check if slug is a special path parameter
+function isSpecialPath(slug: string): boolean {
+    return ['san-pham-noi-bat', 'san-pham-ban-chay', 'san-pham-co-huy-hieu', 'san-pham-con-hang', 'san-pham-dang-giam-gia'].includes(slug);
+}
 
 function buildProductsKey(slug: string) {
+    // Special paths use different endpoints
+    if (slug === 'san-pham-noi-bat') {
+        return `/api/v1/categories/san-pham-noi-bat?page=1&limit=${DEFAULT_ITEMS_PER_PAGE}`;
+    }
+    if (slug === 'san-pham-ban-chay') {
+        return `/api/v1/categories/san-pham-ban-chay?page=1&limit=${DEFAULT_ITEMS_PER_PAGE}`;
+    }
+    if (slug === 'san-pham-co-huy-hieu') {
+        return `/api/v1/categories/san-pham-co-huy-hieu?page=1&limit=${DEFAULT_ITEMS_PER_PAGE}`;
+    }
+    if (slug === 'san-pham-dang-giam-gia') {
+        return `/api/v1/categories/san-pham-dang-giam-gia?page=1&limit=${DEFAULT_ITEMS_PER_PAGE}`;
+    }
+    if (slug === 'san-pham-con-hang') {
+        return `/api/v1/categories/san-pham-con-hang?page=1&limit=${DEFAULT_ITEMS_PER_PAGE}`;
+    }
+    
+    // Regular category
     const queryParams = new URLSearchParams();
     queryParams.append('page', '1');
     queryParams.append('limit', DEFAULT_ITEMS_PER_PAGE.toString());
@@ -135,12 +158,16 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function CategoryDetailPage({ params }: { params: { slug: string } }) {
-    const categoryResponse = await fetchCategoryResponse(params.slug);
+    const isSpecial = isSpecialPath(params.slug);
+    
+    // Only fetch category if it's not a special path
+    const categoryResponse = isSpecial ? null : await fetchCategoryResponse(params.slug);
     const { productsKey, data: productsResponse } = await fetchCategoryProducts(params.slug);
     const fallback: Record<string, unknown> = {};
     const categoryJsonLd = buildCategoryJsonLd(categoryResponse, params.slug);
 
-    if (categoryResponse) {
+    // Only add category to fallback if it's not a special path
+    if (categoryResponse && !isSpecial) {
         fallback[`/api/v1/categories/${params.slug}`] = categoryResponse;
     }
     if (productsResponse) {

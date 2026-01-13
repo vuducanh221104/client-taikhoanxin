@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import OrderLookupLayout from '@/layout/orderLookup';
+import OrderLookupClient from './OrderLookupClient';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taikhoanxin.com';
 const ogImage = 'https://cdn.taikhoanxin.com/seo/banner-seo.jpeg';
@@ -45,6 +45,21 @@ export const metadata: Metadata = {
     },
 };
 
-export default function OrderLookupRootPage() {
-    return <OrderLookupLayout />;
+export default function OrderLookupRootPage({
+    searchParams,
+}: {
+    searchParams: { orderCode?: string; token?: string; email?: string };
+}) {
+    const orderCode = searchParams?.orderCode || null;
+    const token = searchParams?.token || null;
+    const email = searchParams?.email || null;
+
+    return (
+        <OrderLookupClient
+            initialOrderCode={orderCode}
+            initialEmail={email}
+            initialToken={token}
+        />
+    );
 }
+

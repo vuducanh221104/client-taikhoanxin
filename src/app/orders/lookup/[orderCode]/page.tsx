@@ -1,10 +1,13 @@
 import type { Metadata } from 'next';
-import OrderLookupLayout from '@/layout/orderLookup';
+import OrderLookupClient from './OrderLookupClient';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taikhoanxin.com';
 const ogImage = 'https://cdn.taikhoanxin.com/seo/banner-seo.jpeg';
 
-export function generateMetadata({ params }: { params: { orderCode: string } }): Metadata {
+export function generateMetadata({ params, searchParams }: { 
+    params: { orderCode: string };
+    searchParams: { token?: string; email?: string };
+}): Metadata {
     const code = params?.orderCode ? String(params.orderCode) : '';
     const orderCode = code ? code.toUpperCase() : 'Đơn hàng';
     const title = `Tra cứu đơn ${orderCode} | TaiKhoanXin`;
@@ -50,6 +53,22 @@ export function generateMetadata({ params }: { params: { orderCode: string } }):
     };
 }
 
-export default function OrderLookupWithCodePage() {
-    return <OrderLookupLayout />;
+export default function OrderLookupWithCodePage({
+    params,
+    searchParams,
+}: {
+    params: { orderCode: string };
+    searchParams: { token?: string; email?: string };
+}) {
+    const orderCode = params?.orderCode ? String(params.orderCode) : null;
+    const token = searchParams?.token || null;
+    const email = searchParams?.email || null;
+
+    return (
+        <OrderLookupClient
+            initialOrderCode={orderCode}
+            initialEmail={email}
+            initialToken={token}
+        />
+    );
 }

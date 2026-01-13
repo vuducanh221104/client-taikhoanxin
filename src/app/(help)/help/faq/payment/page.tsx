@@ -153,7 +153,7 @@ export default function PaymentFAQPage() {
                         <ul>
                             <li>Website: www.taikhoanxin.com</li>
                             <li>Email: support@taikhoanxin.com</li>
-                            <li>Hotline: 1900 xxxx</li>
+                            <li>Hotline: 037775528</li>
                             <li>Facebook: /taikhoanxin.official</li>
                         </ul>
                     </div>

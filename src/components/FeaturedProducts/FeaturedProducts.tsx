@@ -28,6 +28,9 @@ export interface FeaturedProduct {
     imageAlt?: string;
     tags?: string[];
     categoryIds?: string[];
+    stock?: number;
+    min?: number;
+    max?: number;
 }
 
 export interface FeaturedProductsProps {

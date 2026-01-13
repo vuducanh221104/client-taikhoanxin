@@ -58,7 +58,7 @@ export default function LoginCodePage() {
             // });
             // const data = await response.json();
 
-            showSuccess('Mã đăng nhập đã được gửi đến email của bạn!');
+            showSuccess('Mã đăng nhập đã được gửi đến email của bạn! Nếu không nhận được, vui lòng kiểm tra thư spam.');
             
             // Reset form after success
             setEmail('');

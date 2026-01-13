@@ -253,7 +253,7 @@ const CheckoutSuccessPage: React.FC = () => {
                             <Link href="/" className={cx('btn', 'primary')}>
                                 Về trang chủ
                             </Link>
-                            <Link href="/products" className={cx('btn')}>
+                            <Link href="/" className={cx('btn')}>
                                 Tiếp tục mua sắm
                             </Link>
                         </div>

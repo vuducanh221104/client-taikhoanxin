@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import classNames from 'classnames/bind';
 import styles from '@/app/(user)/checkout/page.module.scss';
 import { useSelector, useDispatch } from 'react-redux';
@@ -8,11 +8,11 @@ import type { RootState, AppDispatch } from '@/redux/store';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { OnlineBankingQrIcon } from '@/components/Icons';
 import ProgressIndicator, { Step } from '@/components/ProgressIndicator';
 import { useCart, checkout } from '@/services/cartService';
 import { useToast } from '@/hooks/useToast';
-import { clearCart } from '@/redux/cartSlice';
+import { clearCart, removeCoupon } from '@/redux/cartSlice';
+import { clearDiscountCode } from '@/redux/authSlice';
 import { createGuestOrder } from '@/services/orderService';
 
 const cx = classNames.bind(styles);
@@ -35,7 +35,7 @@ interface PaymentMethod {
 const paymentMethods: PaymentMethod[] = [
     {
         id: 'qr-bank-transfer',
-        icon: <OnlineBankingQrIcon size={48} />,
+        iconImage: '/payment/vietQR.png',
         title: 'Chuyển khoản ngân hàng',
         description: 'Quét mã QR chuyển khoản online. Phí 0%',
         fee: '0%',
@@ -59,6 +59,8 @@ const CheckoutLayout: React.FC = () => {
     const [touched, setTouched] = useState<Record<string, boolean>>({});
     const [submitting, setSubmitting] = useState(false);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('qr-bank-transfer');
+    // Lưu giá cart trước khi submit để giữ nguyên khi đang xử lý
+    const savedCartRef = useRef<any>(null);
 
     const { data: cartData, error: cartError, isLoading: cartLoading, mutate: mutateCart } = useCart();
     const isLoggedIn = Boolean(currentUser?.accessToken);
@@ -96,17 +98,31 @@ const CheckoutLayout: React.FC = () => {
                 if (!price && product?.price) {
                     if (Array.isArray(product.price)) {
                         const priceItem = product.price[0];
+                        const priceOriginal = priceItem?.priceOriginal || priceItem?.original || 0;
                         const discount = priceItem?.discount;
-                        // Use priceDiscount if available, otherwise use priceOriginal
-                        price = discount?.priceDiscount !== undefined && discount.priceDiscount !== null
+                        
+                        // Only use priceDiscount if it's valid (> 0 and < priceOriginal)
+                        const hasValidDiscount = discount?.priceDiscount !== undefined &&
+                            discount.priceDiscount !== null &&
+                            discount.priceDiscount > 0 &&
+                            discount.priceDiscount < priceOriginal;
+                        
+                        price = hasValidDiscount
                             ? discount.priceDiscount
-                            : priceItem?.priceOriginal || priceItem?.original || 0;
+                            : priceOriginal;
                     } else if (typeof product.price === 'object') {
+                        const priceOriginal = product.price.priceOriginal || product.price.original || 0;
                         const discount = product.price.discount;
-                        // Use priceDiscount if available, otherwise use priceOriginal
-                        price = discount?.priceDiscount !== undefined && discount.priceDiscount !== null
+                        
+                        // Only use priceDiscount if it's valid (> 0 and < priceOriginal)
+                        const hasValidDiscount = discount?.priceDiscount !== undefined &&
+                            discount.priceDiscount !== null &&
+                            discount.priceDiscount > 0 &&
+                            discount.priceDiscount < priceOriginal;
+                        
+                        price = hasValidDiscount
                             ? discount.priceDiscount
-                            : product.price.priceOriginal || product.price.original || 0;
+                            : priceOriginal;
                     }
                 }
 
@@ -139,10 +155,14 @@ const CheckoutLayout: React.FC = () => {
                 couponDiscount: apiCart.discountAmount || apiCart.totalDiscount || 0,
             };
         }
-        // Calculate totalDiscountBefore from products for Redux cart
+        // Calculate totalDiscountBefore from products for Redux cart (guest)
         const totalDiscountBefore = reduxCart.products.reduce((sum, product) => {
             return sum + (product.price || 0) * (product.quantity || 1);
         }, 0);
+
+        // Calculate totalPrice after discount for guest cart
+        const couponDiscount = reduxCart.couponDiscount || 0;
+        const totalPrice = Math.max(0, totalDiscountBefore - couponDiscount);
 
         return {
             products: reduxCart.products.map((product) => ({
@@ -150,12 +170,15 @@ const CheckoutLayout: React.FC = () => {
                 options: product.options || [],
             })),
             totalDiscountBefore,
-            totalPrice: reduxCart.totalPrice,
+            totalPrice, // Total after discount
             totalQuantity: reduxCart.totalQuantity,
             couponCode: reduxCart.couponCode,
-            couponDiscount: reduxCart.couponDiscount || 0,
+            couponDiscount,
         };
     }, [cartData, isLoggedIn, reduxCart]);
+
+    // Khi đang submit, dùng savedCart để giữ nguyên giá
+    const displayCart = submitting && savedCartRef.current ? savedCartRef.current : cart;
 
     const formatPrice = (value: number) => value.toLocaleString('vi-VN');
     const cartEmpty = cart.products.length === 0;
@@ -307,6 +330,9 @@ const CheckoutLayout: React.FC = () => {
             return;
         }
 
+        // Lưu cart trước khi submit để giữ nguyên giá khi đang xử lý
+        savedCartRef.current = cart;
+
         setSubmitting(true);
 
         try {
@@ -350,11 +376,15 @@ const CheckoutLayout: React.FC = () => {
                 } else {
                     storeGuestCheckoutAccess(orderCode, form.email);
                     dispatch(clearCart());
+                    dispatch(removeCoupon()); // Xóa mã giảm giá khỏi Redux cart
 
                     if (typeof window !== 'undefined') {
                         window.sessionStorage.setItem(`order_created_${orderCode}`, 'true');
                     }
                 }
+
+                // Xóa mã giảm giá sau khi đặt hàng thành công (cả user và guest)
+                dispatch(clearDiscountCode());
 
                 showSuccess('Đặt hàng thành công!');
 
@@ -371,6 +401,8 @@ const CheckoutLayout: React.FC = () => {
                 error?.response?.data?.message || error?.message || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!';
             showError(errorMessage);
             setSubmitting(false);
+            // Clear saved cart khi có lỗi để hiển thị cart hiện tại
+            savedCartRef.current = null;
         }
     };
 
@@ -408,7 +440,7 @@ const CheckoutLayout: React.FC = () => {
                         </div>
                         <div className={cx('row')}>
                             <div className={cx('field')}>
-                                <label>Số điện thoại *</label>
+                                <label>Số điện thoại (Zalo) *</label>
                                 <input
                                     name="phone"
                                     type="tel"
@@ -470,8 +502,8 @@ const CheckoutLayout: React.FC = () => {
                                                 <Image
                                                     src={method.iconImage}
                                                     alt={method.title}
-                                                    width={48}
-                                                    height={48}
+                                                    width={150}
+                                                    height={150}
                                                     className={cx('payment-icon-image')}
                                                 />
                                             ) : null}
@@ -494,7 +526,7 @@ const CheckoutLayout: React.FC = () => {
                     <aside className={cx('summary')}>
                         <h3 className={cx('summary-title')}>Giỏ hàng</h3>
                         <div className={cx('summary-items')}>
-                            {cart.products.map((p: any) => (
+                            {displayCart.products.map((p: any) => (
                                 <div key={p.id} className={cx('summary-item')}>
                                     <div className={cx('item-name')}>
                                         {p.productName}
@@ -508,24 +540,24 @@ const CheckoutLayout: React.FC = () => {
                         </div>
                         <div className={cx('summary-row')}>
                             <span>Tạm tính</span>
-                            <strong>{formatPrice(cart.totalDiscountBefore || cart.totalPrice)}₫</strong>
+                            <strong>{formatPrice(displayCart.totalDiscountBefore || displayCart.totalPrice)}₫</strong>
                         </div>
 
-                        {cart.couponCode && cart.couponDiscount > 0 && (
+                        {displayCart.couponCode && displayCart.couponDiscount > 0 && (
                             <div className={cx('summary-row', 'coupon-row')}>
                                 <span>
                                     Mã giảm giá
-                                    <span className={cx('coupon-code-badge')}>{cart.couponCode}</span>
+                                    <span className={cx('coupon-code-badge')}>{displayCart.couponCode}</span>
                                 </span>
                                 <strong className={cx('discount-amount')}>
-                                    -{formatPrice(cart.couponDiscount)}₫
+                                    -{formatPrice(displayCart.couponDiscount)}₫
                                 </strong>
                             </div>
                         )}
 
                         <div className={cx('summary-total')}>
                             <span>Tổng</span>
-                            <strong>{formatPrice(cart.totalPrice)}₫</strong>
+                            <strong>{formatPrice(displayCart.totalPrice)}₫</strong>
                         </div>
                         <button
                             className={cx('place-order')}
