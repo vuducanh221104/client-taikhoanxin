@@ -1,6 +1,6 @@
 'use client';
 import { useSWRUser } from './swrConfig';
-import { post, put, del } from '@/utils/httpRequest';
+import { post, put, del, get } from '@/utils/httpRequest';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 
@@ -155,6 +155,26 @@ export const importGuestCart = async (data: ImportGuestCartPayload, accessToken?
         : {};
     const response = await post<CartResponse>('/api/v1/cart/import-guest', data, config);
     return response.data;
+};
+
+/**
+ * Validate cart - Check prices, stock, discount code
+ */
+export const validateCart = async (): Promise<{
+    success: boolean;
+    hasChanges?: boolean;
+    message?: string;
+    validationResult?: any;
+    cart?: any;
+}> => {
+    const response = await get<{
+        success: boolean;
+        hasChanges?: boolean;
+        message?: string;
+        validationResult?: any;
+        cart?: any;
+    }>('/api/v1/cart/validate');
+    return response;
 };
 
 /**

@@ -350,6 +350,16 @@ const CheckoutSuccessLayout: React.FC = () => {
         const year = date.getFullYear();
         return `${day}/${month}/${year}`;
     };
+    const formatDateTime = (dateString: string) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${day}/${month}/${year} - ${hours}:${minutes}`;
+    };
 
     const validateEmailFormat = (email: string) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -517,7 +527,7 @@ const CheckoutSuccessLayout: React.FC = () => {
                             <p className={cx('bill-message')}>
                                 Chúng tôi đã nhận được đơn hàng của bạn và đang chờ xác nhận thanh toán.
                                 Đơn hàng sẽ tự động hủy sau{' '}
-                                {checkoutData?.data?.paymentWindowMinutes || 60} phút nếu chưa nhận
+                                {checkoutData?.data?.paymentWindowMinutes || 15} phút nếu chưa nhận
                                 được chuyển khoản.
                             </p>
                             {isExpired && (
@@ -603,7 +613,7 @@ const CheckoutSuccessLayout: React.FC = () => {
                                         <div className={cx('bill-order-meta')}>
                                             <p>
                                                 Đơn hàng <strong>#{displayOrder.code}</strong> (
-                                                {formatDate(displayOrder.createdAt)})
+                                                {formatDateTime(displayOrder.createdAt)})
                                             </p>
                                             {!isExpired && remainingSeconds > 0 && (
                                                 <span className={cx('bill-note-small')}>
@@ -734,12 +744,34 @@ const CheckoutSuccessLayout: React.FC = () => {
                         </div>
 
                         <div className={cx('bill-actions')}>
-                            <Link href="/" className={cx('btn', 'primary')}>
-                                Về trang chủ
-                            </Link>
-                            <Link href="/" className={cx('btn')}>
-                                Tiếp tục mua sắm
-                            </Link>
+                            {!currentUser ? (
+                                <>
+                                    <Link href="/" className={cx('btn', 'primary')}>
+                                        Quay lại trang chủ
+                                    </Link>
+                                    {orderCodeParam && checkoutTokenParam && submittedEmail ? (
+                                        <Link
+                                            href={`/orders/lookup/${orderCodeParam}?token=${checkoutTokenParam}&email=${encodeURIComponent(submittedEmail)}`}
+                                            className={cx('btn')}
+                                        >
+                                            Tra cứu đơn hàng
+                                        </Link>
+                                    ) : (
+                                        <Link href="/orders/lookup" className={cx('btn')}>
+                                            Tra cứu đơn hàng
+                                        </Link>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    <Link href="/" className={cx('btn', 'primary')}>
+                                        Về trang chủ
+                                    </Link>
+                                    <Link href="/" className={cx('btn')}>
+                                        Tiếp tục mua sắm
+                                    </Link>
+                                </>
+                            )}
                         </div>
                     </div>
                 ) : null}

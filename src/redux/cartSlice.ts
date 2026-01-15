@@ -51,13 +51,24 @@ const cartSlice = createSlice({
          * Add product to cart (only for non-logged-in users)
          * When user is logged in, use API addToCart instead
          * Xóa mã giảm giá khi thêm sản phẩm mới vào cart
+         * Validates max quantity constraint before adding
          */
         addToCart: (state, action: PayloadAction<Omit<CartProduct, 'quantity'>>) => {
             const product = action.payload;
             const existingProduct = state.products.find((p) => p.id === product.id);
+            const max = product.max ?? 100;
 
             if (existingProduct) {
+                // Check if adding 1 more would exceed max quantity
+                if (existingProduct.quantity >= max) {
+                    // Already at max, don't add more
+                    return;
+                }
                 existingProduct.quantity += 1;
+                // Update max/min/stock if provided (in case product data was updated)
+                if (product.max !== undefined) existingProduct.max = product.max;
+                if (product.min !== undefined) existingProduct.min = product.min;
+                if (product.stock !== undefined) existingProduct.stock = product.stock;
             } else {
                 // Thêm sản phẩm mới vào cart - xóa mã giảm giá
                 state.couponCode = undefined;
@@ -89,16 +100,23 @@ const cartSlice = createSlice({
         /**
          * Update product quantity (only for non-logged-in users)
          * When user is logged in, use API updateCartItem instead
+         * Validates min/max quantity constraints
          */
         updateQuantity: (state, action: PayloadAction<{ id: string; quantity: number }>) => {
             const { id, quantity } = action.payload;
             const product = state.products.find((p) => p.id === id);
 
             if (product && quantity > 0) {
+                const min = product.min ?? 1;
+                const max = product.max ?? 100;
+                
+                // Clamp quantity to min/max bounds
+                const clampedQuantity = Math.min(Math.max(quantity, min), max);
+                
                 const oldQuantity = product.quantity;
-                product.quantity = quantity;
-                state.totalQuantity += quantity - oldQuantity;
-                state.totalPrice += product.price * (quantity - oldQuantity);
+                product.quantity = clampedQuantity;
+                state.totalQuantity += clampedQuantity - oldQuantity;
+                state.totalPrice += product.price * (clampedQuantity - oldQuantity);
             }
         },
         /**
@@ -129,9 +147,29 @@ const cartSlice = createSlice({
             state.couponCode = undefined;
             state.couponDiscount = 0;
         },
+        /**
+         * Update product price and recalculate totals
+         * Used when validating guest cart and prices have changed
+         */
+        updateProductPrice: (state, action: PayloadAction<{ id: string; price: number; stock?: number }>) => {
+            const { id, price, stock } = action.payload;
+            const product = state.products.find((p) => p.id === id);
+
+            if (product) {
+                const oldPrice = product.price;
+                product.price = price;
+                if (stock !== undefined) {
+                    product.stock = stock;
+                }
+                
+                // Recalculate totalPrice based on price difference
+                const priceDifference = price - oldPrice;
+                state.totalPrice += priceDifference * product.quantity;
+            }
+        },
     },
 });
 
-export const { addToCart, removeFromCart, updateQuantity, clearCart, applyCoupon, removeCoupon } = cartSlice.actions;
+export const { addToCart, removeFromCart, updateQuantity, clearCart, applyCoupon, removeCoupon, updateProductPrice } = cartSlice.actions;
 export default cartSlice.reducer;
 

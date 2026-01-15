@@ -26,6 +26,7 @@ import { addViewedProduct, type ViewedProductsResponse } from '@/services/userSe
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState, AppDispatch } from '@/redux/store';
 import { addGuestViewedProduct } from '@/redux/viewedProductsSlice';
+import { useToast } from '@/hooks/useToast';
 
 const cx = classNames.bind(styles);
 
@@ -56,9 +57,27 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
     const { cache, mutate: globalMutate } = useSWRConfig();
     const currentUser = useSelector((state: RootState) => state.auth.login?.currentUser);
     const lastTrackedProductId = React.useRef<string | null>(null);
+    const { showInfo } = useToast();
+    const previousPriceRef = React.useRef<number | null>(null);
 
-    // Fetch product from API
+    // Fetch product from API (SWR) - always revalidate once on mount to get latest price & stock
     const { data: productResponse, error, isLoading, mutate } = useProduct(slug);
+
+    // Đảm bảo mỗi lần mở product detail sẽ gọi API mới nhất để cập nhật giá & stock
+    const hasRefreshedRef = React.useRef(false);
+    React.useEffect(() => {
+        if (!slug) return;
+        
+        // Reset previous price when slug changes (navigating to different product)
+        previousPriceRef.current = null;
+        hasRefreshedRef.current = false;
+        
+        if (!hasRefreshedRef.current) {
+            hasRefreshedRef.current = true;
+            // Gọi mutate() để force revalidate với server, lấy giá/stock mới nhất
+            mutate();
+        }
+    }, [slug, mutate]);
 
     // Backend returns { product, reviews }
     // Note: relatedProduct field is in product object (array of IDs)
@@ -152,11 +171,19 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
         : null;
     const priceOriginal = priceItem?.priceOriginal || 0;
     const discount = priceItem?.discount;
-    // Check if there's a valid discount (priceDiscount > 0 and < priceOriginal)
+    // Check if there's a valid discount:
+    // 1. priceDiscount > 0 and < priceOriginal
+    // 2. quantity > 0 (còn mã giảm giá)
+    const quantity = discount?.quantity || 0;
+    
+    // Chỉ kiểm tra quantity > 0
+    const isDiscountAvailable = quantity > 0;
+    
     const hasValidDiscount = discount?.priceDiscount !== undefined && 
                              discount.priceDiscount !== null && 
                              discount.priceDiscount > 0 && 
-                             discount.priceDiscount < priceOriginal;
+                             discount.priceDiscount < priceOriginal &&
+                             isDiscountAvailable;
     // If priceDiscount exists and is valid, use it as the final price
     // Otherwise, use priceOriginal (no discount)
     const finalPrice = hasValidDiscount
@@ -170,6 +197,29 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
     const discountPercent = hasValidDiscount && priceOriginal > 0
         ? Math.round(((priceOriginal - discount.priceDiscount) / priceOriginal) * 100)
         : undefined;
+
+    // Detect price changes and show notification
+    React.useEffect(() => {
+        if (!product || isLoading) return;
+
+        const currentPrice = finalPrice || 0;
+        
+        // Initialize previous price on first load
+        if (previousPriceRef.current === null) {
+            previousPriceRef.current = currentPrice;
+            return;
+        }
+
+        // Check if price has changed (with small threshold to avoid floating point issues)
+        const priceDifference = Math.abs(previousPriceRef.current - currentPrice);
+        if (priceDifference > 0.01 && previousPriceRef.current > 0) {
+            // Price has changed, show notification
+            showInfo('Giá tiền đã được thay đổi');
+        }
+
+        // Update previous price
+        previousPriceRef.current = currentPrice;
+    }, [finalPrice, product, isLoading, showInfo]);
 
     // Map product to component format (must be before conditional returns)
     const mappedProduct = useMemo(() => {
@@ -280,6 +330,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
             description: description || product.shortDescription || '', // Chi tiết sản phẩm
             tos: product.tos || undefined, // Terms of Service (Điều khoản và lưu ý)
             paymentpromo: product.paymentpromo || undefined, // Ưu đãi thanh toán riêng cho sản phẩm
+            // Stock and quantity constraints
+            stock: product.stock ?? 0,
+            min: product.min ?? 1,
+            max: product.max ?? 100,
         };
     }, [product, finalPrice, oldPrice, discountPercent]);
 

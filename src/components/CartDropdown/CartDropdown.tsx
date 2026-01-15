@@ -114,11 +114,24 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                         const priceOriginal = priceItem?.priceOriginal || priceItem?.original || 0;
                         const discount = priceItem?.discount;
                         
-                        // Only use priceDiscount if it's valid (> 0 and < priceOriginal)
+                        // Only use priceDiscount if it's valid:
+                        // 1. priceDiscount > 0 and < priceOriginal
+                        // 2. quantityLimit = undefined/null (unlimited) or quantitySold < quantityLimit (still available)
+                        // 3. quantityLimit = 0 nghĩa là không có discount
+                        const quantityLimit = discount?.quantityLimit;
+                        const quantitySold = discount?.quantitySold || 0;
+                        // Nếu quantityLimit = undefined hoặc null → không giới hạn, luôn dùng discount nếu hợp lệ
+                        // Nếu quantityLimit = 0 → không có discount, không dùng
+                        // Nếu quantityLimit > 0 → chỉ dùng discount khi quantitySold < quantityLimit
+                        const isDiscountAvailable = (quantityLimit === undefined || quantityLimit === null) 
+                            ? true  // Không giới hạn, luôn available
+                            : (quantityLimit > 0 && quantitySold < quantityLimit);  // Có giới hạn, check quantitySold
+                        
                         const hasValidDiscount = discount?.priceDiscount !== undefined &&
                             discount.priceDiscount !== null &&
                             discount.priceDiscount > 0 &&
-                            discount.priceDiscount < priceOriginal;
+                            discount.priceDiscount < priceOriginal &&
+                            isDiscountAvailable;
                         
                         price = hasValidDiscount
                             ? discount.priceDiscount
@@ -127,11 +140,24 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                         const priceOriginal = product.price.priceOriginal || product.price.original || 0;
                         const discount = product.price.discount;
                         
-                        // Only use priceDiscount if it's valid (> 0 and < priceOriginal)
+                        // Only use priceDiscount if it's valid:
+                        // 1. priceDiscount > 0 and < priceOriginal
+                        // 2. quantityLimit = undefined/null (unlimited) or quantitySold < quantityLimit (still available)
+                        // 3. quantityLimit = 0 nghĩa là không có discount
+                        const quantityLimit = discount?.quantityLimit;
+                        const quantitySold = discount?.quantitySold || 0;
+                        // Nếu quantityLimit = undefined hoặc null → không giới hạn, luôn dùng discount nếu hợp lệ
+                        // Nếu quantityLimit = 0 → không có discount, không dùng
+                        // Nếu quantityLimit > 0 → chỉ dùng discount khi quantitySold < quantityLimit
+                        const isDiscountAvailable = (quantityLimit === undefined || quantityLimit === null) 
+                            ? true  // Không giới hạn, luôn available
+                            : (quantityLimit > 0 && quantitySold < quantityLimit);  // Có giới hạn, check quantitySold
+                        
                         const hasValidDiscount = discount?.priceDiscount !== undefined &&
                             discount.priceDiscount !== null &&
                             discount.priceDiscount > 0 &&
-                            discount.priceDiscount < priceOriginal;
+                            discount.priceDiscount < priceOriginal &&
+                            isDiscountAvailable;
                         
                         price = hasValidDiscount
                             ? discount.priceDiscount
@@ -147,10 +173,16 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                         priceOriginal = product.price[0]?.priceOriginal || product.price[0]?.original || 0;
                         const discount = product.price[0]?.discount;
                         // Only show oldPrice if there's a valid discount
+                        // Check if discount is still available (quantitySold < quantityLimit)
+                        const quantityLimit = discount?.quantityLimit || 0;
+                        const quantitySold = discount?.quantitySold || 0;
+                        const isDiscountAvailable = quantityLimit === 0 || quantityLimit === undefined || quantityLimit === null || quantitySold < quantityLimit;
+                        
                         const hasValidDiscount = discount?.priceDiscount !== undefined &&
                             discount.priceDiscount !== null &&
                             discount.priceDiscount > 0 &&
-                            discount.priceDiscount < priceOriginal;
+                            discount.priceDiscount < priceOriginal &&
+                            isDiscountAvailable;
                         if (hasValidDiscount && priceOriginal > 0 && price !== priceOriginal) {
                             oldPrice = priceOriginal;
                         }
@@ -158,10 +190,16 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                         priceOriginal = product.price.priceOriginal || product.price.original || 0;
                         const discount = product.price.discount;
                         // Only show oldPrice if there's a valid discount
+                        // Check if discount is still available (quantitySold < quantityLimit)
+                        const quantityLimit = discount?.quantityLimit || 0;
+                        const quantitySold = discount?.quantitySold || 0;
+                        const isDiscountAvailable = quantityLimit === 0 || quantityLimit === undefined || quantityLimit === null || quantitySold < quantityLimit;
+                        
                         const hasValidDiscount = discount?.priceDiscount !== undefined &&
                             discount.priceDiscount !== null &&
                             discount.priceDiscount > 0 &&
-                            discount.priceDiscount < priceOriginal;
+                            discount.priceDiscount < priceOriginal &&
+                            isDiscountAvailable;
                         if (hasValidDiscount && priceOriginal > 0 && price !== priceOriginal) {
                             oldPrice = priceOriginal;
                         }
@@ -449,7 +487,7 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
         // Find product in cart to check max
         const product = cart.products.find(p => p.id === id);
         const max = (product as any)?.max || 100;
-        const stock = (product as any)?.stock || 0;
+        const stock = (product as any)?.stock;
         const newQuantity = currentQuantity + 1;
 
         // Client-side validation
@@ -458,7 +496,8 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
             return;
         }
 
-        if (newQuantity > stock) {
+        // Chỉ validate stock nếu stock có giá trị (không phải undefined hoặc null)
+        if (stock !== undefined && stock !== null && newQuantity > stock) {
             showError(`Sản phẩm chỉ còn ${stock} sản phẩm trong kho`);
             return;
         }

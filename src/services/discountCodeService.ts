@@ -55,9 +55,13 @@ export interface ValidateDiscountCodeData {
 export interface ValidateDiscountCodeResponse {
     success: boolean;
     message?: string;
-    data: {
+    data?: {
         discountAmount: number;
         code: string;
+    };
+    errors?: {
+        errorType?: string;
+        shouldRemove?: boolean;
     };
 }
 

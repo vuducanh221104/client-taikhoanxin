@@ -101,6 +101,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     const { showSuccess, showInfo, showError } = useToast();
     const isFavorite = isProductInWishlist(product.id);
     const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
+    const reduxCart = useSelector((state: RootState) => state.cart); // For guest cart validation
     const [isAddingToCart, setIsAddingToCart] = React.useState(false);
     const { mutate: globalMutate } = useSWRConfig();
     const { data: homePageData } = useHomePage();
@@ -261,6 +262,14 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
 
         // Guest users: store cart items locally (Redux)
         if (!isLoggedIn || !currentUser?.accessToken) {
+            // Check max quantity constraint for guest users
+            const max = (product as any).max ?? 100;
+            const existingCartItem = reduxCart.products.find(p => p.id === productId);
+            if (existingCartItem && existingCartItem.quantity >= max) {
+                showError(`Số lượng tối đa cho sản phẩm này là ${max}`);
+                return false;
+            }
+
             dispatch(
                 addToCart({
                     id: productId,

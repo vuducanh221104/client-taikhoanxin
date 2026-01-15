@@ -415,13 +415,30 @@ export const mapProductToFeaturedProduct = (product: Product): FeaturedProduct =
 
     if (discount) {
         if (discount.priceDiscount !== undefined && discount.priceDiscount !== null) {
-            // Use priceDiscount as the final price directly
-            finalPrice = discount.priceDiscount;
-            oldPrice = priceOriginal;
-            // Calculate discount percent: (priceOriginal - priceDiscount) / priceOriginal * 100
-            discountPercent = priceOriginal > 0
-                ? Math.round(((priceOriginal - discount.priceDiscount) / priceOriginal) * 100)
-                : undefined;
+            // Check if discount is still available (quantitySold < quantityLimit)
+            // quantityLimit = undefined/null nghĩa là không giới hạn (unlimited)
+            // quantityLimit > 0 nghĩa là có giới hạn, chỉ dùng discount khi quantitySold < quantityLimit
+            // quantityLimit = 0 nghĩa là không có discount (không giới hạn nhưng không có discount)
+            const quantityLimit = discount.quantityLimit;
+            const quantitySold = discount.quantitySold || 0;
+            
+            // Nếu quantityLimit = undefined hoặc null → không giới hạn, luôn dùng discount nếu hợp lệ
+            // Nếu quantityLimit = 0 → không có discount, không dùng
+            // Nếu quantityLimit > 0 → chỉ dùng discount khi quantitySold < quantityLimit
+            const isDiscountAvailable = (quantityLimit === undefined || quantityLimit === null) 
+                ? true  // Không giới hạn, luôn available
+                : (quantityLimit > 0 && quantitySold < quantityLimit);  // Có giới hạn, check quantitySold
+            
+            // Only use priceDiscount if it's valid and still available
+            if (isDiscountAvailable && discount.priceDiscount > 0 && discount.priceDiscount < priceOriginal) {
+                // Use priceDiscount as the final price directly
+                finalPrice = discount.priceDiscount;
+                oldPrice = priceOriginal;
+                // Calculate discount percent: (priceOriginal - priceDiscount) / priceOriginal * 100
+                discountPercent = priceOriginal > 0
+                    ? Math.round(((priceOriginal - discount.priceDiscount) / priceOriginal) * 100)
+                    : undefined;
+            }
         } else if (discount.quantity) {
             // Fallback to percentage discount
             finalPrice = Math.round(priceOriginal * (1 - discount.quantity / 100));
@@ -662,4 +679,37 @@ export const detectProductGenre = (productName: string): 'account' | 'code' | 'l
     }
 
     return null;
+};
+
+// ============================================
+// STOCK CHECK TYPES & FUNCTIONS
+// ============================================
+export interface StockCheckItem {
+    productId: string;
+    quantity: number;
+}
+
+export interface StockCheckResult {
+    productId: string;
+    name: string;
+    stock: number;
+    isActive: boolean;
+    isAvailable: boolean;
+    requestedQuantity: number;
+    hasEnoughStock: boolean;
+}
+
+export interface StockCheckResponse {
+    success: boolean;
+    data: StockCheckResult[];
+    message?: string;
+}
+
+/**
+ * Check stock availability for multiple products
+ */
+export const checkProductsStock = async (items: StockCheckItem[]): Promise<StockCheckResponse> => {
+    const { post } = await import('@/utils/httpRequest');
+    const response = await post<StockCheckResponse>('/api/v1/products/check-stock', { items });
+    return response.data;
 };

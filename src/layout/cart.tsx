@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import classNames from 'classnames/bind';
@@ -37,21 +37,29 @@ import {
     removeReferralCode as removeReferralCodeAPI,
 } from '@/services/referralCodeService';
 import { validateDiscountCode } from '@/services/discountCodeService';
+import { checkProductsStock, type Product } from '@/services/productService';
 import { useSWRConfig } from 'swr';
 import { useToast } from '@/hooks/useToast';
 import { useDebounceCallback } from '@/hooks/useDebounceCallback';
+import { useRouter } from 'next/navigation';
 
 const cx = classNames.bind(styles);
 
 const CartLayout: React.FC = () => {
     const dispatch = useDispatch();
+    const router = useRouter();
     const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
     const reduxCart = useSelector((state: RootState) => state.cart);
     const savedDiscountCode = useSelector((state: RootState) => state.auth.discountCode);
     const savedReferralCode = useSelector((state: RootState) => state.auth.referralCode);
     const { confirm } = useConfirm();
-    const { showSuccess, showError } = useToast();
+    const { showSuccess, showError, showInfo } = useToast();
     const { mutate: globalMutate } = useSWRConfig();
+    const [isCheckingStock, setIsCheckingStock] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const hasCheckedStockRef = useRef(false);
+    const [isOutOfStockModalOpen, setIsOutOfStockModalOpen] = useState(false);
+    const [outOfStockProducts, setOutOfStockProducts] = useState<Array<{ productId: string; name: string; imageSrc?: string; href?: string }>>([]);
 
     // Fetch cart from API if user is logged in
     const {
@@ -62,6 +70,8 @@ const CartLayout: React.FC = () => {
 
     // Track previous discountCode to detect when it's removed
     const prevDiscountCodeRef = useRef<string | null>(savedDiscountCode);
+    // Track if user manually removed discount code to avoid duplicate messages
+    const isManualRemovalRef = useRef<boolean>(false);
 
     const [couponInput, setCouponInput] = useState(savedDiscountCode || '');
     const [couponError, setCouponError] = useState('');
@@ -74,6 +84,23 @@ const CartLayout: React.FC = () => {
     const [referralCodeSuccess, setReferralCodeSuccess] = useState(
         savedReferralCode ? 'Mã giới thiệu đã được áp dụng' : '',
     );
+
+    // Restore out-of-stock modal from sessionStorage on mount
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const pendingOutOfStockData = sessionStorage.getItem('cart_pending_out_of_stock');
+            if (pendingOutOfStockData) {
+                try {
+                    const data = JSON.parse(pendingOutOfStockData);
+                    setOutOfStockProducts(data);
+                    setIsOutOfStockModalOpen(true);
+                } catch (error) {
+                    console.error('Error parsing pending out-of-stock data:', error);
+                    sessionStorage.removeItem('cart_pending_out_of_stock');
+                }
+            }
+        }
+    }, []);
 
     // Sync discountCode and referralCode from API cart to Redux when cart loads
     useEffect(() => {
@@ -105,6 +132,7 @@ const CartLayout: React.FC = () => {
             } else {
                 if (savedDiscountCode || prevDiscountCodeRef.current) {
                     const wasRemoved = prevDiscountCodeRef.current && !apiCart.discountCode;
+                    const isManualRemoval = isManualRemovalRef.current;
 
                     dispatch(clearDiscountCode());
                     dispatch(removeCoupon());
@@ -112,10 +140,13 @@ const CartLayout: React.FC = () => {
                     setCouponSuccess('');
                     setCouponError('');
 
-                    if (wasRemoved) {
+                    // Only show error message if it was removed automatically (not by user)
+                    if (wasRemoved && !isManualRemoval) {
                         showError('Mã giảm giá không còn hợp lệ và đã được xóa');
                     }
 
+                    // Reset manual removal flag
+                    isManualRemovalRef.current = false;
                     prevDiscountCodeRef.current = null;
                 }
             }
@@ -245,11 +276,24 @@ const CartLayout: React.FC = () => {
                         const priceOriginal = priceItem?.priceOriginal || priceItem?.original || 0;
                         const discount = priceItem?.discount;
                         
-                        // Only use priceDiscount if it's valid (> 0 and < priceOriginal)
+                        // Only use priceDiscount if it's valid:
+                        // 1. priceDiscount > 0 and < priceOriginal
+                        // 2. quantityLimit = undefined/null (unlimited) or quantitySold < quantityLimit (still available)
+                        // 3. quantityLimit = 0 nghĩa là không có discount
+                        const quantityLimit = discount?.quantityLimit;
+                        const quantitySold = discount?.quantitySold || 0;
+                        // Nếu quantityLimit = undefined hoặc null → không giới hạn, luôn dùng discount nếu hợp lệ
+                        // Nếu quantityLimit = 0 → không có discount, không dùng
+                        // Nếu quantityLimit > 0 → chỉ dùng discount khi quantitySold < quantityLimit
+                        const isDiscountAvailable = (quantityLimit === undefined || quantityLimit === null) 
+                            ? true  // Không giới hạn, luôn available
+                            : (quantityLimit > 0 && quantitySold < quantityLimit);  // Có giới hạn, check quantitySold
+                        
                         const hasValidDiscount = discount?.priceDiscount !== undefined &&
                             discount.priceDiscount !== null &&
                             discount.priceDiscount > 0 &&
-                            discount.priceDiscount < priceOriginal;
+                            discount.priceDiscount < priceOriginal &&
+                            isDiscountAvailable;
                         
                         price = hasValidDiscount
                             ? discount.priceDiscount
@@ -258,11 +302,24 @@ const CartLayout: React.FC = () => {
                         const priceOriginal = product.price.priceOriginal || product.price.original || 0;
                         const discount = product.price.discount;
                         
-                        // Only use priceDiscount if it's valid (> 0 and < priceOriginal)
+                        // Only use priceDiscount if it's valid:
+                        // 1. priceDiscount > 0 and < priceOriginal
+                        // 2. quantityLimit = undefined/null (unlimited) or quantitySold < quantityLimit (still available)
+                        // 3. quantityLimit = 0 nghĩa là không có discount
+                        const quantityLimit = discount?.quantityLimit;
+                        const quantitySold = discount?.quantitySold || 0;
+                        // Nếu quantityLimit = undefined hoặc null → không giới hạn, luôn dùng discount nếu hợp lệ
+                        // Nếu quantityLimit = 0 → không có discount, không dùng
+                        // Nếu quantityLimit > 0 → chỉ dùng discount khi quantitySold < quantityLimit
+                        const isDiscountAvailable = (quantityLimit === undefined || quantityLimit === null) 
+                            ? true  // Không giới hạn, luôn available
+                            : (quantityLimit > 0 && quantitySold < quantityLimit);  // Có giới hạn, check quantitySold
+                        
                         const hasValidDiscount = discount?.priceDiscount !== undefined &&
                             discount.priceDiscount !== null &&
                             discount.priceDiscount > 0 &&
-                            discount.priceDiscount < priceOriginal;
+                            discount.priceDiscount < priceOriginal &&
+                            isDiscountAvailable;
                         
                         price = hasValidDiscount
                             ? discount.priceDiscount
@@ -277,22 +334,36 @@ const CartLayout: React.FC = () => {
                     if (Array.isArray(product.price)) {
                         priceOriginal = product.price[0]?.priceOriginal || product.price[0]?.original || 0;
                         const discount = product.price[0]?.discount;
-                        // Only show oldPrice if there's a valid discount
+                        // Only show oldPrice if there's a valid discount:
+                        // 1. priceDiscount > 0 and < priceOriginal
+                        // 2. quantityLimit = 0 (unlimited) or quantitySold < quantityLimit (still available)
+                        const quantityLimit = discount?.quantityLimit || 0;
+                        const quantitySold = discount?.quantitySold || 0;
+                        const isDiscountAvailable = quantityLimit === 0 || quantityLimit === undefined || quantityLimit === null || quantitySold < quantityLimit;
+                        
                         const hasValidDiscount = discount?.priceDiscount !== undefined &&
                             discount.priceDiscount !== null &&
                             discount.priceDiscount > 0 &&
-                            discount.priceDiscount < priceOriginal;
+                            discount.priceDiscount < priceOriginal &&
+                            isDiscountAvailable;
                         if (hasValidDiscount && priceOriginal > 0 && price !== priceOriginal) {
                             oldPrice = priceOriginal;
                         }
                     } else if (typeof product.price === 'object') {
                         priceOriginal = product.price.priceOriginal || product.price.original || 0;
                         const discount = product.price.discount;
-                        // Only show oldPrice if there's a valid discount
+                        // Only show oldPrice if there's a valid discount:
+                        // 1. priceDiscount > 0 and < priceOriginal
+                        // 2. quantityLimit = 0 (unlimited) or quantitySold < quantityLimit (still available)
+                        const quantityLimit = discount?.quantityLimit || 0;
+                        const quantitySold = discount?.quantitySold || 0;
+                        const isDiscountAvailable = quantityLimit === 0 || quantityLimit === undefined || quantityLimit === null || quantitySold < quantityLimit;
+                        
                         const hasValidDiscount = discount?.priceDiscount !== undefined &&
                             discount.priceDiscount !== null &&
                             discount.priceDiscount > 0 &&
-                            discount.priceDiscount < priceOriginal;
+                            discount.priceDiscount < priceOriginal &&
+                            isDiscountAvailable;
                         if (hasValidDiscount && priceOriginal > 0 && price !== priceOriginal) {
                             oldPrice = priceOriginal;
                         }
@@ -362,6 +433,251 @@ const CartLayout: React.FC = () => {
     }, [cartData, currentUser, reduxCart]);
 
     const formatPrice = (value: number): string => value.toLocaleString('vi-VN');
+
+    // Check stock and remove out-of-stock products
+    const checkAndRemoveOutOfStockProducts = useCallback(async () => {
+        if (!cart || cart.products.length === 0) return;
+
+        setIsCheckingStock(true);
+        try {
+            // Prepare items for stock check
+            const items = cart.products.map((product: any) => ({
+                productId: product.id,
+                quantity: product.quantity || 1,
+            }));
+
+            // Check stock via API
+            const stockCheckResult = await checkProductsStock(items);
+            
+            if (stockCheckResult.success && stockCheckResult.data) {
+                // Find products with stock = 0
+                const outOfStockProducts = stockCheckResult.data.filter(
+                    (item) => !item.isAvailable || item.stock === 0
+                );
+
+                if (outOfStockProducts.length > 0) {
+                    // Map to get product names, images, and href from cart
+                    const outOfStockProductsWithNames = outOfStockProducts.map((item) => {
+                        const cartProduct = cart.products.find((p: any) => p.id === item.productId);
+                        return {
+                            productId: item.productId,
+                            name: cartProduct?.productName || item.name || 'Sản phẩm không xác định',
+                            imageSrc: cartProduct?.imageSrc || undefined,
+                            href: cartProduct?.href || `#`,
+                        };
+                    });
+
+                    // Remove out-of-stock products
+                    for (const outOfStockProduct of outOfStockProducts) {
+                        if (currentUser) {
+                            // Remove from API cart
+                            try {
+                                await removeFromCartAPI(outOfStockProduct.productId);
+                            } catch (error) {
+                                console.error('Error removing product from cart:', error);
+                            }
+                        } else {
+                            // Remove from Redux cart
+                            dispatch(removeFromCart(outOfStockProduct.productId));
+                        }
+                    }
+
+                    // Show modal notification with product list
+                    setOutOfStockProducts(outOfStockProductsWithNames);
+                    setIsOutOfStockModalOpen(true);
+                    // Save to sessionStorage so modal can be restored when user navigates back
+                    if (typeof window !== 'undefined') {
+                        sessionStorage.setItem('cart_pending_out_of_stock', JSON.stringify(outOfStockProductsWithNames));
+                    }
+
+                    // Revalidate cart
+                    if (currentUser) {
+                        await mutateCart();
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error checking stock:', error);
+            // Don't show error to user, just log it
+        } finally {
+            setIsCheckingStock(false);
+        }
+    }, [cart, currentUser, dispatch, mutateCart, removeFromCartAPI]);
+
+    // Validate and sync guest cart with latest prices and stock
+    const validateAndSyncGuestCart = useCallback(async () => {
+        if (currentUser || !reduxCart.products || reduxCart.products.length === 0) return;
+
+        try {
+            // Get product IDs from Redux cart
+            const productIds = reduxCart.products.map((p: any) => p.id).filter(Boolean);
+            if (productIds.length === 0) return;
+
+            // Fetch latest product data including prices
+            const { post } = await import('@/utils/httpRequest');
+            const productsResponse = await post<{ success: boolean; data: Product[] }>('/api/v1/products/by-ids', { ids: productIds });
+            
+            if (!productsResponse.data.success || !productsResponse.data.data) {
+                return;
+            }
+
+            const latestProducts = productsResponse.data.data;
+            const productMap = new Map(latestProducts.map((p: Product) => [p._id, p]));
+
+            // Update Redux cart with latest prices
+            let hasChanges = false;
+            const updatedProducts = reduxCart.products.map((cartProduct: any) => {
+                const latestProduct = productMap.get(cartProduct.id);
+                if (!latestProduct) return cartProduct;
+
+                // Calculate latest price and oldPrice
+                let latestPrice = 0;
+                let latestOldPrice: number | undefined = undefined;
+                let priceOriginal = 0;
+                
+                if (latestProduct.price) {
+                    if (Array.isArray(latestProduct.price)) {
+                        const priceItem = latestProduct.price[0];
+                        priceOriginal = priceItem?.priceOriginal || 0;
+                        const discount = priceItem?.discount;
+                        
+                        const quantityLimit = discount?.quantityLimit || 0;
+                        const quantitySold = discount?.quantitySold || 0;
+                        const isDiscountAvailable = quantityLimit === 0 || quantityLimit === undefined || quantityLimit === null || quantitySold < quantityLimit;
+                        
+                        const hasValidDiscount = discount?.priceDiscount !== undefined &&
+                            discount.priceDiscount !== null &&
+                            discount.priceDiscount > 0 &&
+                            discount.priceDiscount < priceOriginal &&
+                            isDiscountAvailable;
+                        
+                        latestPrice = hasValidDiscount ? discount.priceDiscount : priceOriginal;
+                        if (hasValidDiscount && priceOriginal > 0 && latestPrice !== priceOriginal) {
+                            latestOldPrice = priceOriginal;
+                        }
+                    } else if (typeof latestProduct.price === 'object' && latestProduct.price !== null) {
+                        const priceObj = latestProduct.price as any;
+                        priceOriginal = priceObj?.priceOriginal || 0;
+                        const discount = priceObj?.discount;
+                        
+                        const quantityLimit = discount?.quantityLimit || 0;
+                        const quantitySold = discount?.quantitySold || 0;
+                        const isDiscountAvailable = quantityLimit === 0 || quantityLimit === undefined || quantityLimit === null || quantitySold < quantityLimit;
+                        
+                        const hasValidDiscount = discount?.priceDiscount !== undefined &&
+                            discount.priceDiscount !== null &&
+                            discount.priceDiscount > 0 &&
+                            discount.priceDiscount < priceOriginal &&
+                            isDiscountAvailable;
+                        
+                        latestPrice = hasValidDiscount ? discount.priceDiscount : priceOriginal;
+                        if (hasValidDiscount && priceOriginal > 0 && latestPrice !== priceOriginal) {
+                            latestOldPrice = priceOriginal;
+                        }
+                    }
+                }
+
+                // Check if price changed
+                if (cartProduct.price !== latestPrice) {
+                    hasChanges = true;
+                    return {
+                        ...cartProduct,
+                        price: latestPrice,
+                        oldPrice: latestOldPrice,
+                        stock: latestProduct.stock || 0,
+                    };
+                } else if (cartProduct.oldPrice !== latestOldPrice) {
+                    // Update oldPrice even if price didn't change
+                    hasChanges = true;
+                    return {
+                        ...cartProduct,
+                        oldPrice: latestOldPrice,
+                        stock: latestProduct.stock || 0,
+                    };
+                }
+
+                // Update stock even if price didn't change
+                if (cartProduct.stock !== (latestProduct.stock || 0)) {
+                    hasChanges = true;
+                    return {
+                        ...cartProduct,
+                        stock: latestProduct.stock || 0,
+                    };
+                }
+
+                return cartProduct;
+            });
+
+            // Update Redux if there are changes - need to update each product individually
+            if (hasChanges) {
+                updatedProducts.forEach((product: any) => {
+                    // Update price by dispatching updateQuantity with same quantity (this will recalculate totals)
+                    dispatch(updateQuantity({ id: product.id, quantity: product.quantity }));
+                });
+            }
+
+            // Validate discount code if exists
+            if (savedDiscountCode && updatedProducts.length > 0) {
+                try {
+                    const orderValue = updatedProducts.reduce((sum: number, p: any) => sum + (p.price * p.quantity), 0);
+                    const productIdsForValidation = updatedProducts.map((p: any) => p.id).filter(Boolean);
+                    
+                    const discountResponse = await validateDiscountCode({
+                        code: savedDiscountCode,
+                        orderValue,
+                        productIds: productIdsForValidation,
+                    });
+
+                    if (discountResponse.success && discountResponse.data?.discountAmount !== undefined) {
+                        const discountAmount = discountResponse.data.discountAmount || 0;
+                        dispatch(applyCoupon({
+                            code: savedDiscountCode,
+                            discount: discountAmount,
+                        }));
+                    } else {
+                        // Discount code is invalid, remove it
+                        dispatch(clearDiscountCode());
+                        dispatch(removeCoupon());
+                        setCouponInput('');
+                        setCouponSuccess('');
+                        setCouponError(discountResponse.message || 'Mã giảm giá không còn hợp lệ');
+                    }
+                } catch (error) {
+                    console.error('Error validating discount code:', error);
+                    // Don't remove discount code on error, just log it
+                }
+            }
+
+            // Check stock and remove out-of-stock products (will use updated cart)
+            await checkAndRemoveOutOfStockProducts();
+        } catch (error) {
+            console.error('Error validating guest cart:', error);
+            // Don't show error to user, just log it
+        }
+    }, [currentUser, reduxCart, savedDiscountCode, dispatch, checkAndRemoveOutOfStockProducts]);
+
+    // Validate and sync guest cart when component mounts
+    useEffect(() => {
+        if (!currentUser && reduxCart.products.length > 0) {
+            validateAndSyncGuestCart();
+        }
+    }, []); // Only run once on mount for guest user
+
+    // Check stock when cart loads (only once per cart load)
+    useEffect(() => {
+        if (cart && cart.products.length > 0 && !cartLoading && !hasCheckedStockRef.current) {
+            hasCheckedStockRef.current = true;
+            checkAndRemoveOutOfStockProducts().finally(() => {
+                // Reset flag after a delay to allow re-check if cart changes significantly
+                setTimeout(() => {
+                    hasCheckedStockRef.current = false;
+                }, 5000);
+            });
+        } else if (cart && cart.products.length === 0) {
+            // Reset flag when cart is empty
+            hasCheckedStockRef.current = false;
+        }
+    }, [cart?.products.length, cartLoading, checkAndRemoveOutOfStockProducts]); // Only check when cart products change or cart finishes loading
 
     const handleRemove = async (id: string) => {
         if (currentUser) {
@@ -656,6 +972,9 @@ const CartLayout: React.FC = () => {
     };
 
     const handleRemoveCoupon = async () => {
+        // Set flag to indicate manual removal
+        isManualRemovalRef.current = true;
+        
         if (currentUser) {
             try {
                 const response = await removeDiscountCodeAPI();
@@ -679,6 +998,8 @@ const CartLayout: React.FC = () => {
                 const errorMessage =
                     error?.response?.data?.message || error?.message || 'Có lỗi xảy ra. Vui lòng thử lại!';
                 showError(errorMessage);
+                // Reset flag on error
+                isManualRemovalRef.current = false;
             }
         } else {
             dispatch(clearDiscountCode());
@@ -868,6 +1189,7 @@ const CartLayout: React.FC = () => {
                                         {/* Desktop Table Layout */}
                                         {cart.products.map((p: any) => {
                                             const rowSubtotal = p.price * p.quantity;
+                                            const rowOldSubtotal = p.oldPrice ? p.oldPrice * p.quantity : null;
                                             return (
                                                 <div className={cx('tr')} key={p.id}>
                                                     <div className={cx('td', 'product')}>
@@ -928,7 +1250,16 @@ const CartLayout: React.FC = () => {
                                                     </div>
                                                     <div className={cx('td', 'price')}>
                                                         <div className={cx('price-content')}>
-                                                            <span>{formatPrice(rowSubtotal)}₫</span>
+                                                            <div className={cx('price-wrapper-desktop')}>
+                                                                <div className={cx('price-discount')}>
+                                                                    {formatPrice(rowSubtotal)}₫
+                                                                </div>
+                                                                {rowOldSubtotal && rowOldSubtotal > rowSubtotal && (
+                                                                    <div className={cx('price-original-desktop')}>
+                                                                        {formatPrice(rowOldSubtotal)}₫
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                             <button
                                                                 className={cx('remove')}
                                                                 onClick={() => handleRemove(p.id)}
@@ -1007,22 +1338,18 @@ const CartLayout: React.FC = () => {
 
                                                         <div className={cx('cart-item-price-section')}>
                                                             <div className={cx('price-wrapper')}>
-                                                                <span className={cx('current-price')}>
+                                                                <div className={cx('price-discount')}>
                                                                     {formatPrice(p.price)}₫
-                                                                </span>
+                                                                </div>
                                                                 {p.oldPrice && p.oldPrice > p.price && (
-                                                                    <>
-                                                                        <span className={cx('old-price')}>
-                                                                            {formatPrice(p.oldPrice)}₫
-                                                                        </span>
-                                                                        {discountPercent > 0 && (
-                                                                            <span
-                                                                                className={cx('discount-badge')}
-                                                                            >
-                                                                                -{discountPercent}%
-                                                                            </span>
-                                                                        )}
-                                                                    </>
+                                                                    <div className={cx('price-original')}>
+                                                                        {formatPrice(p.oldPrice)}₫
+                                                                    </div>
+                                                                )}
+                                                                {discountPercent > 0 && (
+                                                                    <span className={cx('discount-badge')}>
+                                                                        -{discountPercent}%
+                                                                    </span>
                                                                 )}
                                                             </div>
                                                         </div>
@@ -1274,25 +1601,125 @@ const CartLayout: React.FC = () => {
                             <Link
                                 href="/checkout"
                                 className={cx('checkout-btn', {
-                                    disabled: cart.products.length === 0,
+                                    disabled: cart.products.length === 0 || isCheckingStock || isProcessing,
                                 })}
-                                aria-disabled={cart.products.length === 0}
-                                onClick={(e) => {
-                                    if (cart.products.length === 0) {
+                                aria-disabled={cart.products.length === 0 || isCheckingStock || isProcessing}
+                                onClick={async (e) => {
+                                    if (cart.products.length === 0 || isCheckingStock || isProcessing) {
                                         e.preventDefault();
+                                        return;
+                                    }
+
+                                    // Check stock before navigating to checkout
+                                    e.preventDefault();
+                                    setIsProcessing(true);
+                                    
+                                    try {
+                                        await checkAndRemoveOutOfStockProducts();
+                                        
+                                        // Navigate to checkout after stock check
+                                        if (cart.products.length > 0) {
+                                            router.push('/checkout');
+                                        } else {
+                                            setIsProcessing(false);
+                                        }
+                                    } catch (error) {
+                                        console.error('Error processing checkout:', error);
+                                        setIsProcessing(false);
                                     }
                                 }}
                             >
-                                Tiến hành thanh toán
+                                {isProcessing ? 'Đang xử lý...' : isCheckingStock ? 'Đang kiểm tra...' : 'Tiến hành thanh toán'}
                             </Link>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Out of Stock Modal */}
+            {isOutOfStockModalOpen && (
+                <div className={cx('tos-modal-backdrop')} role="dialog" aria-modal="true" onClick={() => setIsOutOfStockModalOpen(false)}>
+                    <div className={cx('tos-modal')} onClick={(e) => e.stopPropagation()}>
+                        <div className={cx('out-of-stock-header')}>
+                            <div className={cx('out-of-stock-icon')}>
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 9V13M12 17H12.01M5.07183 19H18.9282C20.4678 19 21.4301 17.3333 20.6603 16L13.7321 4C12.9623 2.66667 11.0377 2.66667 10.2679 4L3.33975 16C2.56995 17.3333 3.53223 19 5.07183 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                            </div>
+                            <h3 className={cx('tos-modal-title')}>
+                                {outOfStockProducts.length} sản phẩm đã hết hàng
+                            </h3>
+                            <p className={cx('out-of-stock-subtitle')}>
+                                Các sản phẩm này sẽ được gỡ khỏi giỏ hàng của bạn
+                            </p>
+                        </div>
+                        
+                        <div className={cx('out-of-stock-list')}>
+                            {outOfStockProducts.map((product) => (
+                                <Link 
+                                    key={product.productId} 
+                                    href={product.href || '#'}
+                                    className={cx('out-of-stock-item')}
+                                    onClick={(e) => {
+                                        // Don't close modal when clicking on product link
+                                        e.stopPropagation();
+                                        // Save modal state to sessionStorage before navigating
+                                        // to restore when user comes back to cart page
+                                        if (typeof window !== 'undefined' && outOfStockProducts.length > 0) {
+                                            sessionStorage.setItem('cart_pending_out_of_stock', JSON.stringify(outOfStockProducts));
+                                        }
+                                    }}
+                                >
+                                    <div className={cx('out-of-stock-item-icon')}>
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M6 18L18 6M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
+                                    </div>
+                                    <span className={cx('out-of-stock-item-name')}>{product.name}</span>
+                                    {product.imageSrc && (
+                                        <div className={cx('out-of-stock-item-image')}>
+                                            <Image
+                                                src={product.imageSrc}
+                                                alt={product.name}
+                                                width={100}
+                                                height={48}
+                                                className={cx('out-of-stock-image')}
+                                            />
+                                        </div>
+                                    )}
+                                </Link>
+                            ))}
+                        </div>
+
+                        <div className={cx('out-of-stock-footer')}>
+                            <p className={cx('out-of-stock-footer-text')}>
+                                Bạn vẫn có thể thanh toán các sản phẩm còn lại trong giỏ hàng.
+                            </p>
+                        </div>
+
+                        <div className={cx('tos-modal-actions')}>
+                            <button 
+                                className={cx('tos-confirm-button')} 
+                                onClick={() => {
+                                    setIsOutOfStockModalOpen(false);
+                                    setOutOfStockProducts([]);
+                                    // Remove from sessionStorage when user confirms
+                                    if (typeof window !== 'undefined') {
+                                        sessionStorage.removeItem('cart_pending_out_of_stock');
+                                    }
+                                }}
+                            >
+                                Đã hiểu
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
 export default CartLayout;
+
 
 
