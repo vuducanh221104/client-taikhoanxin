@@ -39,11 +39,23 @@ jobs:
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
+      - name: Verify build context
+        run: |
+          echo "Current working directory:"
+          pwd
+          echo "Listing root directory:"
+          ls -la
+          echo "Checking Dockerfile:"
+          ls -la Dockerfile || echo "ERROR: Dockerfile not found!"
+          echo "Verifying workflow file content:"
+          cat .github/workflows/client-docker-build-push.yml | grep -A 5 "Build and push Docker image" || echo "Workflow file check"
+          echo "NEXT_PUBLIC_TURNSTILE_SITE_KEY will be set to: 0x4AAAAAACCqcSwjNT3mbAl3"
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: Dockerfile
           build-args: |
             NEXT_PUBLIC_SERVER_URL=https://api.taikhoanxin.com
             NEXT_PUBLIC_SITE_URL=https://taikhoanxin.com
