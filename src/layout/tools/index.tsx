@@ -46,6 +46,7 @@ export default function ToolsHomeLayout() {
             <div className={cx('tools-container')}>
                 <div className={cx('home-header')}>
                     <h1 className={cx('home-title')}>Xin chào!</h1>
+                    <h1 className={cx('home-title')} style={{color:"red" }}>Hiện Trang Tools Chưa Hoạt Động Vui Lòng Quay Lại Sau </h1>
                     <p className={cx('home-subtitle')}>Chọn công cụ bạn muốn sử dụng.</p>
                 </div>
                 <div className={cx('tools-grid')}>

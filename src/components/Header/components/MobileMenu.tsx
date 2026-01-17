@@ -58,8 +58,8 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, mobileMenuSide
     const menuItems = [
         { href: '/', label: 'Trang chủ', icon: <HomeIcon /> },
         { href: '/viewed', label: 'Đã xem', icon: <EyeIcon /> },
-        { href: '/products/best-selling', label: 'Bán chạy', icon: <FlameIcon /> },
-        { href: '/products/sale', label: 'Khuyến mại', icon: <PercentIcon /> },
+        { href: '/categories/san-pham-ban-chay', label: 'Bán chạy', icon: <FlameIcon /> },
+        { href: '/categories/san-pham-dang-giam-gia', label: 'Khuyến mại', icon: <PercentIcon /> },
         { href: '/tools', label: 'Tools', icon: <CategoryIcon /> },
         { href: '/orders/lookup', label: 'Tra cứu đơn hàng', icon: <HistoryIcon /> },
     ];

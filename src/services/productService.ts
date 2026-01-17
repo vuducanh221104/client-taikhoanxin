@@ -415,19 +415,13 @@ export const mapProductToFeaturedProduct = (product: Product): FeaturedProduct =
 
     if (discount) {
         if (discount.priceDiscount !== undefined && discount.priceDiscount !== null) {
-            // Check if discount is still available (quantitySold < quantityLimit)
-            // quantityLimit = undefined/null nghĩa là không giới hạn (unlimited)
-            // quantityLimit > 0 nghĩa là có giới hạn, chỉ dùng discount khi quantitySold < quantityLimit
-            // quantityLimit = 0 nghĩa là không có discount (không giới hạn nhưng không có discount)
-            const quantityLimit = discount.quantityLimit;
-            const quantitySold = discount.quantitySold || 0;
+            // Check if discount is still available:
+            // 1. priceDiscount > 0 and < priceOriginal
+            // 2. quantity > 0 (còn mã giảm giá)
+            const quantity = discount.quantity || 0;
             
-            // Nếu quantityLimit = undefined hoặc null → không giới hạn, luôn dùng discount nếu hợp lệ
-            // Nếu quantityLimit = 0 → không có discount, không dùng
-            // Nếu quantityLimit > 0 → chỉ dùng discount khi quantitySold < quantityLimit
-            const isDiscountAvailable = (quantityLimit === undefined || quantityLimit === null) 
-                ? true  // Không giới hạn, luôn available
-                : (quantityLimit > 0 && quantitySold < quantityLimit);  // Có giới hạn, check quantitySold
+            // Chỉ kiểm tra quantity > 0
+            const isDiscountAvailable = quantity > 0;
             
             // Only use priceDiscount if it's valid and still available
             if (isDiscountAvailable && discount.priceDiscount > 0 && discount.priceDiscount < priceOriginal) {

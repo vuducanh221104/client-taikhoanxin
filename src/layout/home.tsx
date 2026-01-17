@@ -321,7 +321,7 @@ export default function Home() {
                     title={bestSellingSection.title || "Sản phẩm bán chạy nhất"}
                     subtitle={bestSellingSection.description || "Những sản phẩm được khách hàng yêu thích và tin dùng"}
                     discoverButtonText="Khám phá"
-                    discoverButtonHref={bestSellingSection.linkViewAll || "/products/best-selling"}
+                    discoverButtonHref={bestSellingSection.linkViewAll || "/categories/san-pham-ban-chay"}
                     backgroundImage={bestSellingSection.image || "/banners/image.png"}
                     isDarkBackground={true}
                     badge="HOT"

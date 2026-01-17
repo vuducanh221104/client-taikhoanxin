@@ -31,15 +31,15 @@ const HeaderMiddleBar: React.FC<HeaderMiddleBarProps> = ({ setIsHeaderHoverOverl
                         <span>Sản phẩm bạn vừa xem</span>
                     </Link>
                     <Link 
-                        href="/products/best-selling" 
+                        href="/categories/san-pham-ban-chay" 
                         className={cx('quick-link')}
-                        aria-label="Sản phẩm mua nhiều"
+                        aria-label="Sản phẩm bán chạy"
                     >
                         <FlameIcon className={cx('quick-link-icon')} />
-                        <span>Sản phẩm mua nhiều</span>
+                        <span>Sản phẩm bán chạy</span>
                     </Link>
                     <Link 
-                        href="/products/sale" 
+                        href="/categories/san-pham-dang-giam-gia" 
                         className={cx('quick-link')}
                         aria-label="Sản phẩm khuyến mại"
                     >

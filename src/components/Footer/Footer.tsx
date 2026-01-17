@@ -84,7 +84,7 @@ const Footer: React.FC = () => {
                                 <Link href="/products/new">Sản phẩm mới</Link>
                             </li>
                             <li>
-                                <Link href="/products/best-selling">Bán chạy nhất</Link>
+                                <Link href="/categories/san-pham-ban-chay">Bán chạy nhất</Link>
                             </li>
                             <li>
                                 <Link href="/orders/lookup">Tra cứu đơn hàng</Link>

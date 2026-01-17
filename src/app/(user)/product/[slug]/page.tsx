@@ -19,6 +19,7 @@ type NormalizedProduct = {
     shortDescription?: string;
     descriptionText?: string;
     descriptionArray?: Array<{ description?: string }>;
+    tag?: string[];
 };
 
 function normalizeProduct(raw: ProductApiResponse | null | undefined, slug: string): NormalizedProduct | null {
@@ -43,6 +44,7 @@ function normalizeProduct(raw: ProductApiResponse | null | undefined, slug: stri
     const shortDescription = typeof product.shortDescription === 'string' ? product.shortDescription : undefined;
     const descriptionText = typeof product.description === 'string' ? product.description : undefined;
     const descriptionArray = Array.isArray(product.description) ? product.description : undefined;
+    const tag = Array.isArray(product.tag) ? product.tag.filter((t: unknown) => typeof t === 'string') as string[] : undefined;
 
     return {
         name,
@@ -51,6 +53,7 @@ function normalizeProduct(raw: ProductApiResponse | null | undefined, slug: stri
         shortDescription,
         descriptionText,
         descriptionArray,
+        tag,
     };
 }
 
@@ -148,10 +151,16 @@ export async function generateMetadata({ params }: { params: { slug: string } })
         fallbackDescription;
     const image = product.image || defaultOgImage;
     const canonical = `${siteUrl}/product/${product.slug || params.slug}`;
+    
+    // Build keywords from tags
+    const keywords = product.tag && product.tag.length > 0 
+        ? product.tag.join(', ') 
+        : undefined;
 
     return {
         title,
         description,
+        keywords,
         openGraph: {
             title,
             description,

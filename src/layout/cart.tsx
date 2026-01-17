@@ -15,6 +15,7 @@ import {
     applyCoupon,
     removeCoupon,
     clearCart,
+    updateProductPrice,
 } from '@/redux/cartSlice';
 import {
     setDiscountCode,
@@ -31,6 +32,7 @@ import {
     applyDiscountCode as applyDiscountCodeAPI,
     removeDiscountCode as removeDiscountCodeAPI,
     updateCartItem as updateCartItemAPI,
+    validateCart,
 } from '@/services/cartService';
 import {
     applyReferralCode as applyReferralCodeAPI,
@@ -60,6 +62,9 @@ const CartLayout: React.FC = () => {
     const hasCheckedStockRef = useRef(false);
     const [isOutOfStockModalOpen, setIsOutOfStockModalOpen] = useState(false);
     const [outOfStockProducts, setOutOfStockProducts] = useState<Array<{ productId: string; name: string; imageSrc?: string; href?: string }>>([]);
+    const [isCartChangesModalOpen, setIsCartChangesModalOpen] = useState(false);
+    const [cartChangesData, setCartChangesData] = useState<any>(null);
+    const [mounted, setMounted] = useState(false);
 
     // Fetch cart from API if user is logged in
     const {
@@ -85,6 +90,11 @@ const CartLayout: React.FC = () => {
         savedReferralCode ? 'Mã giới thiệu đã được áp dụng' : '',
     );
 
+    // Set mounted flag
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     // Restore out-of-stock modal from sessionStorage on mount
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -97,6 +107,19 @@ const CartLayout: React.FC = () => {
                 } catch (error) {
                     console.error('Error parsing pending out-of-stock data:', error);
                     sessionStorage.removeItem('cart_pending_out_of_stock');
+                }
+            }
+
+            // Check if there's a pending cart changes modal that wasn't confirmed
+            const pendingModalData = sessionStorage.getItem('cart_pending_cart_changes');
+            if (pendingModalData) {
+                try {
+                    const data = JSON.parse(pendingModalData);
+                    setCartChangesData(data);
+                    setIsCartChangesModalOpen(true);
+                } catch (error) {
+                    console.error('Error parsing pending cart changes data:', error);
+                    sessionStorage.removeItem('cart_pending_cart_changes');
                 }
             }
         }
@@ -278,16 +301,11 @@ const CartLayout: React.FC = () => {
                         
                         // Only use priceDiscount if it's valid:
                         // 1. priceDiscount > 0 and < priceOriginal
-                        // 2. quantityLimit = undefined/null (unlimited) or quantitySold < quantityLimit (still available)
-                        // 3. quantityLimit = 0 nghĩa là không có discount
-                        const quantityLimit = discount?.quantityLimit;
-                        const quantitySold = discount?.quantitySold || 0;
-                        // Nếu quantityLimit = undefined hoặc null → không giới hạn, luôn dùng discount nếu hợp lệ
-                        // Nếu quantityLimit = 0 → không có discount, không dùng
-                        // Nếu quantityLimit > 0 → chỉ dùng discount khi quantitySold < quantityLimit
-                        const isDiscountAvailable = (quantityLimit === undefined || quantityLimit === null) 
-                            ? true  // Không giới hạn, luôn available
-                            : (quantityLimit > 0 && quantitySold < quantityLimit);  // Có giới hạn, check quantitySold
+                        // 2. quantity > 0 (còn mã giảm giá)
+                        const quantity = discount?.quantity || 0;
+                        
+                        // Chỉ kiểm tra quantity > 0
+                        const isDiscountAvailable = quantity > 0;
                         
                         const hasValidDiscount = discount?.priceDiscount !== undefined &&
                             discount.priceDiscount !== null &&
@@ -304,16 +322,11 @@ const CartLayout: React.FC = () => {
                         
                         // Only use priceDiscount if it's valid:
                         // 1. priceDiscount > 0 and < priceOriginal
-                        // 2. quantityLimit = undefined/null (unlimited) or quantitySold < quantityLimit (still available)
-                        // 3. quantityLimit = 0 nghĩa là không có discount
-                        const quantityLimit = discount?.quantityLimit;
-                        const quantitySold = discount?.quantitySold || 0;
-                        // Nếu quantityLimit = undefined hoặc null → không giới hạn, luôn dùng discount nếu hợp lệ
-                        // Nếu quantityLimit = 0 → không có discount, không dùng
-                        // Nếu quantityLimit > 0 → chỉ dùng discount khi quantitySold < quantityLimit
-                        const isDiscountAvailable = (quantityLimit === undefined || quantityLimit === null) 
-                            ? true  // Không giới hạn, luôn available
-                            : (quantityLimit > 0 && quantitySold < quantityLimit);  // Có giới hạn, check quantitySold
+                        // 2. quantity > 0 (còn mã giảm giá)
+                        const quantity = discount?.quantity || 0;
+                        
+                        // Chỉ kiểm tra quantity > 0
+                        const isDiscountAvailable = quantity > 0;
                         
                         const hasValidDiscount = discount?.priceDiscount !== undefined &&
                             discount.priceDiscount !== null &&
@@ -336,10 +349,9 @@ const CartLayout: React.FC = () => {
                         const discount = product.price[0]?.discount;
                         // Only show oldPrice if there's a valid discount:
                         // 1. priceDiscount > 0 and < priceOriginal
-                        // 2. quantityLimit = 0 (unlimited) or quantitySold < quantityLimit (still available)
-                        const quantityLimit = discount?.quantityLimit || 0;
-                        const quantitySold = discount?.quantitySold || 0;
-                        const isDiscountAvailable = quantityLimit === 0 || quantityLimit === undefined || quantityLimit === null || quantitySold < quantityLimit;
+                        // 2. quantity > 0 (còn mã giảm giá)
+                        const quantity = discount?.quantity || 0;
+                        const isDiscountAvailable = quantity > 0;
                         
                         const hasValidDiscount = discount?.priceDiscount !== undefined &&
                             discount.priceDiscount !== null &&
@@ -354,10 +366,9 @@ const CartLayout: React.FC = () => {
                         const discount = product.price.discount;
                         // Only show oldPrice if there's a valid discount:
                         // 1. priceDiscount > 0 and < priceOriginal
-                        // 2. quantityLimit = 0 (unlimited) or quantitySold < quantityLimit (still available)
-                        const quantityLimit = discount?.quantityLimit || 0;
-                        const quantitySold = discount?.quantitySold || 0;
-                        const isDiscountAvailable = quantityLimit === 0 || quantityLimit === undefined || quantityLimit === null || quantitySold < quantityLimit;
+                        // 2. quantity > 0 (còn mã giảm giá)
+                        const quantity = discount?.quantity || 0;
+                        const isDiscountAvailable = quantity > 0;
                         
                         const hasValidDiscount = discount?.priceDiscount !== undefined &&
                             discount.priceDiscount !== null &&
@@ -538,12 +549,11 @@ const CartLayout: React.FC = () => {
                 if (latestProduct.price) {
                     if (Array.isArray(latestProduct.price)) {
                         const priceItem = latestProduct.price[0];
-                        priceOriginal = priceItem?.priceOriginal || 0;
+                        priceOriginal = priceItem?.priceOriginal || priceItem?.original || 0;
                         const discount = priceItem?.discount;
                         
-                        const quantityLimit = discount?.quantityLimit || 0;
-                        const quantitySold = discount?.quantitySold || 0;
-                        const isDiscountAvailable = quantityLimit === 0 || quantityLimit === undefined || quantityLimit === null || quantitySold < quantityLimit;
+                        const quantity = discount?.quantity || 0;
+                        const isDiscountAvailable = quantity > 0;
                         
                         const hasValidDiscount = discount?.priceDiscount !== undefined &&
                             discount.priceDiscount !== null &&
@@ -557,12 +567,11 @@ const CartLayout: React.FC = () => {
                         }
                     } else if (typeof latestProduct.price === 'object' && latestProduct.price !== null) {
                         const priceObj = latestProduct.price as any;
-                        priceOriginal = priceObj?.priceOriginal || 0;
+                        priceOriginal = priceObj?.priceOriginal || priceObj?.original || 0;
                         const discount = priceObj?.discount;
                         
-                        const quantityLimit = discount?.quantityLimit || 0;
-                        const quantitySold = discount?.quantitySold || 0;
-                        const isDiscountAvailable = quantityLimit === 0 || quantityLimit === undefined || quantityLimit === null || quantitySold < quantityLimit;
+                        const quantity = discount?.quantity || 0;
+                        const isDiscountAvailable = quantity > 0;
                         
                         const hasValidDiscount = discount?.priceDiscount !== undefined &&
                             discount.priceDiscount !== null &&
@@ -611,8 +620,16 @@ const CartLayout: React.FC = () => {
             // Update Redux if there are changes - need to update each product individually
             if (hasChanges) {
                 updatedProducts.forEach((product: any) => {
-                    // Update price by dispatching updateQuantity with same quantity (this will recalculate totals)
-                    dispatch(updateQuantity({ id: product.id, quantity: product.quantity }));
+                    // Update price (and stock) in Redux so UI reflects latest pricing immediately
+                    if (typeof product?.price === 'number') {
+                        dispatch(
+                            updateProductPrice({
+                                id: product.id,
+                                price: product.price,
+                                stock: product.stock,
+                            }),
+                        );
+                    }
                 });
             }
 
@@ -656,12 +673,337 @@ const CartLayout: React.FC = () => {
         }
     }, [currentUser, reduxCart, savedDiscountCode, dispatch, checkAndRemoveOutOfStockProducts]);
 
+    // Validate guest cart - Check prices, stock, and discount code
+    const validateGuestCartForChanges = React.useCallback(async () => {
+        if (currentUser || !mounted || !reduxCart.products || reduxCart.products.length === 0) return;
+
+        try {
+            // Get product IDs from Redux cart
+            const productIds = reduxCart.products.map((p: any) => p.id).filter(Boolean);
+            if (productIds.length === 0) return;
+
+            // Fetch latest product data including prices
+            const { post } = await import('@/utils/httpRequest');
+            const productsResponse = await post<{ success: boolean; data: Product[] }>('/api/v1/products/by-ids', { ids: productIds });
+            
+            if (!productsResponse.data.success || !productsResponse.data.data) {
+                return;
+            }
+
+            const latestProducts = productsResponse.data.data;
+            const productMap = new Map(latestProducts.map((p: Product) => [p._id, p]));
+
+            // Build validation result
+            const validationResult: any = {
+                hasChanges: false,
+                priceChanges: [],
+                stockIssues: [],
+                discountCodeIssue: null,
+            };
+
+            // Check each product for price and stock changes
+            for (const cartProduct of reduxCart.products) {
+                const latestProduct = productMap.get(cartProduct.id);
+                if (!latestProduct) continue;
+
+                // Calculate latest price
+                let latestPrice = 0;
+                let latestPriceOriginal = 0;
+                let latestPriceDiscount: number | null = null;
+                
+                if (latestProduct.price) {
+                    if (Array.isArray(latestProduct.price)) {
+                        const priceItem = latestProduct.price[0];
+                        latestPriceOriginal = priceItem?.priceOriginal || priceItem?.original || 0;
+                        const discount = priceItem?.discount;
+                        
+                        // Chỉ kiểm tra quantity > 0 (còn mã giảm giá)
+                        const discountQuantity = discount?.quantity || 0;
+                        const hasValidDiscount = discount?.priceDiscount !== undefined &&
+                            discount.priceDiscount !== null &&
+                            discount.priceDiscount > 0 &&
+                            discount.priceDiscount < latestPriceOriginal &&
+                            discountQuantity > 0;
+                        
+                        latestPrice = hasValidDiscount ? discount.priceDiscount : latestPriceOriginal;
+                        latestPriceDiscount = hasValidDiscount ? discount.priceDiscount : null;
+                    } else if (typeof latestProduct.price === 'object' && latestProduct.price !== null) {
+                        const priceObj = latestProduct.price as any;
+                        latestPriceOriginal = priceObj?.priceOriginal || priceObj?.original || 0;
+                        const discount = priceObj?.discount;
+                        
+                        // Chỉ kiểm tra quantity > 0 (còn mã giảm giá)
+                        const discountQuantity = discount?.quantity || 0;
+                        const hasValidDiscount = discount?.priceDiscount !== undefined &&
+                            discount.priceDiscount !== null &&
+                            discount.priceDiscount > 0 &&
+                            discount.priceDiscount < latestPriceOriginal &&
+                            discountQuantity > 0;
+                        
+                        latestPrice = hasValidDiscount ? discount.priceDiscount : latestPriceOriginal;
+                        latestPriceDiscount = hasValidDiscount ? discount.priceDiscount : null;
+                    }
+                }
+
+                // Check if price changed
+                const priceDifference = Math.abs(cartProduct.price - latestPrice);
+                if (priceDifference > 0.01) {
+                    // Calculate old price info from cartProduct
+                    let oldPriceDiscount: number | null = null;
+                    let oldPriceOriginal: number = cartProduct.price;
+
+                    if (cartProduct.oldPrice && cartProduct.oldPrice > cartProduct.price) {
+                        // Có giảm giá trước đó: oldPrice = giá gốc, price = giá giảm
+                        oldPriceDiscount = cartProduct.price;
+                        oldPriceOriginal = cartProduct.oldPrice;
+                    } else {
+                        // Không có giảm giá, coi price hiện tại là giá gốc
+                        oldPriceOriginal = cartProduct.price;
+                    }
+                    
+                    // Calculate product href
+                    let productHref = '#';
+                    if (cartProduct.href && cartProduct.href !== '#') {
+                        productHref = cartProduct.href;
+                    } else if (latestProduct.slug) {
+                        productHref = `/product/${latestProduct.slug}`;
+                    } else if (cartProduct.id) {
+                        productHref = `/product/${cartProduct.id}`;
+                    }
+                    
+                    validationResult.hasChanges = true;
+                    validationResult.priceChanges.push({
+                        productId: cartProduct.id,
+                        productName: cartProduct.productName,
+                        productImage: latestProduct.image?.[0] || null,
+                        productHref: productHref,
+                        oldPrice: cartProduct.price,
+                        oldPriceOriginal: oldPriceOriginal,
+                        oldPriceDiscount: oldPriceDiscount,
+                        newPrice: latestPrice,
+                        newPriceOriginal: latestPriceOriginal,
+                        newPriceDiscount: latestPriceDiscount,
+                        quantity: cartProduct.quantity,
+                    });
+
+                    // Update price in Redux cart
+                    dispatch(updateProductPrice({
+                        id: cartProduct.id,
+                        price: latestPrice,
+                        stock: latestProduct.stock || 0,
+                    }));
+                } else {
+                    // Update stock even if price didn't change
+                    if (cartProduct.stock !== (latestProduct.stock || 0)) {
+                        dispatch(updateProductPrice({
+                            id: cartProduct.id,
+                            price: cartProduct.price,
+                            stock: latestProduct.stock || 0,
+                        }));
+                    }
+                }
+
+                // Check stock issues
+                if (!latestProduct.isActive) {
+                    validationResult.hasChanges = true;
+                    validationResult.stockIssues.push({
+                        productId: cartProduct.id,
+                        productName: cartProduct.productName,
+                        productImage: latestProduct.image?.[0] || null,
+                        issue: 'inactive',
+                        message: 'Sản phẩm không còn khả dụng',
+                    });
+                } else if ((latestProduct.stock || 0) <= 0) {
+                    validationResult.hasChanges = true;
+                    validationResult.stockIssues.push({
+                        productId: cartProduct.id,
+                        productName: cartProduct.productName,
+                        productImage: latestProduct.image?.[0] || null,
+                        issue: 'out_of_stock',
+                        message: 'Sản phẩm đã hết hàng',
+                    });
+                } else if (cartProduct.quantity > (latestProduct.stock || 0)) {
+                    validationResult.hasChanges = true;
+                    validationResult.stockIssues.push({
+                        productId: cartProduct.id,
+                        productName: cartProduct.productName,
+                        productImage: latestProduct.image?.[0] || null,
+                        issue: 'insufficient_stock',
+                        message: `Sản phẩm chỉ còn ${latestProduct.stock} sản phẩm trong kho`,
+                        requestedQuantity: cartProduct.quantity,
+                        availableStock: latestProduct.stock || 0,
+                    });
+                }
+            }
+
+            // Validate discount code if exists
+            if (reduxCart.couponCode && reduxCart.products.length > 0) {
+                try {
+                    const orderValue = reduxCart.products.reduce((sum: number, p: any) => sum + (p.price * p.quantity), 0);
+                    const productIdsForValidation = reduxCart.products.map((p: any) => p.id).filter(Boolean);
+                    
+                    const discountResponse = await validateDiscountCode({
+                        code: reduxCart.couponCode,
+                        orderValue,
+                        productIds: productIdsForValidation,
+                    });
+
+                    if (!discountResponse.success || discountResponse.data?.discountAmount === undefined) {
+                        validationResult.hasChanges = true;
+                        const errorType = discountResponse.errors?.errorType;
+                        validationResult.discountCodeIssue = {
+                            code: reduxCart.couponCode,
+                            message: discountResponse.message || 'Mã giảm giá không còn hợp lệ',
+                            errorType,
+                        };
+                        // Remove invalid discount code
+                        dispatch(removeCoupon());
+                        dispatch(clearDiscountCode());
+                    } else {
+                        // Update discount amount if valid
+                        const discountAmount = discountResponse.data.discountAmount || 0;
+                        dispatch(applyCoupon({
+                            code: reduxCart.couponCode,
+                            discount: discountAmount,
+                        }));
+                    }
+                } catch (error: any) {
+                    validationResult.hasChanges = true;
+                    const errorType = error?.response?.data?.errors?.errorType;
+                    const errorMessage = error?.response?.data?.message || 'Mã giảm giá không còn hợp lệ';
+                    validationResult.discountCodeIssue = {
+                        code: reduxCart.couponCode,
+                        message: errorMessage,
+                        errorType,
+                    };
+                    // Remove invalid discount code
+                    dispatch(removeCoupon());
+                    dispatch(clearDiscountCode());
+                }
+            }
+
+            // Show modal if there are changes
+            if (validationResult.hasChanges) {
+                setCartChangesData(validationResult);
+                setIsCartChangesModalOpen(true);
+                // Save to sessionStorage so modal can be restored when user navigates back
+                if (typeof window !== 'undefined') {
+                    sessionStorage.setItem('cart_pending_cart_changes', JSON.stringify(validationResult));
+                }
+            }
+        } catch (error) {
+            // Silently fail - don't block user from viewing cart
+            console.error('Error validating guest cart:', error);
+        }
+    }, [currentUser, mounted, reduxCart, dispatch]);
+
     // Validate and sync guest cart when component mounts
     useEffect(() => {
         if (!currentUser && reduxCart.products.length > 0) {
             validateAndSyncGuestCart();
         }
     }, []); // Only run once on mount for guest user
+
+    // Track if validation has been run to avoid running multiple times
+    const hasValidatedRef = useRef(false);
+
+    // Validate cart when entering cart page (for both logged-in and guest users)
+    useEffect(() => {
+        const checkCartValidation = async () => {
+            if (!mounted || hasValidatedRef.current) return;
+
+            const isLoggedIn = Boolean(currentUser?.accessToken);
+            const cartEmpty = isLoggedIn 
+                ? (cartLoading || !cartData?.data || ((cartData.data as any)?.items || []).length === 0)
+                : reduxCart.products.length === 0;
+
+            if (cartEmpty) {
+                hasValidatedRef.current = true;
+                return;
+            }
+
+            if (isLoggedIn) {
+                // Validate logged-in user cart
+                if (cartLoading) return;
+
+                hasValidatedRef.current = true;
+
+                try {
+                    const validationResponse = await validateCart();
+                    
+                    if (validationResponse.hasChanges && validationResponse.validationResult) {
+                        // Ensure productHref is set for each priceChange item
+                        const validationResult = validationResponse.validationResult;
+                        if (validationResult.priceChanges && Array.isArray(validationResult.priceChanges)) {
+                            // Get cart data to find product hrefs
+                            const apiCart = cartData?.data as any;
+                            const items = apiCart?.items || [];
+                            
+                            validationResult.priceChanges = validationResult.priceChanges.map((change: any) => {
+                                // Find corresponding cart item to get product data
+                                const cartItem = items.find((item: any) => {
+                                    const product = item.productId || item.product_id;
+                                    const productId = product?._id || product?.id || '';
+                                    return productId === change.productId;
+                                });
+                                
+                                if (cartItem) {
+                                    const product = cartItem.productId || cartItem.product_id;
+                                    const slug = product?.slug || '';
+                                    if (!change.productHref || change.productHref === '#') {
+                                        change.productHref = slug ? `/product/${slug}` : (change.productId ? `/product/${change.productId}` : '#');
+                                    }
+                                } else if (!change.productHref || change.productHref === '#') {
+                                    // Fallback: use productId if no slug available
+                                    change.productHref = change.productId ? `/product/${change.productId}` : '#';
+                                }
+                                
+                                return change;
+                            });
+                        }
+                        
+                        // If discount code issue exists, remove it from cart and reload
+                        if (validationResult.discountCodeIssue) {
+                            try {
+                                await removeDiscountCodeAPI();
+                                // Reload cart to get updated totals without discount code
+                                await mutateCart();
+                            } catch (error) {
+                                console.error('Error removing discount code:', error);
+                            }
+                        }
+                        
+                        // Show modal with cart changes
+                        setCartChangesData(validationResult);
+                        setIsCartChangesModalOpen(true);
+                        // Save to sessionStorage so modal can be restored when user navigates back
+                        if (typeof window !== 'undefined') {
+                            sessionStorage.setItem('cart_pending_cart_changes', JSON.stringify(validationResult));
+                        }
+                        
+                        // Update cart if it was updated (even if discount code was already removed above)
+                        if (validationResponse.cart) {
+                            await mutateCart();
+                        }
+                    }
+                } catch (error) {
+                    // Silently fail - don't block user from viewing cart
+                    console.error('Error validating cart:', error);
+                }
+            } else {
+                // Validate guest cart
+                hasValidatedRef.current = true;
+                await validateGuestCartForChanges();
+            }
+        };
+
+        const isLoggedIn = Boolean(currentUser?.accessToken);
+        
+        // Only check if cart is loaded (for logged-in users)
+        if (isLoggedIn && cartLoading) return;
+        
+        checkCartValidation();
+    }, [currentUser, mounted, cartLoading, cartData, reduxCart.products.length, mutateCart, validateGuestCartForChanges]);
 
     // Check stock when cart loads (only once per cart load)
     useEffect(() => {
@@ -1706,6 +2048,258 @@ const CartLayout: React.FC = () => {
                                     // Remove from sessionStorage when user confirms
                                     if (typeof window !== 'undefined') {
                                         sessionStorage.removeItem('cart_pending_out_of_stock');
+                                    }
+                                }}
+                            >
+                                Đã hiểu
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Cart Changes Modal */}
+            {isCartChangesModalOpen && cartChangesData && (
+                <div className={cx('tos-modal-backdrop')} role="dialog" aria-modal="true" onClick={() => setIsCartChangesModalOpen(false)}>
+                    <div className={cx('tos-modal', 'cart-changes-modal')} onClick={(e) => e.stopPropagation()}>
+                        {/* Check if only discount code issue (no price changes or stock issues) */}
+                        {(() => {
+                            const hasPriceChanges = cartChangesData.priceChanges && cartChangesData.priceChanges.length > 0;
+                            const hasStockIssues = cartChangesData.stockIssues && cartChangesData.stockIssues.length > 0;
+                            const hasDiscountIssue = !!cartChangesData.discountCodeIssue;
+                            const isOnlyDiscountIssue = hasDiscountIssue && !hasPriceChanges && !hasStockIssues;
+
+                            if (isOnlyDiscountIssue) {
+                                // Show discount code specific modal
+                                return (
+                                    <>
+                                        <div className={cx('cart-changes-header')}>
+                                            <div className={cx('cart-changes-icon')}>
+                                                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.1"/>
+                                                    <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                    <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                </svg>
+                                            </div>
+                                            <h3 className={cx('cart-changes-title')}>
+                                                Mã giảm giá không hợp lệ
+                                            </h3>
+                                            <p className={cx('cart-changes-subtitle')}>
+                                                Mã giảm giá đã được gỡ khỏi giỏ hàng
+                                            </p>
+                                        </div>
+                                        <div className={cx('cart-changes-content')}>
+                                            {cartChangesData.discountCodeIssue && (
+                                                <div className={cx('discount-code-issue', 'discount-code-issue-centered')}>
+                                                    <div className={cx('discount-code-icon')}>
+                                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                            <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                        </svg>
+                                                    </div>
+                                                    <div className={cx('discount-code-content')}>
+                                                        <span className={cx('discount-code-label')}>Mã giảm giá</span>
+                                                        <span className={cx('discount-code-value')}>{cartChangesData.discountCodeIssue.code}</span>
+                                                        <span className={cx('discount-code-message')}>{cartChangesData.discountCodeIssue.message}</span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <div className={cx('cart-changes-footer')}>
+                                                <div className={cx('cart-changes-footer-icon')}>
+                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                    </svg>
+                                                </div>
+                                                <p className={cx('cart-changes-footer-text')}>
+                                                    Tổng tiền đã được tính lại và cập nhật tự động
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </>
+                                );
+                            }
+
+                            // Show normal cart changes modal
+                            return (
+                                <>
+                                    <div className={cx('cart-changes-header')}>
+                                        <div className={cx('cart-changes-icon')}>
+                                            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.1"/>
+                                                <path d="M12 16V12M12 8H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                <path d="M12 8V12L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                            </svg>
+                                        </div>
+                                        <h3 className={cx('cart-changes-title')}>
+                                            Giỏ hàng đã được cập nhật
+                                        </h3>
+                                        <p className={cx('cart-changes-subtitle')}>
+                                            {cartChangesData.priceChanges?.length || 0} sản phẩm đã thay đổi giá
+                                        </p>
+                                    </div>
+                                    <div className={cx('cart-changes-content')}>
+                                        {cartChangesData.priceChanges && cartChangesData.priceChanges.length > 0 && (
+                                <div className={cx('price-changes-list')}>
+                                    {cartChangesData.priceChanges.map((change: any, index: number) => (
+                                        <Link
+                                            key={index}
+                                            href={change.productHref || '#'}
+                                            className={cx('price-change-item')}
+                                            onClick={(e) => {
+                                                // Không đóng modal khi click vào item, chỉ navigate
+                                                e.stopPropagation();
+                                                // Lưu trạng thái modal vào sessionStorage trước khi navigate
+                                                // để có thể hiển thị lại khi user quay lại trang cart
+                                                if (typeof window !== 'undefined' && cartChangesData) {
+                                                    sessionStorage.setItem('cart_pending_cart_changes', JSON.stringify(cartChangesData));
+                                                }
+                                            }}
+                                        >
+                                            <div className={cx('price-change-product')}>
+                                                {change.productImage && (
+                                                    <div className={cx('price-change-image')}>
+                                                        <Image
+                                                            src={change.productImage}
+                                                            alt={change.productName}
+                                                            width={118}
+                                                            height={72}
+                                                            className={cx('product-thumb')}
+                                                        />
+                                                    </div>
+                                                )}
+                                                <div className={cx('price-change-info')}>
+                                                    <div className={cx('price-change-name')}>{change.productName}</div>
+                                                    <div className={cx('price-change-prices')}>
+                                                        <div className={cx('price-group', 'old-price-group')}>
+                                                            <span className={cx('price-label')}>Giá cũ</span>
+                                                            <div className={cx('price-value-wrapper')}>
+                                                                {change.oldPriceDiscount && change.oldPriceOriginal && change.oldPriceOriginal > change.oldPriceDiscount ? (
+                                                                    <>
+                                                                        <span className={cx('price-discount')}>
+                                                                            {formatPrice(change.oldPriceDiscount)}₫
+                                                                        </span>
+                                                                        <span className={cx('price-original')}>
+                                                                            {formatPrice(change.oldPriceOriginal)}₫
+                                                                        </span>
+                                                                    </>
+                                                                ) : change.oldPrice && change.oldPriceOriginal && change.oldPriceOriginal > change.oldPrice ? (
+                                                                    <>
+                                                                        <span className={cx('price-discount')}>
+                                                                            {formatPrice(change.oldPrice)}₫
+                                                                        </span>
+                                                                        <span className={cx('price-original')}>
+                                                                            {formatPrice(change.oldPriceOriginal)}₫
+                                                                        </span>
+                                                                    </>
+                                                                ) : (
+                                                                    <span className={cx('price-normal')}>
+                                                                        {formatPrice(change.oldPriceOriginal || change.oldPrice || change.newPrice)}₫
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div className={cx('price-arrow')}>
+                                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                            </svg>
+                                                        </div>
+                                                        <div className={cx('price-group', 'new-price-group')}>
+                                                            <span className={cx('price-label')}>Giá mới</span>
+                                                            <div className={cx('price-value-wrapper')}>
+                                                                {change.newPriceDiscount && change.newPriceOriginal > change.newPriceDiscount ? (
+                                                                    <>
+                                                                        <span className={cx('price-discount', 'highlight')}>
+                                                                            {formatPrice(change.newPriceDiscount)}₫
+                                                                        </span>
+                                                                        <span className={cx('price-original')}>
+                                                                            {formatPrice(change.newPriceOriginal)}₫
+                                                                        </span>
+                                                                    </>
+                                                                ) : (
+                                                                    <span className={cx('price-normal', 'highlight')}>
+                                                                        {formatPrice(change.newPrice)}₫
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+
+                            {cartChangesData.stockIssues && cartChangesData.stockIssues.length > 0 && (
+                                <div className={cx('stock-issues-list')}>
+                                    {cartChangesData.stockIssues.map((issue: any, index: number) => (
+                                        <div key={index} className={cx('stock-issue-item')}>
+                                            {issue.productImage && (
+                                                <div className={cx('stock-issue-image')}>
+                                                    <Image
+                                                        src={issue.productImage}
+                                                        alt={issue.productName}
+                                                        width={48}
+                                                        height={48}
+                                                        className={cx('product-thumb')}
+                                                    />
+                                                </div>
+                                            )}
+                                            <div className={cx('stock-issue-content')}>
+                                                <span className={cx('stock-issue-name')}>{issue.productName}</span>
+                                                <span className={cx('stock-issue-message')}>{issue.message}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                                        {(() => {
+                                            const hasPriceChanges = cartChangesData.priceChanges && cartChangesData.priceChanges.length > 0;
+                                            const hasStockIssues = cartChangesData.stockIssues && cartChangesData.stockIssues.length > 0;
+                                            const hasDiscountIssue = !!cartChangesData.discountCodeIssue;
+                                            const isOnlyDiscountIssue = hasDiscountIssue && !hasPriceChanges && !hasStockIssues;
+                                            return cartChangesData.discountCodeIssue && !isOnlyDiscountIssue;
+                                        })() && (
+                                            <div className={cx('discount-code-issue')}>
+                                                <div className={cx('discount-code-icon')}>
+                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                        <path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                    </svg>
+                                                </div>
+                                                <div className={cx('discount-code-content')}>
+                                                    <span className={cx('discount-code-label')}>Mã giảm giá</span>
+                                                    <span className={cx('discount-code-value')}>{cartChangesData.discountCodeIssue.code}</span>
+                                                    <span className={cx('discount-code-message')}>{cartChangesData.discountCodeIssue.message}</span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className={cx('cart-changes-footer')}>
+                                            <div className={cx('cart-changes-footer-icon')}>
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                </svg>
+                                            </div>
+                                            <p className={cx('cart-changes-footer-text')}>
+                                                Tổng tiền đã được tính lại và cập nhật tự động
+                                            </p>
+                                        </div>
+                                    </div>
+                                </>
+                            );
+                        })()}
+
+                        <div className={cx('tos-modal-actions')}>
+                            <button 
+                                className={cx('tos-confirm-button')} 
+                                onClick={() => {
+                                    setIsCartChangesModalOpen(false);
+                                    setCartChangesData(null);
+                                    // Remove from sessionStorage when user confirms
+                                    if (typeof window !== 'undefined') {
+                                        sessionStorage.removeItem('cart_pending_cart_changes');
                                     }
                                 }}
                             >
