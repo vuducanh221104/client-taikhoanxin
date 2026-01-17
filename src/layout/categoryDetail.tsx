@@ -613,9 +613,25 @@ export default function CategoryDetailLayout() {
                         {currentProducts.length > 0 ? (
                             <>
                                 <div className={cx('products-grid')}>
-                                    {currentProducts.map((product) => (
-                                        <ProductCard key={product.id} {...product} />
-                                    ))}
+                                    {currentProducts.map((product) => {
+                                        // Convert stock number to string literal type
+                                        const stockStatus: 'in-stock' | 'low-stock' | 'out-of-stock' | undefined = 
+                                            product.stock === undefined || product.stock === null
+                                                ? undefined
+                                                : product.stock === 0
+                                                ? 'out-of-stock'
+                                                : product.stock <= 10
+                                                ? 'low-stock'
+                                                : 'in-stock';
+                                        
+                                        return (
+                                            <ProductCard 
+                                                key={product.id} 
+                                                {...product} 
+                                                stock={stockStatus}
+                                            />
+                                        );
+                                    })}
                                 </div>
 
                                 {/* Load More */}

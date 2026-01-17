@@ -166,10 +166,10 @@ const UserDropdown: React.FC<UserDropdownProps> = ({
         return null;
     }
 
-    const displayName = currentUser?.fullName?.trim() || currentUser?.full_name?.trim() || currentUser.email;
+    const displayName = currentUser?.full_name?.trim() || currentUser.email;
     const avatarSrc = currentUser.avatar?.trim() || '';
     const isMissingAvatar = !avatarSrc;
-    const userFullName = currentUser?.fullName?.trim() || currentUser?.full_name?.trim();
+    const userFullName = currentUser?.full_name?.trim();
     const avatarInitials = getInitials(userFullName, currentUser.email);
 
     return (

@@ -296,7 +296,7 @@ const CartLayout: React.FC = () => {
                 if (!price && product?.price) {
                     if (Array.isArray(product.price)) {
                         const priceItem = product.price[0];
-                        const priceOriginal = priceItem?.priceOriginal || priceItem?.original || 0;
+                        const priceOriginal = priceItem?.priceOriginal || 0;
                         const discount = priceItem?.discount;
                         
                         // Only use priceDiscount if it's valid:
@@ -345,7 +345,7 @@ const CartLayout: React.FC = () => {
                 if (product?.price) {
                     let priceOriginal = 0;
                     if (Array.isArray(product.price)) {
-                        priceOriginal = product.price[0]?.priceOriginal || product.price[0]?.original || 0;
+                        priceOriginal = product.price[0]?.priceOriginal || 0;
                         const discount = product.price[0]?.discount;
                         // Only show oldPrice if there's a valid discount:
                         // 1. priceDiscount > 0 and < priceOriginal
@@ -362,7 +362,7 @@ const CartLayout: React.FC = () => {
                             oldPrice = priceOriginal;
                         }
                     } else if (typeof product.price === 'object') {
-                        priceOriginal = product.price.priceOriginal || product.price.original || 0;
+                        priceOriginal = product.price.priceOriginal || 0;
                         const discount = product.price.discount;
                         // Only show oldPrice if there's a valid discount:
                         // 1. priceDiscount > 0 and < priceOriginal
@@ -549,7 +549,7 @@ const CartLayout: React.FC = () => {
                 if (latestProduct.price) {
                     if (Array.isArray(latestProduct.price)) {
                         const priceItem = latestProduct.price[0];
-                        priceOriginal = priceItem?.priceOriginal || priceItem?.original || 0;
+                        priceOriginal = priceItem?.priceOriginal || 0;
                         const discount = priceItem?.discount;
                         
                         const quantity = discount?.quantity || 0;
@@ -567,7 +567,7 @@ const CartLayout: React.FC = () => {
                         }
                     } else if (typeof latestProduct.price === 'object' && latestProduct.price !== null) {
                         const priceObj = latestProduct.price as any;
-                        priceOriginal = priceObj?.priceOriginal || priceObj?.original || 0;
+                        priceOriginal = priceObj?.priceOriginal || 0;
                         const discount = priceObj?.discount;
                         
                         const quantity = discount?.quantity || 0;
@@ -714,7 +714,7 @@ const CartLayout: React.FC = () => {
                 if (latestProduct.price) {
                     if (Array.isArray(latestProduct.price)) {
                         const priceItem = latestProduct.price[0];
-                        latestPriceOriginal = priceItem?.priceOriginal || priceItem?.original || 0;
+                        latestPriceOriginal = priceItem?.priceOriginal || 0;
                         const discount = priceItem?.discount;
                         
                         // Chỉ kiểm tra quantity > 0 (còn mã giảm giá)
@@ -729,7 +729,7 @@ const CartLayout: React.FC = () => {
                         latestPriceDiscount = hasValidDiscount ? discount.priceDiscount : null;
                     } else if (typeof latestProduct.price === 'object' && latestProduct.price !== null) {
                         const priceObj = latestProduct.price as any;
-                        latestPriceOriginal = priceObj?.priceOriginal || priceObj?.original || 0;
+                        latestPriceOriginal = priceObj?.priceOriginal || 0;
                         const discount = priceObj?.discount;
                         
                         // Chỉ kiểm tra quantity > 0 (còn mã giảm giá)

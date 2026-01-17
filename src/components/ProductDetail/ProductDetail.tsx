@@ -273,32 +273,15 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
             });
         }
 
-        // Extract warranty info from policy and warrantyPeriod
-        const warrantyPeriod = product.warrantyPeriod || 0;
-        let warrantyPeriodText = 'Theo chính sách';
-        if (warrantyPeriod > 0) {
-            if (warrantyPeriod < 30) {
-                warrantyPeriodText = `${warrantyPeriod} ngày`;
-            } else if (warrantyPeriod === 30) {
-                warrantyPeriodText = '1 tháng';
-            } else if (warrantyPeriod < 365) {
-                const months = Math.floor(warrantyPeriod / 30);
-                warrantyPeriodText = `${months} tháng`;
-            } else {
-                const years = Math.floor(warrantyPeriod / 365);
-                warrantyPeriodText = `${years} năm`;
-            }
-        } else {
-            warrantyPeriodText = 'Không bảo hành';
-        }
-
+        // Extract warranty info from policy
+        // Note: warrantyPeriod is not in Product type, so we use policy text only
         const warranty = policy
             ? {
-                period: warrantyPeriod > 0 ? warrantyPeriodText : 'Theo chính sách',
+                period: 'Theo chính sách',
                 method: policy.split('\n').filter((m: string) => m.trim()),
             }
             : {
-                period: warrantyPeriod > 0 ? warrantyPeriodText : 'Theo chính sách',
+                period: 'Theo chính sách',
                 method: [],
             };
 
@@ -329,7 +312,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
             info, // Câu hỏi thường gặp
             description: description || product.shortDescription || '', // Chi tiết sản phẩm
             tos: product.tos || undefined, // Terms of Service (Điều khoản và lưu ý)
-            paymentpromo: product.paymentpromo || undefined, // Ưu đãi thanh toán riêng cho sản phẩm
             // Stock and quantity constraints
             stock: product.stock ?? 0,
             min: product.min ?? 1,

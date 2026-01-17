@@ -70,7 +70,7 @@ export const useCategories = (
 /**
  * Get category by slug
  */
-export const useCategory = (slug: string, config?: SWRConfiguration<CategoryResponse>) => {
+export const useCategory = (slug: string | null, config?: SWRConfiguration<CategoryResponse>) => {
     const key = slug ? `/api/v1/categories/${slug}` : null;
     return useSWRUser<CategoryResponse>(key, config);
 };

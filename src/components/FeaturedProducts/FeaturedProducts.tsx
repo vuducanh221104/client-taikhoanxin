@@ -33,6 +33,20 @@ export interface FeaturedProduct {
     max?: number;
 }
 
+// Helper function to convert numeric stock to string literal type
+const convertStockToStatus = (stock?: number): 'in-stock' | 'low-stock' | 'out-of-stock' | undefined => {
+    if (stock === undefined || stock === null) {
+        return undefined;
+    }
+    if (stock === 0) {
+        return 'out-of-stock';
+    }
+    if (stock <= 10) {
+        return 'low-stock';
+    }
+    return 'in-stock';
+};
+
 export interface FeaturedProductsProps {
     products?: FeaturedProduct[];
     title?: string;
@@ -151,16 +165,20 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
                             variant={isDarkBackground ? 'dark' : 'light'}
                         />
                     ) : displayProducts.length > 0 ? (
-                        displayProducts.map((product, index) => (
-                            <ProductCard
-                                key={product.id}
-                                {...product}
-                                variant={isDarkBackground ? 'dark' : 'light'}
-                                isFavorite={isProductInWishlist(product.id)}
-                                onAddToCart={onAddToCart ? () => onAddToCart(product) : undefined}
-                                onToggleFavorite={handleToggleFavorite}
-                            />
-                        ))
+                        displayProducts.map((product, index) => {
+                            const { stock: numericStock, ...restProduct } = product;
+                            return (
+                                <ProductCard
+                                    key={product.id}
+                                    {...restProduct}
+                                    stock={convertStockToStatus(numericStock)}
+                                    variant={isDarkBackground ? 'dark' : 'light'}
+                                    isFavorite={isProductInWishlist(product.id)}
+                                    onAddToCart={onAddToCart ? () => onAddToCart(product) : undefined}
+                                    onToggleFavorite={handleToggleFavorite}
+                                />
+                            );
+                        })
                     ) : (
                         <EmptyState
                             type="products"

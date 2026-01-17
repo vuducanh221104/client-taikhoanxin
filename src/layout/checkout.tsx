@@ -837,7 +837,13 @@ const CheckoutLayout: React.FC = () => {
         setSubmitting(true);
 
         try {
-            let response: { success: boolean; data: any; message: string };
+            let response: { 
+                success: boolean; 
+                data: any; 
+                message: string;
+                hasChanges?: boolean;
+                validationResult?: any;
+            };
 
             if (isLoggedIn) {
                 response = await checkout({
