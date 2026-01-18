@@ -236,7 +236,7 @@
 // Products Grid
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr)); // Default: 2 columns for mobile/tablet
+    grid-template-columns: repeat(2, minmax(0, 1fr)); // Default: 2 columns for mobile
     row-gap: 20px;
     column-gap: 12px;
     justify-items: stretch;
@@ -332,19 +332,19 @@
     color: var(--text-color-secondary);
 }
 
-// PC Medium (min-width: 1000px and max-width: 1199px) - 3 cột
-@media (min-width: 1000px) and (max-width: 1199px) {
+// iPad (768px - 1023px) - 3 cột
+@media (min-width: 768px) and (max-width: 1023px) {
     .products-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
         justify-items: stretch;
         align-items: start;
         row-gap: 16px;
-        column-gap: 10px;
+        column-gap: 12px;
     }
 }
 
-// PC Large (min-width: 1200px) - 4 cột
-@media (min-width: 1200px) {
+// PC (min-width: 1024px) - 4 cột
+@media (min-width: 1024px) {
     .products-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
         justify-items: stretch;
@@ -365,18 +365,8 @@
     }
 }
 
-// Tablet (max-width: 999px) - 2 cột
-@media (max-width: 999px) {
-    .products-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        justify-items: stretch;
-        align-items: start;
-        row-gap: 16px;
-        column-gap: 12px;
-    }
-}
-
-@media (max-width: 768px) {
+// Mobile (max-width: 767px) - 2 cột
+@media (max-width: 767px) {
     .featured-products {
         padding: 40px 0;
     }

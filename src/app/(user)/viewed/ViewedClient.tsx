@@ -10,23 +10,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '@/redux/cartSlice';
 import FilterBar, { FilterValues, FilterOption } from '@/components/FilterBar';
 import { useViewedProducts } from '@/services/userService';
+import { useCategories, Category } from '@/services/categoryService';
 import { ProductListSkeleton } from '@/components/Skeleton';
+import { PlusIcon } from '@/components/Icons';
 import type { RootState } from '@/redux/store';
 
 const cx = classNames.bind(styles);
 
 const INITIAL_DISPLAY_LIMIT = 8;
 const LOAD_MORE_INCREMENT = 8;
-
-const categories = [
-    { value: 'all', label: 'Tất cả' },
-    { value: 'featured', label: 'Sản phẩm nổi bật' },
-    { value: 'work', label: 'Làm việc' },
-    { value: 'ai', label: 'Tài khoản AI' },
-    { value: 'bestSelling', label: 'Bán chạy nhất' },
-    { value: 'entertainment', label: 'Giải trí' },
-    { value: 'new', label: 'Sản phẩm mới' },
-];
 
 const genres = [
     { value: 'all', label: 'Tất cả' },
@@ -78,6 +70,30 @@ export default function ViewedProductsPage() {
         { enabled: isLoggedIn }
     );
 
+    // Fetch categories from API
+    const { data: categoriesData } = useCategories({ isActive: true, includeHidden: false });
+
+    // Map API categories to FilterOption format
+    const categories = useMemo(() => {
+        const categoryOptions: FilterOption[] = [
+            { value: 'all', label: 'Tất cả' },
+        ];
+
+        if (categoriesData?.data && categoriesData.data.length > 0) {
+            const apiCategories = categoriesData.data
+                .filter((cat: Category) => cat.isActive)
+                .sort((a: Category, b: Category) => (a.sortOrder || 0) - (b.sortOrder || 0))
+                .map((cat: Category) => ({
+                    value: cat._id,
+                    label: cat.name,
+                }));
+
+            categoryOptions.push(...apiCategories);
+        }
+
+        return categoryOptions;
+    }, [categoriesData]);
+
     const viewedProducts = isLoggedIn ? data?.data ?? [] : guestViewedProducts;
 
     useEffect(() => {
@@ -88,7 +104,19 @@ export default function ViewedProductsPage() {
 
     // Map API products to FeaturedProduct format
     const mappedProducts = useMemo(() => {
-        return viewedProducts.map((product) => mapProductToFeaturedProduct(product));
+        const mapped = viewedProducts.map((product) => mapProductToFeaturedProduct(product));
+        
+        // Debug: Log first product to check categoryIds
+        if (mapped.length > 0 && process.env.NODE_ENV === 'development') {
+            console.log('First mapped product:', {
+                id: mapped[0].id,
+                name: mapped[0].productName,
+                categoryIds: mapped[0].categoryIds,
+                originalCategoryId: viewedProducts[0]?.categoryId,
+            });
+        }
+        
+        return mapped;
     }, [viewedProducts]);
 
     // Reset display limit when filters or data change
@@ -104,6 +132,65 @@ export default function ViewedProductsPage() {
     // Filter products
     const filteredProducts = useMemo(() => {
         let filtered = [...baseProducts];
+
+        // Filter by category
+        if (filters.category !== 'all') {
+            const filterCategoryStr = String(filters.category || '').trim();
+            
+            // Debug: Log filter info
+            if (process.env.NODE_ENV === 'development') {
+                console.log('Filtering by category:', {
+                    filterCategory: filterCategoryStr,
+                    totalProducts: filtered.length,
+                    sampleProduct: filtered[0] ? {
+                        id: filtered[0].id,
+                        name: filtered[0].productName,
+                        categoryIds: filtered[0].categoryIds,
+                    } : null,
+                });
+            }
+            
+            filtered = filtered.filter(product => {
+                // Check if product has the selected category in its categoryIds array
+                if (!product.categoryIds || !Array.isArray(product.categoryIds) || product.categoryIds.length === 0) {
+                    if (process.env.NODE_ENV === 'development') {
+                        console.log('Product has no categoryIds:', {
+                            id: product.id,
+                            name: product.productName,
+                            categoryIds: product.categoryIds,
+                        });
+                    }
+                    return false;
+                }
+                
+                // Check if any categoryId matches (compare as strings)
+                const matches = product.categoryIds.some(catId => {
+                    const catIdStr = String(catId || '').trim();
+                    const isMatch = catIdStr === filterCategoryStr;
+                    
+                    if (process.env.NODE_ENV === 'development' && isMatch) {
+                        console.log('Category match found:', {
+                            productId: product.id,
+                            productName: product.productName,
+                            catIdStr,
+                            filterCategoryStr,
+                        });
+                    }
+                    
+                    return isMatch;
+                });
+                
+                return matches;
+            });
+            
+            // Debug: Log filtered results
+            if (process.env.NODE_ENV === 'development') {
+                console.log('After category filter:', {
+                    filterCategory: filterCategoryStr,
+                    filteredCount: filtered.length,
+                });
+            }
+        }
 
         // Filter by genre - Detect genre from product name
         if (filters.genre !== 'all') {
@@ -149,7 +236,7 @@ export default function ViewedProductsPage() {
         }
 
         return filtered;
-    }, [baseProducts, filters.genre, filters.status, filters.priceFrom, filters.priceTo, filters.sortBy]);
+    }, [baseProducts, filters.category, filters.genre, filters.status, filters.priceFrom, filters.priceTo, filters.sortBy]);
 
     const handleAddToCart = (product: FeaturedProduct) => {
         dispatch(addToCart({
@@ -194,6 +281,7 @@ export default function ViewedProductsPage() {
     const hasError = isLoggedIn ? Boolean(error) : false;
     const effectiveIsLoading = isLoggedIn ? isLoading : false;
     const showEmptyState = !effectiveIsLoading && !hasError && filteredProducts.length === 0;
+    const remainingProducts = filteredProducts.length - displayLimit;
 
     return (
         <div className={cx('products-page')}>
@@ -206,13 +294,14 @@ export default function ViewedProductsPage() {
                 {/* Filter Bar */}
                 <FilterBar
                     categories={categories}
-                    genres={genres}
+                    genres={[]}
                     statusOptions={statusOptions}
                     sortOptions={sortOptions}
                     quickPriceFilters={quickPriceFilters}
                     defaultCategory="all"
                     layout="flex"
                     onFilterChange={handleFilterChange}
+                    applyOnButtonClick={true}
                 />
 
                 {/* Products Grid */}
@@ -246,15 +335,18 @@ export default function ViewedProductsPage() {
                             ))}
                         </div>
 
-                        {/* Load More Button */}
+                        {/* Load More */}
                         {hasMoreProducts && (
-                            <div className={cx('load-more-section')}>
+                            <div className={cx('load-more')}>
                                 <button
+                                    type="button"
                                     className={cx('load-more-button')}
                                     onClick={handleLoadMore}
-                                    type="button"
                                 >
-                                    <span>Xem thêm {Math.min(LOAD_MORE_INCREMENT, filteredProducts.length - displayLimit)} sản phẩm</span>
+                                    <span>
+                                        Xem thêm {Math.min(LOAD_MORE_INCREMENT, remainingProducts)} sản phẩm
+                                    </span>
+                                    <PlusIcon size={20} />
                                 </button>
                             </div>
                         )}

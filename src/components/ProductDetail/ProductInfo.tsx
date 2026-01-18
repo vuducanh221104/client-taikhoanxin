@@ -847,7 +847,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
             )}
 
             {/* Mobile Sticky Action Bar */}
-            <div className={cx('mobile-sticky-actions')}>
+            {/* <div className={cx('mobile-sticky-actions')}>
                 <div className={cx('mobile-actions-wrapper')}>
                     <div className={cx('mobile-price-info')}>
                         <span className={cx('mobile-current-price')}>{formatPrice(displayPrice)}₫</span>
@@ -874,7 +874,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                         </button>
                     </div>
                 </div>
-            </div>
+            </div> */}
         </div>
     );
 };

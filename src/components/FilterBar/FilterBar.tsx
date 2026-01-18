@@ -38,6 +38,7 @@ export interface FilterBarProps {
     defaultCategory?: string;
     layout?: 'flex' | 'grid';
     onFilterChange: (filters: FilterValues) => void;
+    applyOnButtonClick?: boolean; // Nếu true, chỉ apply filter khi bấm nút "Lọc"
 }
 
 const FilterBar: React.FC<FilterBarProps> = React.memo(({
@@ -49,6 +50,7 @@ const FilterBar: React.FC<FilterBarProps> = React.memo(({
     defaultCategory = 'all',
     layout = 'flex',
     onFilterChange,
+    applyOnButtonClick = false,
 }) => {
     const [selectedCategory, setSelectedCategory] = useState<string>(defaultCategory);
     const [selectedGenre, setSelectedGenre] = useState<string>('all');
@@ -122,8 +124,35 @@ const FilterBar: React.FC<FilterBarProps> = React.memo(({
         onFilterChangeRef.current = onFilterChange;
     }, [onFilterChange]);
 
+    // Apply filters function
+    const applyFilters = useCallback(() => {
+        const filterValues = {
+            category: selectedCategory,
+            genre: selectedGenre,
+            status: selectedStatus,
+            priceFrom,
+            priceTo,
+            sortBy,
+        };
+        onFilterChangeRef.current(filterValues);
+    }, [selectedCategory, selectedGenre, selectedStatus, priceFrom, priceTo, sortBy]);
+
     // Notify parent of filter changes - only when filters actually change
+    // Nếu applyOnButtonClick = true, chỉ apply khi bấm nút "Lọc"
     useEffect(() => {
+        // Nếu applyOnButtonClick = true, không auto-trigger filter
+        if (applyOnButtonClick) {
+            // Chỉ apply filter lần đầu khi mount
+            if (isInitialMount.current) {
+                isInitialMount.current = false;
+                requestAnimationFrame(() => {
+                    applyFilters();
+                });
+            }
+            return;
+        }
+
+        // Logic cũ: auto-trigger khi filter thay đổi
         const filterValues = {
             category: selectedCategory,
             genre: selectedGenre,
@@ -157,7 +186,7 @@ const FilterBar: React.FC<FilterBarProps> = React.memo(({
 
         // For subsequent changes (user interactions), call immediately
         onFilterChangeRef.current(filterValues);
-    }, [selectedCategory, selectedGenre, selectedStatus, priceFrom, priceTo, sortBy]);
+    }, [selectedCategory, selectedGenre, selectedStatus, priceFrom, priceTo, sortBy, applyOnButtonClick, applyFilters]);
 
     const handleResetFilters = useCallback(() => {
         setSelectedCategory(defaultCategory);
@@ -294,7 +323,8 @@ const FilterBar: React.FC<FilterBarProps> = React.memo(({
                     </div>
                 </div>
 
-                {/* Genre Dropdown */}
+                {/* Genre Dropdown - Chỉ hiển thị nếu có genres */}
+                {genres && genres.length > 0 && (
                 <div className={cx('filter-item', { 'is-open': isGenreOpen })} ref={genreRef}>
                     <label className={cx('filter-label')}>Thể loại</label>
                     <div className={cx('dropdown-wrapper')}>
@@ -335,6 +365,7 @@ const FilterBar: React.FC<FilterBarProps> = React.memo(({
                         )}
                     </div>
                 </div>
+                )}
 
                 {/* Status Dropdown */}
                 <div className={cx('filter-item', { 'is-open': isStatusOpen })} ref={statusRef}>
@@ -481,6 +512,7 @@ const FilterBar: React.FC<FilterBarProps> = React.memo(({
                     <button 
                         className={cx('filter-button')} 
                         type="button"
+                        onClick={applyFilters}
                         aria-label="Áp dụng bộ lọc"
                     >
                         <FilterIcon size={18} aria-hidden="true" />

@@ -1042,7 +1042,7 @@
     @media (min-width: 1000px) {
         grid-template-columns: repeat(3, minmax(0, 1fr));
         row-gap: 20px;
-        column-gap: 24px;
+        column-gap: 16px;
     }
 
     // PC Large (min-width: 1200px) - 3 cột với gap lớn hơn
@@ -1059,8 +1059,15 @@
         column-gap: 32px;
     }
 
-    // Tablet (max-width: 999px) - 2 cột
-    @media (max-width: 999px) {
+    // iPad (768px - 999px) - 3 cột
+    @media (min-width: 768px) and (max-width: 999px) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        row-gap: 16px;
+        column-gap: 12px;
+    }
+
+    // Tablet nhỏ hơn (max-width: 767px) - 2 cột
+    @media (max-width: 767px) {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         row-gap: 16px;
         column-gap: 12px;

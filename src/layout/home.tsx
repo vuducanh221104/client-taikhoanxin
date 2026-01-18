@@ -65,7 +65,7 @@ export default function Home() {
         if (typeof window === 'undefined' || !homePageData?.data) return;
         
         const bannerData = isMobile 
-            ? homePageData.data.bannerSlideMoblie || []
+            ? homePageData.data.bannerMoblie || []
             : homePageData.data.bannerSlide || [];
         
         const firstBanner = bannerData.sort((a, b) => a.numberSort - b.numberSort)[0];
@@ -90,7 +90,7 @@ export default function Home() {
         if (!homePageData?.data) return [];
         
         const bannerData = isMobile 
-            ? homePageData.data.bannerSlideMoblie || []
+            ? homePageData.data.bannerMoblie || []
             : homePageData.data.bannerSlide || [];
         
         return bannerData

@@ -197,10 +197,17 @@ const CategoryIcons: React.FC<CategoryIconsProps> = ({
                     color: '#666',
                 };
 
+                // Xử lý href: đảm bảo href có format đúng
+                let href = item.href || '#';
+                // Nếu href không rỗng và không bắt đầu bằng / hoặc http/https, thêm / vào đầu
+                if (href && href !== '#' && !href.startsWith('/') && !href.startsWith('http://') && !href.startsWith('https://')) {
+                    href = `/${href}`;
+                }
+
                 return {
                     id: item._id || `menu-${item.text}`,
                     name: item.text,
-                    href: item.href || '#',
+                    href: href,
                     image: hasImage ? item.image : undefined,
                     icon: hasImage ? undefined : defaultIconData.icon,
                     color: defaultIconData.color,

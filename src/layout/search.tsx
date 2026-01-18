@@ -9,7 +9,7 @@ import { FeaturedProduct } from '@/components/FeaturedProducts';
 import { useSearchProducts, mapProductToFeaturedProduct, Product, detectProductGenre } from '@/services/productService';
 import { useDispatch } from 'react-redux';
 import { addToCart } from '@/redux/cartSlice';
-import { PlusIcon, SearchIcon, SortIcon } from '@/components/Icons';
+import { PlusIcon, SearchIcon, SortIcon, FilterIcon, CloseIcon } from '@/components/Icons';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useToast } from '@/hooks/useToast';
 import { ProductListSkeleton } from '@/components/Skeleton';
@@ -138,6 +138,7 @@ const SearchLayout: React.FC = () => {
     const [focusedInput, setFocusedInput] = useState<0 | 1 | null>(null);
     const [sortBy, setSortBy] = useState('default');
     const [isSortOpen, setIsSortOpen] = useState(false);
+    const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
     const [displayLimit, setDisplayLimit] = useState<number>(INITIAL_DISPLAY_LIMIT);
     const sortDropdownRef = useRef<HTMLDivElement | null>(null);
     const { data: searchResponse, error: searchError, isLoading: isSearching } = useSearchProducts(query, {
@@ -230,9 +231,12 @@ const SearchLayout: React.FC = () => {
         });
     };
 
+    const toggleMobileFilter = () => setIsMobileFilterOpen((prev) => !prev);
+
     const handleApplyFilters = () => {
         setPriceRange(pendingPriceRange);
         setDisplayLimit(INITIAL_DISPLAY_LIMIT);
+        setIsMobileFilterOpen(false); // Close mobile filter on apply
     };
 
     const clearFilters = () => {
@@ -466,7 +470,18 @@ const SearchLayout: React.FC = () => {
                 {query && baseProducts.length > 0 && (
                     <div className={cx('search-content-wrapper')}>
                         {/* Filters Sidebar */}
-                        <aside className={categoryCx('filters-sidebar')}>
+                        <aside className={categoryCx('filters-sidebar', { 'mobile-open': isMobileFilterOpen })}>
+                            <div className={categoryCx('mobile-filter-header')}>
+                                <h3 className={categoryCx('mobile-filter-title')}>Bộ lọc sản phẩm</h3>
+                                <button
+                                    className={categoryCx('mobile-filter-close')}
+                                    onClick={toggleMobileFilter}
+                                    type="button"
+                                >
+                                    <CloseIcon size={24} />
+                                </button>
+                            </div>
+
                             <div className={categoryCx('filters-header')}>
                                 <div>
                                     <h2 className={categoryCx('filters-title')}>Bộ lọc thông minh</h2>
@@ -582,6 +597,15 @@ const SearchLayout: React.FC = () => {
                         <div className={cx('search-products-content')}>
                             {/* Sort Dropdown */}
                             <div className={categoryCx('category-controls')}>
+                                <button
+                                    className={categoryCx('mobile-filter-button')}
+                                    onClick={toggleMobileFilter}
+                                    type="button"
+                                >
+                                    <FilterIcon size={20} />
+                                    <span>Bộ lọc</span>
+                                </button>
+
                                 <div
                                     className={categoryCx('sort-dropdown', { 'is-open': isSortOpen })}
                                     ref={sortDropdownRef}
@@ -705,6 +729,15 @@ const SearchLayout: React.FC = () => {
                         onAction={clearFilters}
                     />
                 ) : null}
+
+                {/* Mobile Filter Overlay */}
+                {isMobileFilterOpen && (
+                    <div
+                        className={categoryCx('mobile-filter-overlay')}
+                        onClick={toggleMobileFilter}
+                        aria-hidden="true"
+                    />
+                )}
             </div>
         </div>
     );

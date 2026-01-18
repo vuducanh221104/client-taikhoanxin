@@ -2,7 +2,7 @@
   position: fixed;
   left: 24px;
   bottom: 32px;
-  z-index: 60;
+  z-index: 1000;
   pointer-events: none;
   animation: slideInLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -224,7 +224,7 @@
   .purchase-toast-wrapper {
     left: 12px;
     right: auto; // Không stretch full width
-    bottom: 80px; // Nằm trên bottom navigation/sticky actions
+    bottom: 40px; // Nằm trên bottom navigation/sticky actions
     max-width: calc(100vw - 24px); // Giới hạn max width
     animation: slideInLeftMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
@@ -348,9 +348,10 @@
 // Small mobile (max-width: 480px)
 @media (max-width: 480px) {
   .purchase-toast-wrapper {
+    z-index: 1000;
     left: 8px;
     right: auto; // Không stretch full width
-    bottom: 80px; // Nằm trên bottom navigation/sticky actions
+    bottom: 40px; // Nằm trên bottom navigation/sticky actions
     max-width: calc(100vw - 16px);
   }
 

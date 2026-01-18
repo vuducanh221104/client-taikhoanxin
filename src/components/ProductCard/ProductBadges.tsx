@@ -41,11 +41,6 @@ const ProductBadges: React.FC<ProductBadgesProps> = ({
                     <span>HẾT HÀNG</span>
                 </div>
             )}
-            {stock === 'low-stock' && (
-                <div className={cx('badge', 'badge-low-stock')}>
-                    <span>SẮP HẾT</span>
-                </div>
-            )}
 
             {/* Hot Badge */}
             {isHot && stock !== 'out-of-stock' && (

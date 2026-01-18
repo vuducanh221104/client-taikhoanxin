@@ -446,6 +446,45 @@ export const mapProductToFeaturedProduct = (product: Product): FeaturedProduct =
             ? product.isAvailable
             : product.isActive !== false && (product.stock || 0) > 0;
 
+    // Normalize categoryIds to array of strings
+    const normalizeCategoryIds = (categoryId: any): string[] => {
+        if (!categoryId) {
+            return [];
+        }
+        
+        // If it's not an array, convert to array
+        const categoryArray = Array.isArray(categoryId) ? categoryId : [categoryId];
+        
+        return categoryArray.map((id: any) => {
+            // If it's already a string, return it
+            if (typeof id === 'string') {
+                return id.trim();
+            }
+            
+            // If it's an object (populated category), get _id
+            if (id && typeof id === 'object') {
+                // Check if it has _id property (populated category object)
+                if ('_id' in id) {
+                    // Handle both string _id and ObjectId _id
+                    const objectId = id._id;
+                    if (typeof objectId === 'string') {
+                        return objectId.trim();
+                    }
+                    if (objectId && typeof objectId === 'object' && 'toString' in objectId) {
+                        return objectId.toString().trim();
+                    }
+                }
+                // If it's an ObjectId object with toString method
+                if ('toString' in id) {
+                    return id.toString().trim();
+                }
+            }
+            
+            // Fallback: convert to string
+            return String(id || '').trim();
+        }).filter((id: string) => id && id.length > 0);
+    };
+
     return {
         id: product._id,
         productName: product.name,
@@ -461,6 +500,7 @@ export const mapProductToFeaturedProduct = (product: Product): FeaturedProduct =
         stock: product.stock,
         min: product.min,
         max: product.max,
+        categoryIds: normalizeCategoryIds(product.categoryId),
     };
 };
 

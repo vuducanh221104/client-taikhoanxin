@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import classNames from 'classnames/bind';
 import styles from './MobileMenu.module.scss';
@@ -11,23 +12,24 @@ import {
     EyeIcon,
     FlameIcon,
     PercentIcon,
-    CreditCardIcon,
     UserIcon,
     HeartIcon,
     HistoryIcon,
     LogOutIcon,
     CloseIcon,
-    ChevronDownIcon,
     WindowsIcon,
     OfficeIcon,
     BrainIcon,
     ImageIcon,
     CloudIcon,
     PlayIcon,
+    BriefcaseIcon,
+    GraduationIcon,
 } from '@/components/Icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { logoutUser } from '@/redux/authActions';
+import { useCategories, Category } from '@/services/categoryService';
 
 const cx = classNames.bind(styles);
 
@@ -37,11 +39,28 @@ interface MobileMenuProps {
     mobileMenuSidebarRef: React.RefObject<HTMLDivElement>;
 }
 
+// Mapping category slug với icon component (giống CategoryDropdown)
+const categoryIconMap: Record<string, React.ReactNode> = {
+    'windows': <WindowsIcon />,
+    'office': <OfficeIcon />,
+    'hoc-tap': <GraduationIcon />,
+    'tai-khoan-ai': <BrainIcon />,
+    'edit-anh-video': <ImageIcon />,
+    'luu-tru': <CloudIcon />,
+    'lam-viec': <BriefcaseIcon />,
+    'giai-tri': <PlayIcon />,
+};
+
 const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, mobileMenuSidebarRef }) => {
     const pathname = usePathname();
     const dispatch = useDispatch();
     const currentUser = useSelector((state: RootState) => state.auth.login.currentUser);
-    const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+
+    // Fetch categories from API (only active, non-hidden categories)
+    const { data: categoriesData, error: categoriesError, isLoading: categoriesLoading } = useCategories({ 
+        isActive: true, 
+        includeHidden: false 
+    });
 
     // Prevent body scroll when menu is open
     React.useEffect(() => {
@@ -64,39 +83,31 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, mobileMenuSide
         { href: '/orders/lookup', label: 'Tra cứu đơn hàng', icon: <HistoryIcon /> },
     ];
 
-    // Categories - simplified without subcategories
-    const categories = [
-        {
-            id: 'windows',
-            label: 'Windows & Office',
-            icon: <WindowsIcon />,
-            href: '/categories/windows',
-        },
-        {
-            id: 'ai',
-            label: 'AI & Productivity',
-            icon: <BrainIcon />,
-            href: '/categories/ai',
-        },
-        {
-            id: 'design',
-            label: 'Design & Creative',
-            icon: <ImageIcon />,
-            href: '/categories/design',
-        },
-        {
-            id: 'cloud',
-            label: 'Cloud & Storage',
-            icon: <CloudIcon />,
-            href: '/categories/storage',
-        },
-        {
-            id: 'entertainment',
-            label: 'Entertainment',
-            icon: <PlayIcon />,
-            href: '/categories/entertainment',
-        },
-    ];
+    // Map API categories to display format, sorted by sortOrder
+    const categories = useMemo(() => {
+        if (!categoriesData?.data || categoriesData.data.length === 0) {
+            return [];
+        }
+
+        return categoriesData.data
+            .filter((cat: Category) => cat.isActive) // Chỉ lấy categories active
+            .sort((a: Category, b: Category) => (a.sortOrder || 0) - (b.sortOrder || 0)) // Sort theo sortOrder
+            .map((cat: Category) => {
+                // Nếu có image từ API thì dùng image, không thì dùng icon từ categoryIconMap
+                const hasImage = cat.image && cat.image.trim() !== '';
+                const defaultIcon = categoryIconMap[cat.slug] || 
+                                  categoryIconMap[cat.name.toLowerCase()] || 
+                                  <CategoryIcon />;
+
+                return {
+                    id: cat._id,
+                    label: cat.name,
+                    image: hasImage ? cat.image : undefined,
+                    icon: hasImage ? undefined : defaultIcon,
+                    href: `/categories/${cat.slug}`,
+                };
+            });
+    }, [categoriesData]);
 
     const userMenuItems = currentUser ? [
         { href: '/account/manage', label: 'Tài khoản', icon: <UserIcon /> },
@@ -105,10 +116,6 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, mobileMenuSide
     ] : [
         { href: '/auth/login', label: 'Đăng nhập / Đăng ký', icon: <UserIcon /> },
     ];
-
-    const toggleCategory = (categoryId: string) => {
-        setExpandedCategory(expandedCategory === categoryId ? null : categoryId);
-    };
 
     if (!isOpen) return null;
 
@@ -188,19 +195,45 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, mobileMenuSide
                     {/* Categories - Simple links without subcategories */}
                     <div className={cx('menu-section')}>
                         <h3 className={cx('menu-section-title')}>Danh mục</h3>
-                        {categories.map((category) => (
-                            <Link
-                                key={category.id}
-                                href={category.href}
-                                className={cx('menu-item', 'category-item', {
-                                    active: pathname.startsWith(category.href),
-                                })}
-                                onClick={onClose}
-                            >
-                                <span className={cx('menu-icon')}>{category.icon}</span>
-                                <span className={cx('menu-label')}>{category.label}</span>
-                            </Link>
-                        ))}
+                        {categoriesLoading ? (
+                            <div className={cx('menu-item', 'category-item', 'loading')}>
+                                <span className={cx('menu-label')}>Đang tải...</span>
+                            </div>
+                        ) : categoriesError ? (
+                            <div className={cx('menu-item', 'category-item', 'error')}>
+                                <span className={cx('menu-label')}>Không thể tải danh mục</span>
+                            </div>
+                        ) : categories.length === 0 ? (
+                            <div className={cx('menu-item', 'category-item', 'empty')}>
+                                <span className={cx('menu-label')}>Chưa có danh mục</span>
+                            </div>
+                        ) : (
+                            categories.map((category) => (
+                                <Link
+                                    key={category.id}
+                                    href={category.href}
+                                    className={cx('menu-item', 'category-item', {
+                                        active: pathname.startsWith(category.href),
+                                    })}
+                                    onClick={onClose}
+                                >
+                                    <span className={cx('menu-icon')}>
+                                        {category.image ? (
+                                            <Image
+                                                src={category.image}
+                                                alt={category.label}
+                                                width={24}
+                                                height={24}
+                                                className={cx('category-image')}
+                                            />
+                                        ) : (
+                                            category.icon
+                                        )}
+                                    </span>
+                                    <span className={cx('menu-label')}>{category.label}</span>
+                                </Link>
+                            ))
+                        )}
                     </div>
 
                     {/* Nút đăng xuất - Đặt xuống dưới cùng */}

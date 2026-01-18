@@ -156,7 +156,7 @@ const Footer: React.FC = () => {
                                 <span className={cx('contact-icon', 'clock')}>
                                     <ClockIcon />
                                 </span>
-                                <span>Thời gian: 8:00 - 22:00 (Hàng ngày)</span>
+                                <span>Thời gian: 8:00 - 24:00 (Hàng ngày)</span>
                             </li>
                         </ul>
                     </div>
