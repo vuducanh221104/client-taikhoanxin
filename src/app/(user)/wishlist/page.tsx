@@ -7,19 +7,22 @@ const ogImage = 'https://cdn.taikhoanxin.com/seo/banner-seo.jpeg';
 export const metadata: Metadata = {
     title: 'Sản phẩm yêu thích | TaiKhoanXin',
     description:
-        'Xem danh sách sản phẩm yêu thích của bạn tại TaiKhoanXin. Lưu lại các tài khoản bản quyền bạn quan tâm để mua sau.',
-    keywords: [
-        'sản phẩm yêu thích',
-        'wishlist',
-        'danh sách yêu thích',
-        'lưu sản phẩm',
-        'tài khoản yêu thích',
-        'tai khoan xin',
-    ],
+        'Xem danh sách sản phẩm yêu thích của bạn tại TaiKhoanXin..',
+        keywords: [
+            'yêu thích',
+            'sản phẩm yêu thích',
+            'danh sách yêu thích',
+            'wishlist',
+            'lưu sản phẩm',
+            'sản phẩm đã lưu',
+            'TaiKhoanXin',
+            'taikhoanxin',
+            'tai khoan xin',
+          ],
     openGraph: {
         title: 'Sản phẩm yêu thích | TaiKhoanXin',
         description:
-            'Quản lý danh sách sản phẩm yêu thích của bạn tại TaiKhoanXin. Lưu lại các tài khoản bản quyền để mua sau.',
+            'Quản lý danh sách sản phẩm yêu thích của bạn tại TaiKhoanXin.',
         url: `${siteUrl}/wishlist`,
         siteName: 'TaiKhoanXin',
         images: [

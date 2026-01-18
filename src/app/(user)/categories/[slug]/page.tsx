@@ -123,9 +123,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     const category = await fetchCategory(params.slug);
     const name = category?.name || 'Danh mục';
     const title = `${name} | TaiKhoanXin`;
-    const description =
-        category?.description ||
-        `Khám phá sản phẩm trong danh mục ${name} tại TaiKhoanXin.`;
+    const description = category?.description
+    || `Mua các sản phẩm ${name} nhanh gọn với hệ thống tự động 24/7 tại TaiKhoanXin.`;
+  
     const canonical = `${siteUrl}/categories/${params.slug}`;
 
     return {

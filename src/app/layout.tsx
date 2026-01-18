@@ -31,7 +31,15 @@ export const metadata: Metadata = {
     title: 'Tài Khoản Xịn - Nền Tảng Tài Khoản Số 1 Việt Nam',
     description: 'Khám phá thế giới tài khoản chất lượng cao. Tài Khoản Xịn - Đối tác tin cậy của bạn.',
     icons: {
-        icon: '/favicon.ico',
+        icon: [
+            { url: '/favicon.ico', sizes: 'any' },
+            { url: '/logo/logo.png', type: 'image/png', sizes: '192x192' },
+            { url: '/logo/logo.png', type: 'image/png', sizes: '512x512' },
+        ],
+        apple: [
+            { url: '/logo/logo.png', sizes: '180x180', type: 'image/png' },
+        ],
+        shortcut: '/favicon.ico',
     },
     metadataBase: new URL(siteUrl),
     openGraph: {
@@ -63,7 +71,7 @@ const organizationJsonLd = {
     '@type': 'Organization',
     name: 'TaiKhoanXin',
     url: siteUrl,
-    logo: `${siteUrl}/favicon.ico`,
+    logo: `${siteUrl}/logo/logo.png`,
 };
 
 const websiteJsonLd = {

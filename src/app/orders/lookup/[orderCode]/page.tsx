@@ -11,7 +11,7 @@ export function generateMetadata({ params, searchParams }: {
     const code = params?.orderCode ? String(params.orderCode) : '';
     const orderCode = code ? code.toUpperCase() : 'Đơn hàng';
     const title = `Tra cứu đơn ${orderCode} | TaiKhoanXin`;
-    const description = `Xem chi tiết đơn hàng ${orderCode} với OTP bảo mật. Theo dõi trạng thái giao hàng và thanh toán tại TaiKhoanXin.`;
+    const description = `Xem chi tiết đơn hàng ${orderCode}`;
     const canonical = `${siteUrl}/orders/lookup/${encodeURIComponent(code || 'ma-don')}`;
 
     return {
@@ -20,11 +20,14 @@ export function generateMetadata({ params, searchParams }: {
         keywords: [
             'tra cứu đơn hàng',
             'theo dõi đơn hàng',
+            'xem trạng thái đơn',
             'order lookup',
             'mã đơn hàng',
-            orderCode,
+            'orderCode',
+            'TaiKhoanXin',
+            'taikhoanxin',
             'tai khoan xin',
-        ],
+          ],
         openGraph: {
             title,
             description,

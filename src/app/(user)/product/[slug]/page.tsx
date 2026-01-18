@@ -98,7 +98,7 @@ function buildProductJsonLd(raw: any, slug: string) {
         product.shortDescription ||
         product.description ||
         (Array.isArray(product.description) ? product.description?.[0]?.description : '') ||
-        'Mua tài khoản bản quyền tại TaiKhoanXin.';
+        'Mua tài khoản bản quyền giá rẻ tại TaiKhoanXin.';
 
     const priceItem = Array.isArray(product.price) ? product.price[0] : product.price;
     const price = priceItem?.priceOriginal ?? priceItem?.original ?? 0;
@@ -130,7 +130,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     const product = await fetchProduct(params.slug);
 
     const fallbackTitle = 'Sản phẩm | TaiKhoanXin';
-    const fallbackDescription = 'Mua tài khoản bản quyền uy tín tại TaiKhoanXin.';
+    const fallbackDescription = 'Mua tài khoản bản quyền giá rẻ tại TaiKhoanXin.';
 
     if (!product) {
         return {
