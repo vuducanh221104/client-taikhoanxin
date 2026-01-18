@@ -425,10 +425,10 @@ const OrderLookupPage: React.FC<LookupPageProps> = ({ initialOrderCode, initialE
                         </li>
                     </ul>
                 </div>
-                <div className={cx('hero-badge')}>
+                {/* <div className={cx('hero-badge')}>
                     <span>24/7</span>
                     <p>Hỗ trợ tra cứu</p>
-                </div>
+                </div> */}
             </section>
             <div className={cx('content')}>
                 {renderStepper()}
@@ -441,7 +441,7 @@ const OrderLookupPage: React.FC<LookupPageProps> = ({ initialOrderCode, initialE
                         <p>Đội ngũ CSKH của chúng tôi luôn sẵn sàng giải đáp và hỗ trợ thao tác tra cứu.</p>
                     </div>
                     <div className={cx('support-actions')}>
-                        <a href="mailto:cskh@taikhoanxin.com">cskh@taikhoanxin.com</a>
+                        <a href="https://zalo.me/0377775528" style={{textDecoration: "underline"}}>Zalo Tài Khoản Xịn</a>
                         <span>Hoặc chat trực tiếp trong giờ hành chính.</span>
                     </div>
                 </div>

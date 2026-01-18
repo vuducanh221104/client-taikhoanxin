@@ -131,6 +131,97 @@ const CheckoutSuccessLayout: React.FC = () => {
         }
     }, [mounted, orderCodeParam, checkoutTokenParam]);
 
+    // Helper function to redirect to order detail/lookup page
+    const redirectToOrderDetail = useCallback(
+        (targetOrderCode: string | number) => {
+            if (hasRedirectedToDetails) return;
+            setHasRedirectedToDetails(true);
+
+            if (currentUser) {
+                const targetPath = targetOrderCode
+                    ? `/account/orders/${targetOrderCode}`
+                    : '/account/orders';
+
+                if (typeof window !== 'undefined') {
+                    window.location.href = targetPath;
+                } else {
+                    router.push(targetPath);
+                }
+            } else if (targetOrderCode && checkoutTokenParam && submittedEmail) {
+                // Tự động tạo lookupToken từ checkoutToken khi thanh toán thành công
+                autoCreateLookupToken({
+                    orderCode: targetOrderCode.toString(),
+                    checkoutToken: checkoutTokenParam,
+                    email: submittedEmail,
+                })
+                    .then((lookupResponse) => {
+                        if (lookupResponse.success && lookupResponse.data.token) {
+                            // Redirect với lookupToken mới
+                            const params = new URLSearchParams({
+                                token: lookupResponse.data.token,
+                                email: submittedEmail,
+                            });
+                            router.push(`/orders/lookup/${targetOrderCode}?${params.toString()}`);
+                        } else {
+                            // Fallback: redirect với checkoutToken (sẽ cần tra cứu lại)
+                            const params = new URLSearchParams({
+                                token: checkoutTokenParam,
+                                email: submittedEmail,
+                            });
+                            router.push(`/orders/lookup/${targetOrderCode}?${params.toString()}`);
+                        }
+                    })
+                    .catch((error) => {
+                        // Nếu auto-verify thất bại, fallback về checkoutToken
+                        console.error('Failed to auto-create lookup token:', error);
+                        const params = new URLSearchParams({
+                            token: checkoutTokenParam,
+                            email: submittedEmail,
+                        });
+                        router.push(`/orders/lookup/${targetOrderCode}?${params.toString()}`);
+                    });
+            }
+        },
+        [
+            currentUser,
+            checkoutTokenParam,
+            submittedEmail,
+            router,
+            hasRedirectedToDetails,
+        ],
+    );
+
+    // Check payment status immediately when order is loaded (for when user returns after payment)
+    useEffect(() => {
+        if (
+            !mounted ||
+            !order ||
+            isExpired ||
+            (!currentUser && !submittedEmail) ||
+            hasRedirectedToDetails
+        ) {
+            return;
+        }
+
+        const businessOrderId = (order as any).orderId;
+        const paymentStatus = (order as any).paymentStatus;
+
+        // If payment is already paid, redirect immediately
+        if (paymentStatus === 'paid' || paymentStatus === 'refunded') {
+            redirectToOrderDetail(businessOrderId);
+            return;
+        }
+    }, [
+        mounted,
+        order,
+        isExpired,
+        currentUser,
+        submittedEmail,
+        hasRedirectedToDetails,
+        redirectToOrderDetail,
+    ]);
+
+    // SSE connection for real-time payment status updates
     useEffect(() => {
         if (
             !mounted ||
@@ -172,59 +263,33 @@ const CheckoutSuccessLayout: React.FC = () => {
                             eventSource.close();
                         }
 
-                        setHasRedirectedToDetails(true);
-
-                        if (currentUser) {
-                            const targetPath = targetOrderCode
-                                ? `/account/orders/${targetOrderCode}`
-                                : '/account/orders';
-
-                            if (typeof window !== 'undefined') {
-                                window.location.href = targetPath;
-                            } else {
-                                router.push(targetPath);
-                            }
-                        } else if (
-                            targetOrderCode &&
-                            checkoutTokenParam &&
-                            submittedEmail
-                        ) {
-                            // Tự động tạo lookupToken từ checkoutToken khi thanh toán thành công
-                            autoCreateLookupToken({
-                                orderCode: targetOrderCode,
-                                checkoutToken: checkoutTokenParam,
-                                email: submittedEmail,
-                            })
-                                .then((lookupResponse) => {
-                                    if (lookupResponse.success && lookupResponse.data.token) {
-                                        // Redirect với lookupToken mới
-                                        const params = new URLSearchParams({
-                                            token: lookupResponse.data.token,
-                                            email: submittedEmail,
-                                        });
-                                        router.push(`/orders/lookup/${targetOrderCode}?${params.toString()}`);
-                                    } else {
-                                        // Fallback: redirect với checkoutToken (sẽ cần tra cứu lại)
-                            const params = new URLSearchParams({
-                                token: checkoutTokenParam,
-                                email: submittedEmail,
-                            });
-                            router.push(`/orders/lookup/${targetOrderCode}?${params.toString()}`);
-                                    }
-                                })
-                                .catch((error) => {
-                                    // Nếu auto-verify thất bại, fallback về checkoutToken
-                                    console.error('Failed to auto-create lookup token:', error);
-                                    const params = new URLSearchParams({
-                                        token: checkoutTokenParam,
-                                        email: submittedEmail,
-                                    });
-                                    router.push(`/orders/lookup/${targetOrderCode}?${params.toString()}`);
-                                });
-                        }
+                        redirectToOrderDetail(targetOrderCode);
                     }
                 } catch (err) {
                     console.error('Failed to parse SSE status event:', err);
+                }
+            });
+
+            eventSource.addEventListener('end', (event: MessageEvent) => {
+                try {
+                    const data = JSON.parse(event.data) as {
+                        reason?: string;
+                        status?: {
+                            paymentStatus?: string;
+                            orderId?: string | number;
+                        };
+                    };
+
+                    if (data.status?.paymentStatus === 'paid' || data.status?.paymentStatus === 'refunded') {
+                        const targetOrderCode = data.status.orderId || businessOrderId;
+                        redirectToOrderDetail(targetOrderCode);
+                    }
+
+                    if (eventSource) {
+                        eventSource.close();
+                    }
+                } catch (err) {
+                    console.error('Failed to parse SSE end event:', err);
                 }
             });
 
@@ -245,12 +310,12 @@ const CheckoutSuccessLayout: React.FC = () => {
     }, [
         mounted,
         order,
-        router,
         isExpired,
         currentUser,
         checkoutTokenParam,
         submittedEmail,
         hasRedirectedToDetails,
+        redirectToOrderDetail,
     ]);
 
     useEffect(() => {

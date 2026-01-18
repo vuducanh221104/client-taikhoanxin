@@ -389,8 +389,8 @@ export default function ForgotPasswordLayout() {
                             <p className={cx('support-title')}>Cần trợ giúp ngay?</p>
                             <span className={cx('support-text')}>Đội ngũ CSKH phản hồi trong 5 phút.</span>
                         </div>
-                        <Link href="mailto:support@taikhoanxin.com" className={cx('support-link')}>
-                            support@taikhoanxin.com
+                        <Link href="https://zalo.me/0377775528" className={cx('support-link')} style={{textDecoration: "underline"}}>
+                            ZALO TaiKhoanXin
                         </Link>
                     </div>
                     <div className={cx('security-badge')}>
