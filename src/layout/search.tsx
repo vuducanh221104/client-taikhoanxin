@@ -9,19 +9,19 @@ import { FeaturedProduct } from '@/components/FeaturedProducts';
 import { useSearchProducts, mapProductToFeaturedProduct, Product, detectProductGenre } from '@/services/productService';
 import { useDispatch } from 'react-redux';
 import { addToCart } from '@/redux/cartSlice';
-import { PlusIcon, SearchIcon, SortIcon, FilterIcon, CloseIcon } from '@/components/Icons';
+import { SearchIcon, SortIcon, FilterIcon, CloseIcon } from '@/components/Icons';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useToast } from '@/hooks/useToast';
 import { ProductListSkeleton } from '@/components/Skeleton';
 import EmptyState from '@/components/EmptyState';
-import { FileSearchIcon, PackageIcon } from '@/components/Icons';
+import { FileSearchIcon } from '@/components/Icons';
 import categoryStyles from '@/app/(user)/categories/[slug]/page.module.scss';
+import { useSWRConfig } from 'swr';
 
 const cx = classNames.bind(styles);
 const categoryCx = classNames.bind(categoryStyles);
 
-const INITIAL_DISPLAY_LIMIT = 9;
-const LOAD_MORE_INCREMENT = 9;
+const ITEMS_PER_PAGE = 10;
 
 const DEFAULT_PRICE_RANGE: [number, number] = [0, 10_000_000];
 const PRICE_SLIDER_STEP = 50_000;
@@ -44,6 +44,7 @@ const quickPricePresets: Array<{ label: string; range: [number, number] }> = [
 
 const sortOptions = [
     { value: 'default', label: 'Mặc định' },
+    { value: 'newest', label: 'Mới nhất' },
     { value: 'price-asc', label: 'Giá: Thấp đến cao' },
     { value: 'price-desc', label: 'Giá: Cao đến thấp' },
     { value: 'name-asc', label: 'Tên: A-Z' },
@@ -68,7 +69,6 @@ interface APIError {
     message?: string;
 }
 
-const SEARCH_RESULT_LIMIT = 120;
 const RECENT_DAYS_THRESHOLD = 30;
 
 const inferCategoryFilter = (product: Product): CategoryFilterValue => {
@@ -127,6 +127,7 @@ const SearchLayout: React.FC = () => {
     const searchParams = useSearchParams();
     const router = useRouter();
     const query = searchParams?.get('q') || '';
+    const { mutate: globalMutate } = useSWRConfig();
     
     const [searchValue, setSearchValue] = useState<string>(query);
     const [priceRange, setPriceRange] = useState<[number, number]>(DEFAULT_PRICE_RANGE);
@@ -139,10 +140,36 @@ const SearchLayout: React.FC = () => {
     const [sortBy, setSortBy] = useState('default');
     const [isSortOpen, setIsSortOpen] = useState(false);
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
-    const [displayLimit, setDisplayLimit] = useState<number>(INITIAL_DISPLAY_LIMIT);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [accumulatedProducts, setAccumulatedProducts] = useState<SearchDisplayProduct[]>([]);
     const sortDropdownRef = useRef<HTMLDivElement | null>(null);
+    
+    // Map sortBy to backend sortBy and sortOrder
+    const sortConfig = useMemo(() => {
+        switch (sortBy) {
+            case 'newest':
+                return { sortBy: 'createdAt', sortOrder: 'desc' as const };
+            case 'price-asc':
+                return { sortBy: 'price.priceOriginal', sortOrder: 'asc' as const };
+            case 'price-desc':
+                return { sortBy: 'price.priceOriginal', sortOrder: 'desc' as const };
+            case 'name-asc':
+                return { sortBy: 'name', sortOrder: 'asc' as const };
+            case 'name-desc':
+                return { sortBy: 'name', sortOrder: 'desc' as const };
+            default:
+                // Default: không gửi sort params, để backend dùng default sort
+                return { sortBy: undefined, sortOrder: undefined };
+        }
+    }, [sortBy]);
+
     const { data: searchResponse, error: searchError, isLoading: isSearching } = useSearchProducts(query, {
-        limit: SEARCH_RESULT_LIMIT,
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+        minPrice: priceRange[0] !== DEFAULT_PRICE_RANGE[0] ? priceRange[0] : undefined,
+        maxPrice: priceRange[1] !== DEFAULT_PRICE_RANGE[1] ? priceRange[1] : undefined,
+        sortBy: sortConfig.sortBy,
+        sortOrder: sortConfig.sortOrder,
     });
 
     const dispatch = useDispatch();
@@ -165,9 +192,10 @@ const SearchLayout: React.FC = () => {
         }
     }, [pendingPriceRange, focusedInput]);
 
-    // Reset display limit when filters or query change
+    // Reset page and accumulated products when filters or query change
     useEffect(() => {
-        setDisplayLimit(INITIAL_DISPLAY_LIMIT);
+        setCurrentPage(1);
+        setAccumulatedProducts([]);
     }, [query, priceRange, sortBy]);
 
     // Handle search
@@ -185,19 +213,28 @@ const SearchLayout: React.FC = () => {
     };
 
     const handlePriceInputChange = (index: 0 | 1, value: string) => {
+        // Parse the input value (remove all non-digit characters)
+        const parsedValue = parseCurrency(value);
+        
+        // Clamp the value to valid range
+        const clampedValue = clamp(parsedValue, DEFAULT_PRICE_RANGE[0], DEFAULT_PRICE_RANGE[1]);
+        
+        // Format the value with thousand separators
+        const formattedValue = formatCurrency(clampedValue);
+        
+        // Update display value with formatted number
         setPriceInputValues((prev) => {
             const newValues: [string, string] = [...prev];
-            newValues[index] = value;
+            newValues[index] = formattedValue;
             return newValues;
         });
 
-        const parsedValue = parseCurrency(value);
-        const nextValue = clamp(parsedValue, DEFAULT_PRICE_RANGE[0], DEFAULT_PRICE_RANGE[1]);
+        // Update actual range
         setPendingPriceRange((prev) => {
             if (index === 0) {
-                return [Math.min(nextValue, prev[1]), prev[1]];
+                return [Math.min(clampedValue, prev[1]), prev[1]];
             }
-            return [prev[0], Math.max(nextValue, prev[0])];
+            return [prev[0], Math.max(clampedValue, prev[0])];
         });
     };
 
@@ -235,11 +272,12 @@ const SearchLayout: React.FC = () => {
 
     const handleApplyFilters = () => {
         setPriceRange(pendingPriceRange);
-        setDisplayLimit(INITIAL_DISPLAY_LIMIT);
+        setCurrentPage(1);
         setIsMobileFilterOpen(false); // Close mobile filter on apply
     };
 
     const clearFilters = () => {
+        // Reset all filter states to default
         setPendingPriceRange(DEFAULT_PRICE_RANGE);
         setPriceRange(DEFAULT_PRICE_RANGE);
         setPriceInputValues([
@@ -247,16 +285,27 @@ const SearchLayout: React.FC = () => {
             formatCurrency(DEFAULT_PRICE_RANGE[1])
         ]);
         setSortBy('default');
-        setDisplayLimit(INITIAL_DISPLAY_LIMIT);
+        setCurrentPage(1);
+        // Force revalidate SWR cache to ensure fresh data is displayed
+        setTimeout(() => {
+            globalMutate(
+                (key) => typeof key === 'string' && key.startsWith('/api/v1/products/search'),
+                undefined,
+                { revalidate: true }
+            );
+        }, 0);
     };
 
-    // Get products based on search query from API
-    const baseProducts = useMemo<SearchDisplayProduct[]>(() => {
+    // Get products based on search query from API (already filtered and sorted by server)
+    const currentPageProducts = useMemo<SearchDisplayProduct[]>(() => {
         if (!query || query.trim().length === 0) {
             return [];
         }
 
-        const apiProducts = searchResponse?.data || [];
+        // Ensure data is an array (handle both old and new API response formats)
+        const apiProducts = Array.isArray(searchResponse?.data) 
+            ? searchResponse.data 
+            : [];
         return apiProducts.map((product) => {
             const mapped = mapProductToFeaturedProduct(product);
             return {
@@ -268,38 +317,28 @@ const SearchLayout: React.FC = () => {
         });
     }, [query, searchResponse?.data]);
 
-    // Filter products
-    const filteredProducts = useMemo(() => {
-        let filtered = [...baseProducts];
-
-        // Filter by price range
-        if (priceRange[0] !== DEFAULT_PRICE_RANGE[0] || priceRange[1] !== DEFAULT_PRICE_RANGE[1]) {
-            filtered = filtered.filter(product => 
-                product.price >= priceRange[0] && product.price <= priceRange[1]
-            );
+    // Accumulate products from all loaded pages
+    useEffect(() => {
+        if (!query || query.trim().length === 0) {
+            setAccumulatedProducts([]);
+            return;
         }
 
-        // Sort products
-        switch (sortBy) {
-            case 'price-asc':
-                filtered.sort((a, b) => a.price - b.price);
-                break;
-            case 'price-desc':
-                filtered.sort((a, b) => b.price - a.price);
-                break;
-            case 'name-asc':
-                filtered.sort((a, b) => a.productName.localeCompare(b.productName, 'vi'));
-                break;
-            case 'name-desc':
-                filtered.sort((a, b) => b.productName.localeCompare(a.productName, 'vi'));
-                break;
-            default:
-                // Keep original order (relevance from search)
-                break;
+        if (currentPage === 1) {
+            // First page: replace all
+            setAccumulatedProducts(currentPageProducts);
+        } else if (currentPageProducts.length > 0) {
+            // Subsequent pages: append new products (avoid duplicates)
+            setAccumulatedProducts((prev) => {
+                const existingIds = new Set(prev.map((p) => p.id));
+                const newProducts = currentPageProducts.filter((p) => !existingIds.has(p.id));
+                return [...prev, ...newProducts];
+            });
         }
+    }, [currentPageProducts, currentPage, query]);
 
-        return filtered;
-    }, [baseProducts, priceRange, sortBy]);
+    // Use accumulated products for display
+    const products = accumulatedProducts;
 
     const handleAddToCart = (product: FeaturedProduct) => {
         dispatch(addToCart({
@@ -318,7 +357,7 @@ const SearchLayout: React.FC = () => {
     };
 
     const handleToggleFavorite = async (productId: string) => {
-        const product = filteredProducts.find(p => p.id === productId);
+        const product = products.find((p: SearchDisplayProduct) => p.id === productId);
         if (!product) return;
 
         if (!isLoggedIn) {
@@ -353,13 +392,15 @@ const SearchLayout: React.FC = () => {
     };
 
     const handleLoadMore = () => {
-        setDisplayLimit(prev => prev + LOAD_MORE_INCREMENT);
+        if (!isSearching && searchResponse?.pagination && currentPage < searchResponse.pagination.totalPages) {
+            setCurrentPage(prev => prev + 1);
+        }
     };
 
     const handleSelectSort = (value: string) => {
         setSortBy(value);
         setIsSortOpen(false);
-        setDisplayLimit(INITIAL_DISPLAY_LIMIT);
+        setCurrentPage(1);
     };
 
     const toggleSortDropdown = () => {
@@ -404,19 +445,16 @@ const SearchLayout: React.FC = () => {
         } as React.CSSProperties;
     }, [pendingPriceRange]);
 
-    // Get products to display (limited)
-    const displayedProducts = useMemo(() => {
-        return filteredProducts.slice(0, displayLimit);
-    }, [filteredProducts, displayLimit]);
-
-    const hasMoreProducts = filteredProducts.length > displayLimit;
     const trimmedQuery = query.trim();
     const shouldPromptForQuery = trimmedQuery.length === 0;
-    const isInitialLoading = isSearching && !shouldPromptForQuery && baseProducts.length === 0;
+    const isInitialLoading = isSearching && !shouldPromptForQuery && products.length === 0;
     const searchErrorMessage = getErrorMessage(searchError);
-    const shouldShowNoResults = !isSearching && !shouldPromptForQuery && baseProducts.length === 0 && !searchError;
-    const shouldShowFilteredEmpty =
-        !isSearching && !shouldPromptForQuery && baseProducts.length > 0 && filteredProducts.length === 0;
+    const shouldShowNoResults = !isSearching && !shouldPromptForQuery && products.length === 0 && !searchError;
+    
+    // Empty state description - same format as category page
+    const emptyDescription = isSearching
+        ? 'Đang tải sản phẩm...'
+        : searchErrorMessage || 'Không tìm thấy sản phẩm nào.';
 
 
     return (
@@ -427,16 +465,11 @@ const SearchLayout: React.FC = () => {
                     <h1 className={cx('search-title')}>
                         {query ? `Kết quả tìm kiếm cho "${query}"` : 'Tìm kiếm sản phẩm'}
                     </h1>
-                    {query && baseProducts.length > 0 && (
+                    {query && searchResponse?.data && (
                         <p className={cx('search-results-count')}>
-                            {hasActiveFilters ? (
-                                <>
-                                    Hiển thị <strong>{filteredProducts.length}</strong> / <strong>{baseProducts.length}</strong> sản phẩm
-                                </>
-                            ) : (
-                                <>
-                                    Tìm thấy <strong>{baseProducts.length}</strong> sản phẩm
-                                </>
+                            Tìm thấy <strong>{searchResponse.pagination?.total || searchResponse.data.length}</strong> sản phẩm
+                            {searchResponse.pagination && (
+                                <> (Trang {searchResponse.pagination.page}/{searchResponse.pagination.totalPages})</>
                             )}
                         </p>
                     )}
@@ -467,7 +500,7 @@ const SearchLayout: React.FC = () => {
                 </div>
 
                 {/* Main Content with Filters */}
-                {query && baseProducts.length > 0 && (
+                {query && (
                     <div className={cx('search-content-wrapper')}>
                         {/* Filters Sidebar */}
                         <aside className={categoryCx('filters-sidebar', { 'mobile-open': isMobileFilterOpen })}>
@@ -657,38 +690,64 @@ const SearchLayout: React.FC = () => {
                             </div>
 
                             {/* Products Grid */}
-                            <div className={cx('products-grid')}>
-                                {displayedProducts.map((product) => (
-                                    <ProductCard
-                                        key={product.id}
-                                        id={product.id}
-                                        productName={product.productName}
-                                        price={product.price}
-                                        oldPrice={product.oldPrice}
-                                        discount={product.discount}
-                                        rating={product.rating}
-                                        reviewCount={product.reviewCount}
-                                        status={product.status}
-                                        href={product.href}
-                                        imageSrc={product.imageSrc}
-                                        imageAlt={product.imageAlt}
-                                        isFavorite={isProductInWishlist(product.id)}
-                                        onAddToCart={() => handleAddToCart(product)}
-                                        onToggleFavorite={handleToggleFavorite}
-                                    />
-                                ))}
-                            </div>
+                            {searchError ? (
+                                <EmptyState
+                                    icon={<FileSearchIcon size={80} />}
+                                    title="Không thể tải kết quả tìm kiếm"
+                                    description={searchErrorMessage}
+                                    actionLabel="Thử lại"
+                                    onAction={() => router.refresh()}
+                                />
+                            ) : isSearching ? (
+                                <div className={cx('products-grid')}>
+                                    <ProductListSkeleton count={ITEMS_PER_PAGE} />
+                                </div>
+                            ) : products.length > 0 ? (
+                                <div className={cx('products-grid')}>
+                                    {products.map((product) => (
+                                        <ProductCard
+                                            key={product.id}
+                                            id={product.id}
+                                            productName={product.productName}
+                                            price={product.price}
+                                            oldPrice={product.oldPrice}
+                                            discount={product.discount}
+                                            rating={product.rating}
+                                            reviewCount={product.reviewCount}
+                                            status={product.status}
+                                            href={product.href}
+                                            imageSrc={product.imageSrc}
+                                            imageAlt={product.imageAlt}
+                                            isFavorite={isProductInWishlist(product.id)}
+                                            onAddToCart={() => handleAddToCart(product)}
+                                            onToggleFavorite={handleToggleFavorite}
+                                        />
+                                    ))}
+                                </div>
+                            ) : searchResponse ? (
+                                <EmptyState
+                                    type="products"
+                                    title="Không có sản phẩm"
+                                    description="Thử điều chỉnh bộ lọc để xem thêm kết quả"
+                                    actionLabel="Xóa bộ lọc"
+                                    onAction={clearFilters}
+                                />
+                            ) : null}
 
-                            {/* Load More Button */}
-                            {hasMoreProducts && (
+                            {/* Load More / Pagination */}
+                            {searchResponse?.pagination && searchResponse.pagination.totalPages > currentPage && (
                                 <div className={cx('load-more-section')}>
                                     <button
                                         className={cx('load-more-button')}
                                         onClick={handleLoadMore}
+                                        disabled={isSearching}
                                         type="button"
                                     >
-                                        <span>Xem thêm {Math.min(LOAD_MORE_INCREMENT, filteredProducts.length - displayLimit)} sản phẩm</span>
-                                        <PlusIcon size={20} />
+                                        <span>
+                                            {isSearching 
+                                                ? 'Đang tải...' 
+                                                : `Xem thêm sản phẩm`}
+                                        </span>
                                     </button>
                                 </div>
                             )}
@@ -696,37 +755,19 @@ const SearchLayout: React.FC = () => {
                     </div>
                 )}
 
-                {/* Products Grid or Empty State */}
+                {/* Empty State - Only show when no query */}
                 {shouldPromptForQuery ? (
                     <div className={cx('empty-state')}>
                         <SearchIcon size={64} className={cx('empty-icon')} />
                         <p className={cx('empty-message')}>Nhập từ khóa để tìm kiếm sản phẩm</p>
                     </div>
-                ) : searchError ? (
+                ) : searchError && !query ? (
                     <EmptyState
                         icon={<FileSearchIcon size={80} />}
                         title="Không thể tải kết quả tìm kiếm"
                         description={searchErrorMessage}
                         actionLabel="Thử lại"
                         onAction={() => router.refresh()}
-                    />
-                ) : isInitialLoading ? (
-                    <ProductListSkeleton count={INITIAL_DISPLAY_LIMIT} />
-                ) : shouldShowNoResults ? (
-                    <EmptyState
-                        icon={<FileSearchIcon size={80} />}
-                        title={`Không tìm thấy sản phẩm cho "${query}"`}
-                        description="Thử tìm kiếm với từ khóa khác hoặc khám phá các sản phẩm phổ biến"
-                        actionLabel="Khám phá sản phẩm"
-                        actionHref="/"
-                    />
-                ) : shouldShowFilteredEmpty ? (
-                    <EmptyState
-                        icon={<PackageIcon size={80} />}
-                        title="Không có sản phẩm nào phù hợp"
-                        description="Thử điều chỉnh bộ lọc để xem thêm kết quả"
-                        actionLabel="Xóa bộ lọc"
-                        onAction={clearFilters}
                     />
                 ) : null}
 

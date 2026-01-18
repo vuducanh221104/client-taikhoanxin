@@ -851,7 +851,7 @@
     .tos-modal {
         background: var(--bg-color);
         border-radius: 60px;
-        padding: 70px;
+        padding: 30px;
         width: 100%;
         max-width: 850px;
         box-shadow: 0 30px 90px rgba(0, 0, 0, 0.25);
@@ -1212,14 +1212,14 @@
     line-height: 1.6;
     color: #ea5455;
     font-weight: 600;
-
+font-size: 14px !important;
     div {
         color: #ea5455;
     }
 
     p {
         margin: 8px 0;
-        font-size: 17px;
+        font-size: 14px;
         font-weight: 600;
         color: #ea5455 !important;
 

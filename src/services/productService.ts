@@ -153,8 +153,13 @@ export const useProducts = (params?: {
     if (params?.includeSubcategories !== undefined) {
         queryParams.includeSubcategories = params.includeSubcategories.toString();
     }
-    if (params?.sortBy) queryParams.sortBy = params.sortBy;
-    if (params?.sortOrder) queryParams.sortOrder = params.sortOrder;
+    // Chỉ gửi sortBy/sortOrder khi có giá trị (không phải undefined)
+    if (params?.sortBy !== undefined && params?.sortBy !== null) {
+        queryParams.sortBy = params.sortBy;
+    }
+    if (params?.sortOrder !== undefined && params?.sortOrder !== null) {
+        queryParams.sortOrder = params.sortOrder;
+    }
 
     const queryString = Object.keys(queryParams).length > 0
         ? '?' + new URLSearchParams(queryParams).toString()
@@ -353,7 +358,17 @@ export const useRelatedProducts = (slug?: string, params?: { limit?: number }) =
  * @param params - Additional query parameters
  * @returns SWR hook for search results
  */
-export const useSearchProducts = (query: string, params?: { page?: number; limit?: number }) => {
+export const useSearchProducts = (
+    query: string,
+    params?: {
+        page?: number;
+        limit?: number;
+        minPrice?: number;
+        maxPrice?: number;
+        sortBy?: string;
+        sortOrder?: 'asc' | 'desc';
+    }
+) => {
     const normalizedQuery = query?.trim();
 
     let key: string | null = null;
@@ -362,6 +377,15 @@ export const useSearchProducts = (query: string, params?: { page?: number; limit
         searchParams.append('q', normalizedQuery);
         if (params?.page) searchParams.append('page', params.page.toString());
         if (params?.limit) searchParams.append('limit', params.limit.toString());
+        if (params?.minPrice !== undefined) searchParams.append('minPrice', params.minPrice.toString());
+        if (params?.maxPrice !== undefined) searchParams.append('maxPrice', params.maxPrice.toString());
+        // Chỉ gửi sortBy/sortOrder khi có giá trị (không phải undefined)
+        if (params?.sortBy !== undefined && params?.sortBy !== null) {
+            searchParams.append('sortBy', params.sortBy);
+        }
+        if (params?.sortOrder !== undefined && params?.sortOrder !== null) {
+            searchParams.append('sortOrder', params.sortOrder);
+        }
         key = `/api/v1/products/search?${searchParams.toString()}`;
     }
 

@@ -224,7 +224,7 @@
   .purchase-toast-wrapper {
     left: 12px;
     right: auto; // Không stretch full width
-    bottom: 40px; // Nằm trên bottom navigation/sticky actions
+    bottom: 30px; // Nằm trên bottom navigation/sticky actions
     max-width: calc(100vw - 24px); // Giới hạn max width
     animation: slideInLeftMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
@@ -351,7 +351,7 @@
     z-index: 1000;
     left: 8px;
     right: auto; // Không stretch full width
-    bottom: 40px; // Nằm trên bottom navigation/sticky actions
+    bottom: 20px; // Nằm trên bottom navigation/sticky actions
     max-width: calc(100vw - 16px);
   }
 
@@ -398,7 +398,7 @@
   }
 
   .purchase-toast-content {
-    padding: 10px 32px 10px 10px;
+    padding: 10px 10px 10px 10px;
     gap: 3px;
   }
 

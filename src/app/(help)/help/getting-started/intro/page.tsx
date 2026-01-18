@@ -62,7 +62,7 @@ export default function IntroPage() {
                 <p>
                     <strong>Được các KOLs, Streamer hàng đầu Việt Nam lựa chọn và quảng bá</strong>
                 </p>
-                <p>Mixigaming, Xemesis, Divine Esports, v.v</p>
+                <p>Mixigaming, Xemesis, Esports, v.v</p>
             </div>
 
             <h3>2. Sản phẩm đa dạng</h3>

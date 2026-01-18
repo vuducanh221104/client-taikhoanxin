@@ -5,12 +5,14 @@ import { useParams } from 'next/navigation';
 import classNames from 'classnames/bind';
 import styles from '@/app/(user)/categories/[slug]/page.module.scss';
 import ProductCard from '@/components/ProductCard/ProductCard';
-import { SortIcon, FilterIcon, CloseIcon, PlusIcon } from '@/components/Icons';
+import { SortIcon, FilterIcon, CloseIcon, FileSearchIcon } from '@/components/Icons';
 import EmptyState from '@/components/EmptyState/EmptyState';
 import Breadcrumbs from '@/components/Breadcrumbs/Breadcrumbs';
+import { ProductListSkeleton } from '@/components/Skeleton';
 import { useCategory } from '@/services/categoryService';
 import { useProducts, usePopularProducts, useBestSellingProducts, useBadgeProducts, useOnSaleProducts, mapProductToFeaturedProduct } from '@/services/productService';
 import type { FeaturedProduct } from '@/components/FeaturedProducts';
+import { useSWRConfig } from 'swr';
 
 const cx = classNames.bind(styles);
 const categoryNames: Record<string, string> = {
@@ -75,6 +77,7 @@ const getSpecialPathName = (slug: string): string => {
 export default function CategoryDetailLayout() {
     const params = useParams();
     const slug = params.slug as string;
+    const { mutate: globalMutate } = useSWRConfig();
     
     // Check if slug is a special path parameter (san-pham-noi-bat, san-pham-ban-chay, etc.)
     const isSpecialPath = ['san-pham-noi-bat', 'san-pham-ban-chay', 'san-pham-co-huy-hieu', 'san-pham-con-hang', 'san-pham-dang-giam-gia'].includes(slug);
@@ -89,11 +92,12 @@ export default function CategoryDetailLayout() {
     ]);
     const [focusedInput, setFocusedInput] = useState<0 | 1 | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [loadedProducts, setLoadedProducts] = useState<FeaturedProduct[]>([]);
-    const itemsPerPage = 9;
+    const [accumulatedProducts, setAccumulatedProducts] = useState<FeaturedProduct[]>([]);
+    const itemsPerPage = 10;
     const [isSortOpen, setIsSortOpen] = useState(false);
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
     const sortDropdownRef = useRef<HTMLDivElement | null>(null);
+    const prevSlugRef = useRef<string | null>(null);
 
     // Only fetch category if it's not a special path
     const { data: categoryData } = useCategory(isSpecialPath ? null : slug);
@@ -111,7 +115,8 @@ export default function CategoryDetailLayout() {
             case 'newest':
                 return { sortField: 'createdAt', sortOrder: 'desc' };
             default:
-                return { sortField: 'createdAt', sortOrder: 'desc' };
+                // Default: không gửi sort params, để backend dùng default sort
+                return { sortField: undefined, sortOrder: undefined };
         }
     }, [sortBy]);
 
@@ -132,12 +137,14 @@ export default function CategoryDetailLayout() {
         page: currentPage,
         limit: itemsPerPage,
     });
+    // Send price filter and sort to backend
     const regularProductsQuery = useProducts({
         page: currentPage,
         limit: itemsPerPage,
         categorySlug: isSpecialPath ? undefined : slug,
-        minPrice: priceRange[0],
-        maxPrice: priceRange[1],
+        minPrice: priceRange[0] !== DEFAULT_PRICE_RANGE[0] ? priceRange[0] : undefined,
+        maxPrice: priceRange[1] !== DEFAULT_PRICE_RANGE[1] ? priceRange[1] : undefined,
+        // Chỉ gửi sortBy/sortOrder khi không phải default
         sortBy: sortConfig.sortField,
         sortOrder: sortConfig.sortOrder,
     });
@@ -166,14 +173,48 @@ export default function CategoryDetailLayout() {
         isProductsLoading = regularProductsQuery.isLoading;
     }
 
-    const products = React.useMemo<FeaturedProduct[]>(() => {
+    // Map products from current page (already filtered and sorted by server)
+    const currentPageProducts = React.useMemo<FeaturedProduct[]>(() => {
         if (!productsData?.data) return [];
         return productsData.data.map((product) => mapProductToFeaturedProduct(product));
     }, [productsData?.data]);
 
+    // Accumulate products from all loaded pages
     useEffect(() => {
-        setCurrentPage(1);
-        setLoadedProducts([]);
+        if (currentPage === 1) {
+            // First page: replace all
+            // Luôn update khi có data từ API (kể cả từ cache)
+            // Chỉ skip khi đang loading và chưa có data nào
+            if (currentPageProducts.length > 0) {
+                // Có data: update ngay
+                setAccumulatedProducts(currentPageProducts);
+            } else if (!isProductsLoading && productsData !== undefined) {
+                // Đã load xong và không có data: set empty array để hiển thị empty state
+                setAccumulatedProducts([]);
+            }
+            // Nếu đang loading và chưa có data, giữ nguyên accumulatedProducts (có thể từ cache)
+        } else if (currentPageProducts.length > 0) {
+            // Subsequent pages: append new products (avoid duplicates)
+            setAccumulatedProducts((prev) => {
+                const existingIds = new Set(prev.map((p) => p.id));
+                const newProducts = currentPageProducts.filter((p) => !existingIds.has(p.id));
+                return [...prev, ...newProducts];
+            });
+        }
+    }, [currentPageProducts, currentPage, isProductsLoading, productsData]);
+
+    // Use accumulated products for display
+    const products = accumulatedProducts;
+
+    // Reset state khi slug thay đổi (chuyển sang category khác)
+    // Chỉ reset khi slug thực sự thay đổi, không reset khi quay lại cùng slug
+    useEffect(() => {
+        // Chỉ reset khi slug thực sự thay đổi (không phải khi component remount với cùng slug)
+        if (prevSlugRef.current !== null && prevSlugRef.current !== slug) {
+            setCurrentPage(1);
+            setAccumulatedProducts([]);
+        }
+        prevSlugRef.current = slug;
     }, [slug]);
 
     useEffect(() => {
@@ -189,7 +230,7 @@ export default function CategoryDetailLayout() {
     const handleSortChange = (value: string) => {
         setSortBy(value);
         setCurrentPage(1);
-        setLoadedProducts([]);
+        setAccumulatedProducts([]);
     };
 
     // Update input display values when pendingPriceRange changes (from slider)
@@ -203,21 +244,28 @@ export default function CategoryDetailLayout() {
     }, [pendingPriceRange, focusedInput]);
 
     const handlePriceInputChange = (index: 0 | 1, value: string) => {
-        // Update display value
+        // Parse the input value (remove all non-digit characters)
+        const parsedValue = parseCurrency(value);
+        
+        // Clamp the value to valid range
+        const clampedValue = clamp(parsedValue, DEFAULT_PRICE_RANGE[0], DEFAULT_PRICE_RANGE[1]);
+        
+        // Format the value with thousand separators
+        const formattedValue = formatCurrency(clampedValue);
+        
+        // Update display value with formatted number
         setPriceInputValues((prev) => {
             const newValues: [string, string] = [...prev];
-            newValues[index] = value;
+            newValues[index] = formattedValue;
             return newValues;
         });
 
-        // Parse and update actual range
-        const parsedValue = parseCurrency(value);
-        const nextValue = clamp(parsedValue, DEFAULT_PRICE_RANGE[0], DEFAULT_PRICE_RANGE[1]);
+        // Update actual range
         setPendingPriceRange((prev) => {
             if (index === 0) {
-                return [Math.min(nextValue, prev[1]), prev[1]];
+                return [Math.min(clampedValue, prev[1]), prev[1]];
             }
-            return [prev[0], Math.max(nextValue, prev[0])];
+            return [prev[0], Math.max(clampedValue, prev[0])];
         });
     };
 
@@ -258,48 +306,36 @@ export default function CategoryDetailLayout() {
     const handleApplyFilters = () => {
         setPriceRange(pendingPriceRange);
         setCurrentPage(1);
-        setLoadedProducts([]);
+        setAccumulatedProducts([]);
         setIsMobileFilterOpen(false); // Close mobile filter on apply
     };
 
     const clearFilters = () => {
+        // Reset all filter states to default
         setPendingPriceRange(DEFAULT_PRICE_RANGE);
         setPriceRange(DEFAULT_PRICE_RANGE);
         setPriceInputValues([
             formatCurrency(DEFAULT_PRICE_RANGE[0]),
             formatCurrency(DEFAULT_PRICE_RANGE[1])
         ]);
-        handleSortChange('default');
-        setLoadedProducts([]);
+        setSortBy('default');
+        setCurrentPage(1);
+        setAccumulatedProducts([]);
+        // Force revalidate SWR cache to fetch fresh data with default filters
+        setTimeout(() => {
+            globalMutate(
+                (key) => typeof key === 'string' && key.startsWith('/api/v1/products'),
+                undefined,
+                { revalidate: true }
+            );
+        }, 0);
     };
 
     const categoryName = categoryData?.data?.category?.name || categoryFallbackName;
     const totalPages = productsData?.pagination?.totalPages ?? 0;
-    const productCount = productsData?.pagination?.total ?? loadedProducts.length;
-    const responsePage = productsData?.pagination?.page ?? currentPage;
+    const productCount = productsData?.pagination?.total ?? 0;
     const hasMoreProducts = currentPage < totalPages;
     const isLoadMoreLoading = isProductsLoading && currentPage > 1;
-    const currentProducts = loadedProducts;
-    const remainingProducts = productCount - currentProducts.length;
-
-    useEffect(() => {
-        if (!productsData?.data) {
-            if (!isProductsLoading && responsePage === 1) {
-                setLoadedProducts([]);
-            }
-            return;
-        }
-
-        if (responsePage === 1) {
-            setLoadedProducts(products);
-        } else if (products.length > 0) {
-            setLoadedProducts((prev) => {
-                const existingIds = new Set(prev.map((product) => product.id));
-                const newItems = products.filter((product) => !existingIds.has(product.id));
-                return [...prev, ...newItems];
-            });
-        }
-    }, [products, productsData?.data, responsePage, isProductsLoading]);
 
     const handleLoadMore = () => {
         if (!hasMoreProducts || isProductsLoading) return;
@@ -610,10 +646,22 @@ export default function CategoryDetailLayout() {
 
                     {/* Products Grid */}
                     <div className={cx('products-section')}>
-                        {currentProducts.length > 0 ? (
+                        {productsError ? (
+                            <EmptyState
+                                icon={<FileSearchIcon size={80} />}
+                                title="Không thể tải sản phẩm"
+                                description={productsErrorMessage || 'Có lỗi xảy ra khi tải sản phẩm'}
+                                actionLabel="Thử lại"
+                                onAction={() => window.location.reload()}
+                            />
+                        ) : isProductsLoading && products.length === 0 ? (
+                            <div className={cx('products-grid')}>
+                                <ProductListSkeleton count={itemsPerPage} />
+                            </div>
+                        ) : products.length > 0 ? (
                             <>
                                 <div className={cx('products-grid')}>
-                                    {currentProducts.map((product) => {
+                                    {products.map((product) => {
                                         // Convert stock number to string literal type
                                         const stockStatus: 'in-stock' | 'low-stock' | 'out-of-stock' | undefined = 
                                             product.stock === undefined || product.stock === null
@@ -646,21 +694,24 @@ export default function CategoryDetailLayout() {
                                             <span>
                                                 {isLoadMoreLoading 
                                                     ? 'Đang tải...' 
-                                                    : `Xem thêm ${Math.min(itemsPerPage, remainingProducts)} sản phẩm`}
+                                                    : `Xem thêm sản phẩm`}
                                             </span>
-                                            {!isLoadMoreLoading && <PlusIcon size={20} />}
                                         </button>
                                     </div>
                                 )}
                             </>
-                        ) : (
+                        ) : !isProductsLoading && productsData ? (
                             <EmptyState
                                 type="products"
                                 title="Không có sản phẩm"
                                 description={emptyDescription}
-                                actionLabel="Xem tất cả danh mục"
-                                actionHref="/categories"
+                                actionLabel="Quay về trang chủ"
+                                actionHref="/"
                             />
+                        ) : (
+                            <div className={cx('products-grid')}>
+                                <ProductListSkeleton count={itemsPerPage} />
+                            </div>
                         )}
                     </div>
                 </div>

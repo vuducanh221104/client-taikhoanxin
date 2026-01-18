@@ -33,7 +33,7 @@ async function fetchCategoryResponse(slug: string) {
 }
 
 const DEFAULT_PRICE_RANGE: [number, number] = [0, 10_000_000];
-const DEFAULT_ITEMS_PER_PAGE = 9;
+const DEFAULT_ITEMS_PER_PAGE = 10;
 
 // Check if slug is a special path parameter
 function isSpecialPath(slug: string): boolean {

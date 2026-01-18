@@ -121,7 +121,9 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     const finalDescription = description || config.description;
     const finalIcon = icon || config.icon;
     const finalActionLabel = actionLabel || config.actionLabel;
-    const finalActionHref = actionHref || config.actionHref;
+    // If onAction is provided, prioritize it over actionHref from config
+    // Only use actionHref from config if onAction is not provided
+    const finalActionHref = onAction ? actionHref : (actionHref || config.actionHref);
 
     const handleAction = () => {
         if (onAction) {

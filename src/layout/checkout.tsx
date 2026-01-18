@@ -570,6 +570,9 @@ const CheckoutLayout: React.FC = () => {
                 }
 
                 const itemOptions = Array.isArray(item.options) ? item.options : [];
+                
+                // Get product image
+                const productImage = product?.image?.[0] || product?.imageSrc || null;
 
                 return {
                     id: productId,
@@ -577,6 +580,7 @@ const CheckoutLayout: React.FC = () => {
                     price,
                     quantity: item.quantity || 1,
                     options: itemOptions,
+                    image: productImage,
                 };
             });
 
@@ -611,6 +615,7 @@ const CheckoutLayout: React.FC = () => {
             products: reduxCart.products.map((product) => ({
                 ...product,
                 options: product.options || [],
+                image: product.imageSrc || null,
             })),
             totalDiscountBefore,
             totalPrice, // Total after discount
@@ -1099,12 +1104,25 @@ const CheckoutLayout: React.FC = () => {
                         <div className={cx('summary-items')}>
                             {displayCart.products.map((p: any) => (
                                 <div key={p.id} className={cx('summary-item')}>
-                                    <div className={cx('item-name')}>
-                                        {p.productName}
-                                        <span className={cx('x')}> × {p.quantity}</span>
-                                    </div>
-                                    <div className={cx('item-subtotal')}>
-                                        {formatPrice(p.price * p.quantity)}₫
+                                    {p.image && (
+                                        <div className={cx('item-image')}>
+                                            <Image
+                                                src={p.image}
+                                                alt={p.productName}
+                                                width={100}
+                                                height={100}
+                                                className={cx('product-image')}
+                                            />
+                                        </div>
+                                    )}
+                                    <div className={cx('item-info')}>
+                                        <div className={cx('item-name')}>
+                                            {p.productName}
+                                            <span className={cx('x')}> × {p.quantity}</span>
+                                        </div>
+                                        <div className={cx('item-subtotal')}>
+                                            {formatPrice(p.price * p.quantity)}₫
+                                        </div>
                                     </div>
                                 </div>
                             ))}
