@@ -166,10 +166,11 @@ const UserDropdown: React.FC<UserDropdownProps> = ({
         return null;
     }
 
-    const displayName = currentUser?.full_name?.trim() || currentUser.email;
+    // Support both fullName (backend camelCase) and full_name (frontend snake_case)
+    const userFullName = (currentUser?.fullName || currentUser?.full_name || '').trim();
+    const displayName = userFullName || currentUser.email;
     const avatarSrc = currentUser.avatar?.trim() || '';
     const isMissingAvatar = !avatarSrc;
-    const userFullName = currentUser?.full_name?.trim();
     const avatarInitials = getInitials(userFullName, currentUser.email);
 
     return (

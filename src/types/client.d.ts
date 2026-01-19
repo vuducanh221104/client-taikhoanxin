@@ -4,6 +4,7 @@ export interface CurrentUser {
     user_name?: string;
     email: string;
     full_name?: string;
+    fullName?: string; // Backend format (camelCase)
     phone_number?: string;
     role: number;
     type: 'WEBSITE' | 'GOOGLE';

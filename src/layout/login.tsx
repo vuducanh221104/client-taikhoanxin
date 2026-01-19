@@ -7,7 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import classNames from 'classnames/bind';
 import styles from '@/app/(user)/auth/login/page.module.scss';
-import { authLogin, type AuthResponse } from '@/services/authService';
+import { authLogin, transformUserData, type AuthResponse } from '@/services/authService';
 import { loginSuccess, loginFailed } from '@/redux/authSlice';
 import { EyeIcon, EyeOffIcon } from '@/components/Icons';
 import { useToast } from '@/hooks/useToast';
@@ -123,9 +123,12 @@ export default function LoginLayout() {
                 throw new Error(response.message || 'Đăng nhập thất bại');
             }
 
+            // Transform user data to ensure fullName is mapped to full_name
+            const transformedUser = transformUserData(response.data.user);
+            
             dispatch(
                 loginSuccess({
-                    ...response.data.user,
+                    ...transformedUser,
                     accessToken: response.data.accessToken,
                     refreshToken: response.data.refreshToken,
                 })

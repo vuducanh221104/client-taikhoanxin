@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import classNames from 'classnames/bind';
 import styles from '@/app/auth/google/callback/page.module.scss';
-import { exchangeGoogleAuth, type AuthResponse } from '@/services/authService';
+import { exchangeGoogleAuth, transformUserData, type AuthResponse } from '@/services/authService';
 import { loginSuccess, loginFailed } from '@/redux/authSlice';
 import { RootState } from '@/redux/store';
 import { clearCart as clearGuestCart } from '@/redux/cartSlice';
@@ -76,9 +76,12 @@ export default function GoogleCallbackLayout() {
                 throw new Error(response.message || 'Đăng nhập thất bại');
             }
 
+            // Transform user data to ensure fullName is mapped to full_name
+            const transformedUser = transformUserData(response.data.user);
+            
             dispatch(
                 loginSuccess({
-                    ...response.data.user,
+                    ...transformedUser,
                     accessToken: response.data.accessToken,
                     refreshToken: response.data.refreshToken,
                 })

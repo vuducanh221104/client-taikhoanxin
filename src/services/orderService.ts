@@ -1,5 +1,6 @@
 'use client';
 import { useSWRUser } from './swrConfig';
+import type { SWRConfiguration } from 'swr';
 import { post, put } from '@/utils/httpRequest';
 
 // ============================================
@@ -209,7 +210,12 @@ export const useOrder = (id?: string | null) => {
 /**
  * Get checkout order info via token (public success page)
  */
-export const useCheckoutOrder = (orderId?: string | null, token?: string | null, email?: string | null) => {
+export const useCheckoutOrder = (
+    orderId?: string | null,
+    token?: string | null,
+    email?: string | null,
+    config?: SWRConfiguration<CheckoutOrderResponse>,
+) => {
     let key: string | null = null;
 
     if (orderId && token) {
@@ -222,7 +228,7 @@ export const useCheckoutOrder = (orderId?: string | null, token?: string | null,
         key = `/api/v1/orders/checkout/${orderId}?${params.toString()}`;
     }
 
-    return useSWRUser<CheckoutOrderResponse>(key);
+    return useSWRUser<CheckoutOrderResponse>(key, config);
 };
 
 // ============================================

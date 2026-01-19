@@ -58,6 +58,22 @@ export interface AuthResponse {
     message?: string;
 }
 
+/**
+ * Transform user data from backend format to frontend format
+ * Maps fullName (camelCase) to full_name (snake_case) for consistency
+ */
+export const transformUserData = (user: any): any => {
+    if (!user) return user;
+    
+    return {
+        ...user,
+        // Map fullName (backend) to full_name (frontend)
+        full_name: user.fullName || user.full_name || '',
+        // Keep fullName for backward compatibility
+        fullName: user.fullName || user.full_name || '',
+    };
+};
+
 // ============================================
 // AUTHENTICATION SERVICES
 // ============================================

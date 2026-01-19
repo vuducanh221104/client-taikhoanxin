@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -29,25 +29,61 @@ const CheckoutSuccessLayout: React.FC = () => {
     const [hasRedirectedToDetails, setHasRedirectedToDetails] = useState(false);
     const [loginRedirectUrl, setLoginRedirectUrl] = useState('/auth/login');
     const [isOriginalSession, setIsOriginalSession] = useState(false);
+    const [sseError, setSseError] = useState(false); // Track SSE error state
+    const [sseKey, setSseKey] = useState(0); // Force SSE re-connect when changed
     const searchParams = useSearchParams();
     const orderCodeParam = searchParams.get('order');
     const checkoutTokenParam = searchParams.get('token') || searchParams.get('key');
+    
+    // Ref để lưu checkout order key để có thể mutate
+    const checkoutOrderKeyRef = useRef<string | null>(null);
 
+    // Nếu có token và orderCode → cho phép fetch (backend sẽ check token)
+    // Guest không cần email nếu token hợp lệ - backend đã xử lý check token
     const shouldFetchCheckout = Boolean(
-        orderCodeParam &&
-            checkoutTokenParam &&
-            (currentUser || (submittedEmail && (isOriginalSession || submittedEmail))),
+        orderCodeParam && checkoutTokenParam
+    );
+
+    const checkoutSWRConfig = useMemo(
+        () => ({
+            shouldRetryOnError: false,
+            errorRetryCount: 0,
+            revalidateOnFocus: false,
+            revalidateOnReconnect: false,
+        }),
+        [],
     );
 
     const {
         data: checkoutData,
         error: checkoutError,
         isLoading: checkoutLoading,
+        mutate: mutateCheckoutOrder,
     } = useCheckoutOrder(
         shouldFetchCheckout ? orderCodeParam : null,
         shouldFetchCheckout ? checkoutTokenParam : null,
-        !currentUser ? submittedEmail : null,
+        submittedEmail || null,
+        checkoutSWRConfig,
     );
+
+    // Store checkout order key for mutation
+    useEffect(() => {
+        if (shouldFetchCheckout && orderCodeParam && checkoutTokenParam) {
+            const params = new URLSearchParams({
+                token: checkoutTokenParam,
+            });
+            if (submittedEmail) {
+                params.append('email', submittedEmail);
+            }
+            checkoutOrderKeyRef.current = `/api/v1/orders/checkout/${orderCodeParam}?${params.toString()}`;
+        }
+    }, [shouldFetchCheckout, orderCodeParam, checkoutTokenParam, submittedEmail]);
+
+    // Re-fetch checkout order when user submits verification email (applies to both guest and logged-in)
+    useEffect(() => {
+        if (!shouldFetchCheckout || !submittedEmail) return;
+        mutateCheckoutOrder(undefined, { revalidate: true });
+    }, [shouldFetchCheckout, submittedEmail, mutateCheckoutOrder]);
 
     const order = checkoutData?.data?.order;
     const isExpired = checkoutData?.data?.isExpired;
@@ -112,9 +148,14 @@ const CheckoutSuccessLayout: React.FC = () => {
                 const sessionKey = `order_created_${orderCodeParam}`;
                 const wasJustCreated = window.sessionStorage.getItem(sessionKey);
 
+                // Guest quay lại: tự động dùng email từ localStorage, không cần form verification
+                // Chỉ cần set submittedEmail để có thể fetch order
                 if (wasJustCreated) {
                     setSubmittedEmail(storedEmail);
                     setIsOriginalSession(true);
+                } else {
+                    // Guest quay lại sau khi đã checkout - tự động set email để fetch
+                    setSubmittedEmail(storedEmail);
                 }
             }
         }
@@ -191,8 +232,8 @@ const CheckoutSuccessLayout: React.FC = () => {
         ],
     );
 
-    // Check payment status immediately when order is loaded (for when user returns after payment)
-    useEffect(() => {
+    // Function to check payment status and redirect if paid
+    const checkPaymentStatusAndRedirect = useCallback(() => {
         if (
             !mounted ||
             !order ||
@@ -209,8 +250,9 @@ const CheckoutSuccessLayout: React.FC = () => {
         // If payment is already paid, redirect immediately
         if (paymentStatus === 'paid' || paymentStatus === 'refunded') {
             redirectToOrderDetail(businessOrderId);
-            return;
+            return true; // Return true if redirected
         }
+        return false; // Return false if not redirected
     }, [
         mounted,
         order,
@@ -219,6 +261,153 @@ const CheckoutSuccessLayout: React.FC = () => {
         submittedEmail,
         hasRedirectedToDetails,
         redirectToOrderDetail,
+    ]);
+
+    // Check payment status immediately when order is loaded (for when user returns after payment)
+    useEffect(() => {
+        checkPaymentStatusAndRedirect();
+    }, [
+        mounted,
+        order,
+        isExpired,
+        currentUser,
+        submittedEmail,
+        hasRedirectedToDetails,
+        redirectToOrderDetail,
+        checkPaymentStatusAndRedirect,
+    ]);
+
+    // Handle BFCache (Back/Forward Cache) - Safari restore page from cache
+    useEffect(() => {
+        if (!mounted || hasRedirectedToDetails || !shouldFetchCheckout) {
+            return;
+        }
+
+        const handlePageShow = (event: PageTransitionEvent) => {
+            // When page is restored from BFCache (event.persisted = true)
+            if (event.persisted) {
+                // eslint-disable-next-line no-console
+                console.log('[Checkout Success] Page restored from BFCache, re-checking payment status');
+                
+                // Force re-fetch order data to check payment status
+                if (checkoutOrderKeyRef.current) {
+                    mutateCheckoutOrder(undefined, { revalidate: true });
+                }
+                
+                // Reset SSE error state and force SSE re-connection
+                setSseError(false);
+                setSseKey((prev) => prev + 1); // Force SSE useEffect to re-run
+                
+                // Check payment status after a delay to allow data to fetch
+                setTimeout(() => {
+                    checkPaymentStatusAndRedirect();
+                }, 500);
+            }
+        };
+
+        window.addEventListener('pageshow', handlePageShow);
+
+        return () => {
+            window.removeEventListener('pageshow', handlePageShow);
+        };
+    }, [
+        mounted,
+        hasRedirectedToDetails,
+        shouldFetchCheckout,
+        mutateCheckoutOrder,
+        checkPaymentStatusAndRedirect,
+    ]);
+
+    // Handle visibility change (when user returns to tab after payment on mobile)
+    useEffect(() => {
+        if (!mounted || hasRedirectedToDetails || !shouldFetchCheckout) {
+            return;
+        }
+
+        const handleVisibilityChange = () => {
+            // When tab becomes visible again (user returns from banking app)
+            if (document.visibilityState === 'visible') {
+                // Force re-fetch order data to check payment status
+                if (checkoutOrderKeyRef.current) {
+                    mutateCheckoutOrder(undefined, { revalidate: true });
+                }
+                
+                // Also check current order status immediately
+                setTimeout(() => {
+                    checkPaymentStatusAndRedirect();
+                }, 500); // Small delay to allow data to fetch
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [
+        mounted,
+        hasRedirectedToDetails,
+        shouldFetchCheckout,
+        mutateCheckoutOrder,
+        checkPaymentStatusAndRedirect,
+    ]);
+
+    // Polling fallback: Check payment status periodically (every 5 seconds)
+    // CHỈ BẬT KHI SSE LỖI - không chạy song song với SSE
+    useEffect(() => {
+        // Chỉ start polling nếu SSE đã lỗi
+        if (!sseError) {
+            return;
+        }
+
+        if (
+            !mounted ||
+            !order ||
+            isExpired ||
+            (!currentUser && !submittedEmail) ||
+            hasRedirectedToDetails
+        ) {
+            return;
+        }
+
+        const paymentStatus = (order as any).paymentStatus;
+        
+        // Only start polling if payment is not yet paid
+        if (paymentStatus === 'paid' || paymentStatus === 'refunded') {
+            return;
+        }
+
+        // eslint-disable-next-line no-console
+        console.log('[Checkout Success] Starting polling fallback (SSE error detected)');
+
+        const pollInterval = setInterval(() => {
+            // Re-fetch order data to check payment status
+            if (checkoutOrderKeyRef.current) {
+                mutateCheckoutOrder(undefined, { revalidate: true });
+            }
+            
+            // Check payment status after a short delay
+            setTimeout(() => {
+                const wasRedirected = checkPaymentStatusAndRedirect();
+                if (wasRedirected) {
+                    clearInterval(pollInterval);
+                }
+            }, 500);
+        }, 5000); // Poll every 5 seconds
+
+        return () => {
+            clearInterval(pollInterval);
+        };
+    }, [
+        sseError, // Chỉ chạy khi SSE error
+        mounted,
+        order,
+        isExpired,
+        currentUser,
+        submittedEmail,
+        hasRedirectedToDetails,
+        mutateCheckoutOrder,
+        checkPaymentStatusAndRedirect,
     ]);
 
     // SSE connection for real-time payment status updates
@@ -247,6 +436,9 @@ const CheckoutSuccessLayout: React.FC = () => {
 
         try {
             eventSource = new EventSource(streamUrl);
+
+            // Reset SSE error state when connection opens successfully
+            setSseError(false);
 
             eventSource.addEventListener('status', (event: MessageEvent) => {
                 try {
@@ -294,12 +486,35 @@ const CheckoutSuccessLayout: React.FC = () => {
             });
 
             eventSource.addEventListener('error', () => {
+                // SSE connection error - enable polling as fallback
+                // eslint-disable-next-line no-console
+                console.warn('[Checkout Success] SSE connection error, enabling polling fallback');
+                setSseError(true);
+                
                 if (eventSource) {
                     eventSource.close();
                 }
             });
+
+            // Set timeout to detect if SSE doesn't connect within 10 seconds
+            const errorTimeout = setTimeout(() => {
+                if (eventSource && eventSource.readyState === EventSource.CONNECTING) {
+                    // eslint-disable-next-line no-console
+                    console.warn('[Checkout Success] SSE connection timeout, enabling polling fallback');
+                    setSseError(true);
+                    if (eventSource) {
+                        eventSource.close();
+                    }
+                }
+            }, 10000);
+
+            // Clear timeout when connection is established
+            eventSource.addEventListener('open', () => {
+                clearTimeout(errorTimeout);
+            });
         } catch (err) {
             console.error('Failed to open SSE connection:', err);
+            setSseError(true);
         }
 
         return () => {
@@ -316,6 +531,7 @@ const CheckoutSuccessLayout: React.FC = () => {
         submittedEmail,
         hasRedirectedToDetails,
         redirectToOrderDetail,
+        sseKey, // Re-connect SSE when sseKey changes (BFCache restore)
     ]);
 
     useEffect(() => {
@@ -384,21 +600,34 @@ const CheckoutSuccessLayout: React.FC = () => {
     }, [order]);
 
     useEffect(() => {
-        if (!currentUser && checkoutError) {
+        // Xử lý lỗi 403 - yêu cầu email verification
+        // Set verificationError cho cả guest và user đã login (khi user không phải owner)
+        if (checkoutError) {
             const status = (checkoutError as any)?.response?.status;
+            const errorCode = (checkoutError as any)?.response?.data?.code;
+            
+            // Nếu là lỗi yêu cầu email verification (403)
             if (status === 403) {
+                // Nếu đã submit email nhưng sai → hiển thị "Sai email"
+                if (submittedEmail && (errorCode === 'ORDER_EMAIL_VERIFICATION_REQUIRED' || !errorCode)) {
+                    setVerificationError('Không tìm thấy đơn hàng với email này. Vui lòng kiểm tra lại và thử lại.');                    ;
+                    return;
+                }
+                
+                // Chưa submit email hoặc lỗi khác → hiển thị message từ backend
                 const message =
                     (checkoutError as any)?.response?.data?.message ||
-                    'Địa chỉ email không trùng khớp với đơn hàng.';
+                    'Chúng tôi không thể xác minh địa chỉ email bạn đã cung cấp. Vui lòng thử lại.';
                 setVerificationError(message);
                 return;
             }
         }
 
+        // Clear error khi có order thành công
         if (displayOrder) {
             setVerificationError(null);
         }
-    }, [checkoutError, currentUser, displayOrder]);
+    }, [checkoutError, currentUser, displayOrder, submittedEmail]);
 
     useEffect(() => {
         if (!currentUser && displayOrder && submittedEmail && orderCodeParam) {
@@ -458,8 +687,12 @@ const CheckoutSuccessLayout: React.FC = () => {
         (checkoutError as any)?.response?.data?.message ||
         (checkoutError as any)?.response?.data?.error ||
         undefined;
+    // Set verificationErrorMessage khi có lỗi 403 yêu cầu email verification
+    // Áp dụng cho cả guest và user đã login (khi user không phải owner)
+    // Hiển thị trong form verification thay vì error state chung
     const verificationErrorMessage =
-        !currentUser && (checkoutError as any)?.response?.status === 403
+        (checkoutError as any)?.response?.status === 403 &&
+        ((checkoutError as any)?.response?.data?.code === 'ORDER_EMAIL_VERIFICATION_REQUIRED' || !submittedEmail)
             ? apiErrorMessage
             : null;
     const errorMessage =
@@ -467,11 +700,15 @@ const CheckoutSuccessLayout: React.FC = () => {
         (verificationErrorMessage ? null : apiErrorMessage) ||
         (verificationErrorMessage ? null : checkoutError?.message);
     const requiresLogin = Boolean(errorMessage && errorMessage.toLowerCase().includes('đăng nhập'));
+    // Hiển thị form verification khi:
+    // 1. Guest và backend yêu cầu email (token không hợp lệ hoặc đã hết hạn)
+    // 2. User đã login nhưng không phải owner và backend yêu cầu email verification
+    const hasVerificationError = Boolean(verificationError || (checkoutError && (checkoutError as any)?.response?.status === 403));
     const showVerificationForm =
-        !currentUser &&
         checkedStoredEmail &&
-        (!displayOrder || Boolean(verificationError)) &&
-        !validationError;
+        (!displayOrder || hasVerificationError) &&
+        !validationError &&
+        hasVerificationError;
     const shouldShowExpiredState =
         !checkoutLoading && Boolean(isExpired) && !showVerificationForm;
     const shouldShowError =
@@ -485,11 +722,15 @@ const CheckoutSuccessLayout: React.FC = () => {
             <div className={cx('bill-container')}>
                 {showVerificationForm && (
                     <div className={cx('verification-state')}>
-                        {verificationError && (
-                            <div className={cx('verification-banner')}>{verificationError}</div>
+                        {(verificationError || (checkoutError && (checkoutError as any)?.response?.status === 403)) && (
+                            <div className={cx('verification-banner')}>
+                                {verificationError || 
+                                    ((checkoutError as any)?.response?.data?.message || 
+                                    'Chúng tôi không thể xác minh địa chỉ email bạn đã cung cấp. Vui lòng thử lại.')}
+                            </div>
                         )}
                         <p className={cx('verification-message')}>
-                            Để xem đơn hàng này, bạn phải đăng nhập hoặc xác minh địa chỉ email được
+                            Để xem đơn hàng này, bạn phải xác minh địa chỉ email được
                             liên kết với đơn hàng.
                         </p>
                         <form className={cx('verification-form')} onSubmit={handleVerifyEmail}>
@@ -515,7 +756,15 @@ const CheckoutSuccessLayout: React.FC = () => {
 
                 {checkoutLoading ? (
                     <div className={cx('error-state')}>
-                        <p>Đang tải thông tin đơn hàng...</p>
+                        <div className={cx('loading-card')}>
+                            <div className={cx('loading-spinner')}>
+                                <div className={cx('spinner-circle')}></div>
+                            </div>
+                            <h2 className={cx('loading-title')}>Đang tải thông tin đơn hàng</h2>
+                            <p className={cx('loading-text')}>
+                                Vui lòng không thoát trang trong lúc này. Hệ thống đang kiểm tra trạng thái thanh toán của bạn.
+                            </p>
+                        </div>
                     </div>
                 ) : shouldShowExpiredState ? (
                     <div className={cx('error-state')}>

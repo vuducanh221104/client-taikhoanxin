@@ -222,11 +222,14 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
             if (response.success && response.data) {
                 // Transform API response to CurrentUser format
                 const userData = response.data.user;
+                // Support both fullName (backend camelCase) and full_name (frontend snake_case)
+                const userFullName = (userData.fullName || userData.full_name || '').trim();
                 const currentUser = {
                     _id: userData._id,
                     email: userData.email,
-                    full_name: userData.fullName,
-                    user_name: userData.fullName || userData.email?.split('@')[0],
+                    full_name: userFullName,
+                    fullName: userFullName, // Also keep camelCase for compatibility
+                    user_name: userFullName || userData.email?.split('@')[0],
                     phone_number: userData.phone,
                     role: userData.role,
                     type: (userData.typeLogin === '0' ? 'WEBSITE' : (userData.typeLogin === '1' ? 'GOOGLE' : 'WEBSITE')) as 'WEBSITE' | 'GOOGLE',
