@@ -277,6 +277,32 @@
             box-shadow: 0 2px 8px rgba(47, 120, 255, 0.3);
         }
 
+        &.out-of-stock {
+            opacity: 0.5;
+            cursor: pointer;
+            background: var(--bg-color-secondary);
+            border-color: var(--border-color-light);
+            color: var(--text-color-secondary);
+            position: relative;
+
+            &:hover {
+                border-color: var(--border-color);
+                background: var(--bg-color-secondary);
+                box-shadow: 0 1px 4px var(--shadow-color-light);
+            }
+
+            &::after {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 0;
+                right: 0;
+                height: 1px;
+                background: var(--text-color-secondary);
+                opacity: 0.6;
+            }
+        }
+
         &:active {
             transform: scale(0.98);
             transition: transform 0.1s ease;

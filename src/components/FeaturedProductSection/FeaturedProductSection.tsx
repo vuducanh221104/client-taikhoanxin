@@ -108,7 +108,7 @@ const FeaturedProductSection: React.FC<FeaturedProductSectionProps> = ({ section
         <FeaturedProducts
             title={section.title || 'Sản phẩm nổi bật'}
             subtitle={section.description || ''}
-            discoverButtonText="Khám phá"
+            discoverButtonText="Xem tất cả"
             discoverButtonHref={section.linkViewAll || '/products'}
             products={products}
             isLoading={isLoading}

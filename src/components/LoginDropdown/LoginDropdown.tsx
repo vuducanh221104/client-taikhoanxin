@@ -59,7 +59,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
     const [turnstileResetKey, setTurnstileResetKey] = useState(() => Date.now().toString());
     const [googleAuthLink, setGoogleAuthLink] = useState<string | null>(null);
     
-    const dropdownRef = useRef<HTMLDivElement>(null);
+    const dropdownRef = useRef<HTMLElement>(null);
     const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const buttonRef = useRef<HTMLDivElement>(null);
@@ -315,7 +315,8 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
     }, [isOpen, onOverlayChange, mounted, setIsOpen]);
 
     return (
-        <div
+        <Link 
+            href="/auth/login"
             className={cx('login-dropdown-wrapper')}
             ref={dropdownRef}
         >
@@ -327,7 +328,10 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
                     role="dialog"
                     aria-modal="true"
                     aria-label="Đăng nhập"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                    }}
                     onMouseEnter={handleDropdownMouseEnter}
                     onMouseLeave={handleDropdownMouseLeave}
                 >
@@ -491,7 +495,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
                     </div>
                 </div>
             )}
-        </div>
+        </Link>
     );
 };
 

@@ -320,7 +320,7 @@ export default function Home() {
                 <FeaturedProducts
                     title={bestSellingSection.title || "Sản phẩm bán chạy nhất"}
                     subtitle={bestSellingSection.description || "Những sản phẩm được khách hàng yêu thích và tin dùng"}
-                    discoverButtonText="Khám phá"
+                    discoverButtonText="Xem tất cả"
                     discoverButtonHref={bestSellingSection.linkViewAll || "/categories/san-pham-ban-chay"}
                     backgroundImage={bestSellingSection.image || "/banners/image.png"}
                     isDarkBackground={true}

@@ -14,8 +14,42 @@ import { useToast } from '@/hooks/useToast';
 import { addToCart as addToCartAPI } from '@/services/cartService';
 import { useSWRConfig } from 'swr';
 import { useHomePage } from '@/services/homePageService';
+import { useProduct } from '@/services/productService';
 
 const cx = classNames.bind(styles);
+
+// Component to check stock for variant items
+const VariantButton: React.FC<{
+    item: VariantItem;
+    currentSlug?: string;
+    onVariantSelect?: (slug: string) => void;
+}> = ({ item, currentSlug, onVariantSelect }) => {
+    const { data: variantProductData } = useProduct(item.slug, {
+        revalidateOnFocus: false,
+        revalidateOnReconnect: false,
+    });
+    const variantProduct = variantProductData?.data?.product;
+    const variantStock = variantProduct?.stock ?? 0;
+    const isOutOfStock = variantStock === 0;
+    
+    return (
+        <button
+            className={cx('package-button', {
+                selected: currentSlug === item.slug,
+                'out-of-stock': isOutOfStock
+            })}
+            onClick={() => {
+                // Allow click even when out of stock - user can still view product details
+                if (onVariantSelect && item.slug) {
+                    onVariantSelect(item.slug);
+                }
+            }}
+            title={isOutOfStock ? 'Hết hàng' : undefined}
+        >
+            {item.text}
+        </button>
+    );
+};
 
 interface Package {
     id: string;
@@ -484,21 +518,36 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                         <div key={variantIndex} className={cx('product-packages')}>
                                 {title && <h3 className={cx('packages-title')}>{title}</h3>}
                             <div className={cx('packages-grid')}>
-                                    {variant.list.map((item) => (
-                                        <button
-                                            key={item.slug || item._id || item.text}
-                                            className={cx('package-button', {
-                                                selected: currentSlug === item.slug
-                                            })}
-                                            onClick={() => {
-                                                if (onVariantSelect && item.slug) {
-                                                    onVariantSelect(item.slug);
-                                                }
-                                            }}
-                                        >
-                                            {item.text}
-                                        </button>
-                                    ))}
+                                    {variant.list.map((item) => {
+                                        // If item has slug, check stock; otherwise render without stock check
+                                        if (item.slug) {
+                                            return (
+                                                <VariantButton
+                                                    key={item.slug || item._id || item.text}
+                                                    item={item}
+                                                    currentSlug={currentSlug}
+                                                    onVariantSelect={onVariantSelect}
+                                                />
+                                            );
+                                        }
+                                        
+                                        // Fallback for items without slug
+                                        return (
+                                            <button
+                                                key={item._id || item.text}
+                                                className={cx('package-button', {
+                                                    selected: currentSlug === item.slug
+                                                })}
+                                                onClick={() => {
+                                                    if (onVariantSelect && item.slug) {
+                                                        onVariantSelect(item.slug);
+                                                    }
+                                                }}
+                                            >
+                                                {item.text}
+                                            </button>
+                                        );
+                                    })}
                             </div>
                         </div>
                         );

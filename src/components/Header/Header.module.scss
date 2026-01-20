@@ -1973,7 +1973,7 @@
     .middle-bar-content {
         display: flex;
         align-items: center;
-        justify-content: flex-start;
+        justify-content: space-evenly;
         // gap: 60px;
         padding: 14px 0;
         flex-wrap: wrap;
@@ -1982,6 +1982,10 @@
         position: relative;
         overflow: visible;
         row-gap: 12px;
+
+        @media (max-width: 1284px) {
+            justify-content: flex-start;
+        }
 
         // CategoryDropdown spacing
         > :first-child {

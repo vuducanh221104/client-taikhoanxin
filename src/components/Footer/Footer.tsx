@@ -166,7 +166,7 @@ const Footer: React.FC = () => {
                 <div className={cx('footer-bottom')}>
                     <div className={cx('footer-bottom-left')}>
                         <p className={cx('footer-copyright')}>
-                            © {new Date().getFullYear()} Tài Khoản Xịn. Tất cả quyền được bảo lưu.
+                            © {new Date().getFullYear()} Tài Khoản Xịn. .
                         </p>
                     </div>
                     <div className={cx('footer-payment-section')}>
