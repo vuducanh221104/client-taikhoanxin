@@ -64,13 +64,24 @@ export interface AuthResponse {
  */
 export const transformUserData = (user: any): any => {
     if (!user) return user;
-    
+
+    // Prefer backend provided name fields, otherwise derive from email
+    const derivedName =
+        user.user_name ||
+        user.fullName ||
+        user.full_name ||
+        user.name ||
+        (user.email ? user.email.split('@')[0] : '');
+    const normalizedFullName = user.fullName || user.full_name || derivedName || '';
+
     return {
         ...user,
+        // Normalize username for UI display across components
+        user_name: derivedName,
         // Map fullName (backend) to full_name (frontend)
-        full_name: user.fullName || user.full_name || '',
+        full_name: normalizedFullName,
         // Keep fullName for backward compatibility
-        fullName: user.fullName || user.full_name || '',
+        fullName: normalizedFullName,
     };
 };
 

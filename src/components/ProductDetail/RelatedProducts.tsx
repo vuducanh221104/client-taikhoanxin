@@ -5,7 +5,7 @@ import classNames from 'classnames/bind';
 import styles from './RelatedProducts.module.scss';
 import ProductCard from '@/components/ProductCard/ProductCard';
 import ProductSectionLayout from '@/components/ProductSectionLayout/ProductSectionLayout';
-import { useProductsByIds, useRelatedProducts, mapProductToFeaturedProduct } from '@/services/productService';
+import { useProductsByIds, useRelatedProducts, mapProductToFeaturedProduct, Product } from '@/services/productService';
 import { ProductListSkeleton } from '@/components/Skeleton';
 import { ChevronLeftIcon, ChevronRightIcon } from '@/components/Icons';
 
@@ -65,27 +65,213 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({ product }) => {
 
 
     // Fetch products by IDs if relatedProduct exists (PRIORITY: relatedProduct from database)
-    const productsByIdsQuery = useProductsByIds(
-        hasRelatedProductIds ? relatedProductIds : undefined
+    const productsByIdsQuery = useProductsByIds(hasRelatedProductIds ? relatedProductIds : undefined);
+
+    // Always fetch advanced related by slug as fallback/top-up
+    const fallbackRelatedQuery = useRelatedProducts(
+        product?.slug,
+        { limit: 16 } // over-fetch to have enough after dedupe
     );
 
-    // Fetch related products by slug (advanced behavior) if no relatedProduct
-    const relatedProductsQuery = useRelatedProducts(
-        !hasRelatedProductIds ? product?.slug : undefined,
-        !hasRelatedProductIds ? { limit: 8 } : undefined
-    );
+    // Select main query (for loading/error states): primary when manual exists, else fallback
+    const productsQuery = hasRelatedProductIds ? productsByIdsQuery : fallbackRelatedQuery;
 
-    // Select the appropriate query result
-    const productsQuery = hasRelatedProductIds ? productsByIdsQuery : relatedProductsQuery;
+    type VariantEntry = { productId?: string; slug?: string; text?: string };
 
-    // Map products to FeaturedProduct format
+    // Helpers to normalize variant data
+    const normalizeVariantList = React.useCallback((variant: Product['variant']): VariantEntry[] => {
+        if (!variant) return [];
+        if (Array.isArray(variant)) {
+            return variant.flatMap((v) => (v && Array.isArray(v.list) ? v.list : []));
+        }
+        if (typeof variant === 'object' && Array.isArray((variant as { list?: VariantEntry[] }).list)) {
+            return (variant as { list?: VariantEntry[] }).list || [];
+        }
+        return [];
+    }, []);
+
+    const normalizeTokens = (s?: string | null) => {
+        if (!s || typeof s !== 'string') return [];
+        let t = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        t = t.replace(/[^a-z0-9]+/g, ' ');
+        return t.split(' ').filter(Boolean);
+    };
+
+    const getVariantLinkedIds = React.useCallback((p: Product) => {
+        const list = normalizeVariantList(p.variant);
+        return list.map((item) => (item.productId ? String(item.productId) : '')).filter(Boolean);
+    }, [normalizeVariantList]);
+
+    const getVariantSlugKeys = React.useCallback((p: Product) => {
+        const list = normalizeVariantList(p.variant);
+        return list
+            .map((item) => (item.slug || item.text || '').trim().toLowerCase())
+            .filter(Boolean);
+    }, [normalizeVariantList]);
+
+    const getBaseKeys = React.useCallback((p: Product) => {
+        const keys: string[] = [];
+        const normalize = (s?: string | null) => {
+            if (!s || typeof s !== 'string') return '';
+            let t = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            t = t
+                .replace(/[\d]+/g, ' ')
+                .replace(/\b(thang|tháng|thiet|thiết|device|month|months|day|days|usd|\$)\b/g, ' ')
+                .replace(/[-_/]+/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+            return t;
+        };
+        const slugKey = normalize(p.slug);
+        if (slugKey) keys.push(slugKey);
+        const nameKey = normalize(p.name);
+        if (nameKey) keys.push(nameKey);
+        return keys;
+    }, []);
+
+    const getTokenPrefixKeys = React.useCallback((p: Product) => {
+        const stop = new Set([
+            'thang', 'tháng', 'thiet', 'thiết', 'device', 'month', 'months', 'day', 'days',
+            'tai', 'khoan', 'tài', 'khoản', 'account', 'acc',
+            'goi', 'gói', 'nang', 'nâng', 'cap', 'cấp', 'chinh', 'chính', 'chu', 'chủ',
+            'tao', 'tạo', 'san', 'sẵn', 'upgrade', 'pro', 'premium'
+        ]);
+        const keys: string[] = [];
+        const sources = [p.slug, p.name];
+        for (const src of sources) {
+            const tokens = normalizeTokens(src).filter(tok => !stop.has(tok));
+            if (tokens.length >= 2) {
+                const prefix3 = tokens.slice(0, 3).join(' ');
+                if (prefix3) keys.push(prefix3);
+                const prefix2 = tokens.slice(0, 2).join(' ');
+                if (prefix2) keys.push(prefix2);
+            } else if (tokens.length === 1) {
+                keys.push(tokens[0]);
+            }
+        }
+        return keys;
+    }, []);
+
+    const getAggressiveNameKeys = React.useCallback((p: Product) => {
+        const norm = (s?: string | null) => {
+            if (!s || typeof s !== 'string') return '';
+            let t = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            t = t.replace(/[\d$]+/g, ' ');
+            t = t.replace(/\b(thang|tháng|month|months|day|days|nam|năm|usd|vnd|credit|credits)\b/g, ' ');
+            t = t.replace(/[^a-z0-9]+/g, ' ');
+            t = t.replace(/\s+/g, ' ').trim();
+            return t;
+        };
+        const build = (s?: string | null) => {
+            const tokens = norm(s).split(' ').filter(Boolean);
+            if (!tokens.length) return [];
+            const res: string[] = [];
+            const k3 = tokens.slice(0, 3).join(' ');
+            if (k3) res.push(k3);
+            const k2 = tokens.slice(0, 2).join(' ');
+            if (k2) res.push(k2);
+            const k1 = tokens[0];
+            if (k1) res.push(k1);
+            return res;
+        };
+        return [...build(p.slug), ...build(p.name)];
+    }, []);
+
+    const dedupeAndExcludeVariants = React.useCallback((base: Product | undefined, list: Product[]) => {
+        const all = base ? [base, ...list] : [...list];
+        if (all.length === 0) return [];
+
+        const idToIndex = new Map<string, number>();
+        all.forEach((p, idx) => {
+            if (p?._id) idToIndex.set(String(p._id), idx);
+        });
+
+        const parent = Array.from({ length: all.length }, (_, i) => i);
+        const find = (x: number) => {
+            while (parent[x] !== x) {
+                parent[x] = parent[parent[x]];
+                x = parent[x];
+            }
+            return x;
+        };
+        const union = (a: number, b: number) => {
+            const ra = find(a);
+            const rb = find(b);
+            if (ra !== rb) parent[rb] = ra;
+        };
+
+        // productId links
+        all.forEach((p, i) => {
+            getVariantLinkedIds(p).forEach((id) => {
+                const j = idToIndex.get(id);
+                if (typeof j === 'number') union(i, j);
+            });
+        });
+
+        // slug/text keys
+        const slugMap = new Map<string, number>();
+        all.forEach((p, i) => {
+            getVariantSlugKeys(p).forEach((key) => {
+                if (!slugMap.has(key)) slugMap.set(key, i);
+                else union(i, slugMap.get(key)!);
+            });
+        });
+
+        // base keys
+        const baseMap = new Map<string, number>();
+        all.forEach((p, i) => {
+            getBaseKeys(p).forEach((key) => {
+                if (!baseMap.has(key)) baseMap.set(key, i);
+                else union(i, baseMap.get(key)!);
+            });
+        });
+
+        // token prefix keys
+        const tokenMap = new Map<string, number>();
+        all.forEach((p, i) => {
+            getTokenPrefixKeys(p).forEach((key) => {
+                if (!tokenMap.has(key)) tokenMap.set(key, i);
+                else union(i, tokenMap.get(key)!);
+            });
+        });
+
+        // aggressive name keys
+        const aggMap = new Map<string, number>();
+        all.forEach((p, i) => {
+            getAggressiveNameKeys(p).forEach((key) => {
+                if (!aggMap.has(key)) aggMap.set(key, i);
+                else union(i, aggMap.get(key)!);
+            });
+        });
+
+        const baseRoot = base ? find(0) : null;
+        const seenRoot = new Set<number>();
+        const result: Product[] = [];
+
+        for (let i = base ? 1 : 0; i < all.length; i++) {
+            const root = find(i);
+            if (baseRoot !== null && root === baseRoot) continue; // exclude same variant group as base
+            if (seenRoot.has(root)) continue; // dedupe variants
+            seenRoot.add(root);
+            result.push(all[i]);
+        }
+
+        return result;
+    }, [getAggressiveNameKeys, getBaseKeys, getTokenPrefixKeys, getVariantLinkedIds, getVariantSlugKeys]);
+
+    // Map products to FeaturedProduct format with variant dedupe and base-group exclusion
     const relatedProducts = useMemo(() => {
-        if (!productsQuery?.data?.data) return [];
-        return productsQuery.data.data
-            .filter((p) => p._id !== product?._id) // Exclude current product
-            .map(mapProductToFeaturedProduct)
-            .slice(0, 8); // Limit to 8 products
-    }, [productsQuery?.data, product?._id]);
+        const primary = hasRelatedProductIds ? (productsByIdsQuery.data?.data || []) : [];
+        const fallback = fallbackRelatedQuery.data?.data || [];
+
+        // If manual exists: combine primary + fallback; else use fallback only
+        const combined = hasRelatedProductIds ? [...primary, ...fallback] : fallback;
+
+        if (combined.length === 0) return [];
+
+        const cleaned = dedupeAndExcludeVariants(product as Product | undefined, combined).slice(0, 8);
+        return cleaned.map(mapProductToFeaturedProduct);
+    }, [hasRelatedProductIds, productsByIdsQuery.data, fallbackRelatedQuery.data, product, dedupeAndExcludeVariants]);
 
     // Calculate items per view and slide step
     const itemsPerView = isMobile ? 2 : 4;
@@ -155,7 +341,7 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({ product }) => {
     }
 
     // Loading state
-    if (productsQuery?.isLoading) {
+    if (productsQuery?.isLoading && (!fallbackRelatedQuery || fallbackRelatedQuery.isLoading)) {
         return (
             <ProductSectionLayout title="Sản phẩm liên quan">
                 <ProductListSkeleton count={4} />

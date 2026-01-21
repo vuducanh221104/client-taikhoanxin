@@ -70,6 +70,8 @@ const stepperConfig = [
 
 const OrderLookupPage: React.FC<LookupPageProps> = ({ initialOrderCode, initialEmail, initialToken }) => {
     const router = useRouter();
+    const orderDetailAnchorRef = React.useRef<HTMLDivElement | null>(null);
+    const hasAutoScrolledRef = React.useRef(false);
     const [orderCodeInput, setOrderCodeInput] = React.useState(initialOrderCode || '');
     const [emailInput, setEmailInput] = React.useState(initialEmail || '');
     const [submittedOrderCode, setSubmittedOrderCode] = React.useState<string | null>(initialOrderCode || null);
@@ -200,6 +202,32 @@ const OrderLookupPage: React.FC<LookupPageProps> = ({ initialOrderCode, initialE
         canFetchOrder ? verificationToken : null,
         submittedEmail || undefined
     );
+
+    // Auto-scroll to order detail on mobile when redirecting from checkout success
+    React.useEffect(() => {
+        if (!mounted) return;
+        if (!hasInitialToken) return; // only auto-scroll for checkout redirect flow
+        if (step !== 'result') return;
+        if (!checkoutData?.data?.order) return;
+        if (hasAutoScrolledRef.current) return;
+        if (typeof window === 'undefined') return;
+
+        const isMobile = window.matchMedia
+            ? window.matchMedia('(max-width: 768px)').matches
+            : window.innerWidth <= 768;
+
+        if (!isMobile) return;
+
+        hasAutoScrolledRef.current = true;
+
+        // Wait a tick to ensure layout finished before scrolling
+        window.requestAnimationFrame(() => {
+            setTimeout(() => {
+                const el = orderDetailAnchorRef.current || document.getElementById('order-detail');
+                el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 50);
+        });
+    }, [mounted, hasInitialToken, step, checkoutData]);
 
     React.useEffect(() => {
         if (!checkoutError) return;
@@ -371,11 +399,13 @@ const OrderLookupPage: React.FC<LookupPageProps> = ({ initialOrderCode, initialE
                 </div>
             ) : checkoutData?.data?.order ? (
                 <>
-                    <OrderDetail
-                        orderCode={checkoutData.data.order.orderId}
-                        guestOrder={checkoutData.data.order}
-                        mode="guest"
-                    />
+                    <div id="order-detail" ref={orderDetailAnchorRef}>
+                        <OrderDetail
+                            orderCode={checkoutData.data.order.orderId}
+                            guestOrder={checkoutData.data.order}
+                            mode="guest"
+                        />
+                    </div>
                     <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
                         <button className={cx('primary-button')} onClick={handleStartNewLookup}>
                             Thực hiện tra cứu khác

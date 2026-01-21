@@ -138,7 +138,7 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
             const isAdmin = userRole !== undefined && (typeof userRole === 'number' ? userRole >= 2 : ['manager', 'admin'].includes(String(userRole)));
 
             return {
-                username: isAdmin ? 'Admin-TaiKhoanXin' : (input.fullName || 'Khách hàng'),
+                username: isAdmin ? 'Admin - Tài Khoản Xịn' : (input.fullName || 'Khách hàng'),
                 avatar: input.avatar || '/avatar/user-icon.png',
                 isVerified: Boolean((input as any).isVerified),
                 isCustomerService: Boolean((input as any).role && (input as any).role >= 2) || isAdmin,
@@ -235,13 +235,13 @@ const ProductComments: React.FC<ProductCommentsProps> = ({ productId }) => {
         return productComments.data.comments.map(mapCommentToDisplay);
     }, [productComments, mapCommentToDisplay]);
 
-    // Count comments and reviews separately
+    // Count comments and reviews separately (include replies as individual comments)
     const commentsCount = useMemo(() => {
-        return commentsList.length;
+        return commentsList.reduce((acc, item) => acc + 1 + (item.replies?.length || 0), 0);
     }, [commentsList]);
 
     const reviewsCount = useMemo(() => {
-        return reviewsList.length;
+        return reviewsList.reduce((acc, item) => acc + 1 + (item.replies?.length || 0), 0);
     }, [reviewsList]);
 
     const handleReplyClick = (review: DisplayComment) => {
