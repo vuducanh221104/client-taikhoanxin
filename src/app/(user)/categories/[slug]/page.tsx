@@ -37,11 +37,14 @@ const DEFAULT_ITEMS_PER_PAGE = 10;
 
 // Check if slug is a special path parameter
 function isSpecialPath(slug: string): boolean {
-    return ['san-pham-noi-bat', 'san-pham-ban-chay', 'san-pham-co-huy-hieu', 'san-pham-con-hang', 'san-pham-dang-giam-gia'].includes(slug);
+    return ['tat-ca-san-pham', 'san-pham-noi-bat', 'san-pham-ban-chay', 'san-pham-co-huy-hieu', 'san-pham-con-hang', 'san-pham-dang-giam-gia'].includes(slug);
 }
 
 function buildProductsKey(slug: string) {
     // Special paths use different endpoints
+    if (slug === 'tat-ca-san-pham') {
+        return `/api/v1/categories/tat-ca-san-pham?page=1&limit=${DEFAULT_ITEMS_PER_PAGE}`;
+    }
     if (slug === 'san-pham-noi-bat') {
         return `/api/v1/categories/san-pham-noi-bat?page=1&limit=${DEFAULT_ITEMS_PER_PAGE}`;
     }

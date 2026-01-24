@@ -108,16 +108,23 @@ export const useHeaderSearch = (mounted: boolean, isMobile: boolean, defaultTren
 
     const handleSearch = (query?: string) => {
         const searchQuery = query || searchValue.trim();
-        if (searchQuery) {
-            router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+        
+        // If empty query, go to all products page
+        if (!searchQuery) {
+            router.push('/categories/tat-ca-san-pham');
             closeSearch();
-            
-            // Save to recent searches
-            if (searchQuery && !recentSearches.includes(searchQuery)) {
-                const updated = [searchQuery, ...recentSearches].slice(0, 5);
-                setRecentSearches(updated);
-                localStorage.setItem('recentSearches', JSON.stringify(updated));
-            }
+            return;
+        }
+        
+        // If has query, go to search page
+        router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+        closeSearch();
+        
+        // Save to recent searches
+        if (searchQuery && !recentSearches.includes(searchQuery)) {
+            const updated = [searchQuery, ...recentSearches].slice(0, 5);
+            setRecentSearches(updated);
+            localStorage.setItem('recentSearches', JSON.stringify(updated));
         }
     };
 

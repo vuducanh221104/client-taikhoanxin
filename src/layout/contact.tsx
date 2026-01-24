@@ -161,7 +161,7 @@ const ContactLayout: React.FC = () => {
                                         href="mailto:contact@taikhoanxin.com"
                                         className={cx('info-link')}
                                     >
-                                        contact@taikhoanxin.com
+                                        support@taikhoanxin.com
                                     </a>
                                 </div>
                             </div>
@@ -173,7 +173,7 @@ const ContactLayout: React.FC = () => {
                                 <div className={cx('info-content')}>
                                     <h3 className={cx('info-title')}>Điện Thoại</h3>
                                     <a href="tel:+84901234567" className={cx('info-link')}>
-                                        090 123 4567
+                                        0377775528
                                     </a>
                                 </div>
                             </div>
@@ -185,7 +185,7 @@ const ContactLayout: React.FC = () => {
                                 <div className={cx('info-content')}>
                                     <h3 className={cx('info-title')}>Địa Chỉ</h3>
                                     <p className={cx('info-text')}>
-                                        123 Đường ABC, Phường XYZ, Quận 1, TP. Hồ Chí Minh
+                                        Thảo Điền, Quận 2, TP.HCM
                                     </p>
                                 </div>
                             </div>
@@ -197,9 +197,7 @@ const ContactLayout: React.FC = () => {
                                 <div className={cx('info-content')}>
                                     <h3 className={cx('info-title')}>Giờ Làm Việc</h3>
                                     <p className={cx('info-text')}>
-                                        Thứ 2 - Thứ 6: 8:00 - 22:00
-                                        <br />
-                                        Thứ 7 - Chủ nhật: 9:00 - 20:00
+                                        Thứ 2 - Chủ nhật: 8:00 - 24:00
                                     </p>
                                 </div>
                             </div>
@@ -349,10 +347,10 @@ const ContactLayout: React.FC = () => {
                                         Đang gửi...
                                     </>
                                 ) : (
-                                    <>
+                                    <a href="https://zalo.me/0377775528" target="_blank" rel="noopener noreferrer">
                                         <SendIcon size={18} />
                                         Gửi Tin Nhắn
-                                    </>
+                                    </a>
                                 )}
                             </button>
                         </form>

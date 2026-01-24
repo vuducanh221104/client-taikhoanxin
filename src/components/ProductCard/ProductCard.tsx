@@ -138,6 +138,10 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(({
     const handleAddToCart = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
+        // Nếu hết hàng thì không cho thao tác thêm vào giỏ (kể cả redirect)
+        if (stockStatus === 'out-of-stock') {
+            return;
+        }
         if (href && href !== '#') {
             router.push(href);
         }
@@ -182,10 +186,11 @@ const ProductCard: React.FC<ProductCardProps> = React.memo(({
             {/* Action Buttons */}
             <div className={cx('action-buttons')}>
                 <button
-                    className={cx('action-button')}
+                    className={cx('action-button', { disabled: isOutOfStock })}
                     onClick={handleAddToCart}
                     aria-label="Thêm vào giỏ hàng"
                     type="button"
+                    disabled={isOutOfStock}
                 >
                     <CartIcon className={cx('action-icon')} />
                 </button>

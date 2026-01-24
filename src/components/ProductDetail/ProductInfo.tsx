@@ -283,6 +283,13 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     }, [getOptionId, options, optionsValues]);
 
     const addToCartInternal = async (): Promise<boolean> => {
+        // Không cho thêm vào giỏ nếu sản phẩm đã hết hàng
+        const isOutOfStock = product.status === 'out-of-stock' || (product as any).stock === 0;
+        if (isOutOfStock) {
+            showError('Sản phẩm này đã hết hàng');
+            return false;
+        }
+
         if (!validateAllOptions()) {
             showError('Vui lòng kiểm tra lại thông tin yêu cầu');
             return false;
@@ -296,12 +303,18 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
 
         // Guest users: store cart items locally (Redux)
         if (!isLoggedIn || !currentUser?.accessToken) {
-            // Check max quantity constraint for guest users
+            // Get min quantity (default to 1 if not set)
+            const min = (product as any).min ?? 1;
             const max = (product as any).max ?? 100;
             const existingCartItem = reduxCart.products.find(p => p.id === productId);
-            if (existingCartItem && existingCartItem.quantity >= max) {
-                showError(`Số lượng tối đa cho sản phẩm này là ${max}`);
-                return false;
+            
+            // If product already exists in cart, check if adding min would exceed max
+            if (existingCartItem) {
+                const quantityToAdd = min;
+                if (existingCartItem.quantity + quantityToAdd > max) {
+                    showError(`Số lượng tối đa cho sản phẩm này là ${max}`);
+                    return false;
+                }
             }
 
             dispatch(
@@ -330,9 +343,11 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         let isSuccess = false;
 
         try {
+            // Get min quantity (default to 1 if not set)
+            const min = (product as any).min ?? 1;
             const response = await addToCartAPI({
                 productId,
-                quantity: 1,
+                quantity: min,
                 options: allOptions.length > 0 ? allOptions : undefined,
             });
 
@@ -386,6 +401,13 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     };
 
     const handleAddToCart = async (): Promise<boolean> => {
+        // Ưu tiên báo lỗi hết hàng ngay khi click
+        const isOutOfStock = product.status === 'out-of-stock' || (product as any).stock === 0;
+        if (isOutOfStock) {
+            showError('Sản phẩm này đã hết hàng');
+            return false;
+        }
+
         if (!ensureTosAccepted('add')) {
             return false;
         }
@@ -393,6 +415,13 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     };
 
     const handleBuyNow = async () => {
+        // Ưu tiên báo lỗi hết hàng ngay khi click
+        const isOutOfStock = product.status === 'out-of-stock' || (product as any).stock === 0;
+        if (isOutOfStock) {
+            showError('Sản phẩm này đã hết hàng');
+            return;
+        }
+
         if (!ensureTosAccepted('buy')) {
             return;
         }
@@ -428,6 +457,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     };
 
     const displayPrice = selectedPackage.price || product.price;
+    const isOutOfStock = product.status === 'out-of-stock' || (product as any).stock === 0;
 
     const handleCloseTosModal = () => {
         setIsTosModalOpen(false);
@@ -817,12 +847,15 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
 
             <div className={cx('product-actions')}>
                 <div className={cx('primary-actions')}>
-                    <button className={cx('buy-now-button')} onClick={handleBuyNow}>
+                    <button
+                        className={cx('buy-now-button', { 'is-disabled': isOutOfStock })}
+                        onClick={handleBuyNow}
+                    >
                         <CreditCardIcon size={20} />
                         <span>Mua ngay</span>
                     </button>
                     <button
-                        className={cx('add-to-cart-button')}
+                        className={cx('add-to-cart-button', { 'is-disabled': isOutOfStock })}
                         onClick={handleAddToCart}
                         disabled={isAddingToCart}
                     >

@@ -56,12 +56,14 @@ const cartSlice = createSlice({
         addToCart: (state, action: PayloadAction<Omit<CartProduct, 'quantity'>>) => {
             const product = action.payload;
             const existingProduct = state.products.find((p) => p.id === product.id);
+            const min = product.min ?? 1;
             const max = product.max ?? 100;
 
             if (existingProduct) {
-                // Check if adding 1 more would exceed max quantity
-                if (existingProduct.quantity >= max) {
-                    // Already at max, don't add more
+                // If product already exists, add 1 (not min, to avoid adding too many at once)
+                // Check if adding 1 would exceed max quantity
+                if (existingProduct.quantity + 1 > max) {
+                    // Adding 1 would exceed max, don't add more
                     return;
                 }
                 existingProduct.quantity += 1;
@@ -69,23 +71,36 @@ const cartSlice = createSlice({
                 if (product.max !== undefined) existingProduct.max = product.max;
                 if (product.min !== undefined) existingProduct.min = product.min;
                 if (product.stock !== undefined) existingProduct.stock = product.stock;
+                
+                // Update totals: add 1 item
+                state.totalQuantity += 1;
+                state.totalPrice += product.price;
+                
+                // Xóa mã giảm giá khi tăng số lượng sản phẩm đã có trong cart
+                if (state.couponCode) {
+                    state.couponCode = undefined;
+                    state.couponDiscount = 0;
+                }
             } else {
                 // Thêm sản phẩm mới vào cart - xóa mã giảm giá
+                // Use min quantity (or 1 if min not set) when adding new product
                 state.couponCode = undefined;
                 state.couponDiscount = 0;
                 
                 state.products.push({
                     ...product,
-                    quantity: 1,
+                    quantity: min,
                 });
+                
+                // Update totals: add min quantity items
+                state.totalQuantity += min;
+                state.totalPrice += product.price * min;
             }
-
-            state.totalQuantity += 1;
-            state.totalPrice += product.price;
         },
         /**
          * Remove product from cart (only for non-logged-in users)
          * When user is logged in, use API removeFromCart instead
+         * Xóa mã giảm giá khi xóa sản phẩm khỏi cart
          */
         removeFromCart: (state, action: PayloadAction<string>) => {
             const productId = action.payload;
@@ -95,12 +110,19 @@ const cartSlice = createSlice({
                 state.totalQuantity -= product.quantity;
                 state.totalPrice -= product.price * product.quantity;
                 state.products = state.products.filter((p) => p.id !== productId);
+                
+                // Xóa mã giảm giá khi xóa sản phẩm
+                if (state.couponCode) {
+                    state.couponCode = undefined;
+                    state.couponDiscount = 0;
+                }
             }
         },
         /**
          * Update product quantity (only for non-logged-in users)
          * When user is logged in, use API updateCartItem instead
          * Validates min/max quantity constraints
+         * Xóa mã giảm giá khi tăng/giảm số lượng sản phẩm
          */
         updateQuantity: (state, action: PayloadAction<{ id: string; quantity: number }>) => {
             const { id, quantity } = action.payload;
@@ -110,13 +132,19 @@ const cartSlice = createSlice({
                 const min = product.min ?? 1;
                 const max = product.max ?? 100;
                 
-                // Clamp quantity to min/max bounds
+                // Clamp quantity to min/max bounds (<= max means valid, > max means clamp to max)
                 const clampedQuantity = Math.min(Math.max(quantity, min), max);
                 
                 const oldQuantity = product.quantity;
                 product.quantity = clampedQuantity;
                 state.totalQuantity += clampedQuantity - oldQuantity;
                 state.totalPrice += product.price * (clampedQuantity - oldQuantity);
+                
+                // Xóa mã giảm giá khi thay đổi số lượng sản phẩm
+                if (state.couponCode) {
+                    state.couponCode = undefined;
+                    state.couponDiscount = 0;
+                }
             }
         },
         /**

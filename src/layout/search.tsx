@@ -198,10 +198,13 @@ const SearchLayout: React.FC = () => {
         setAccumulatedProducts([]);
     }, [query, priceRange, sortBy]);
 
-    // Handle search
+    // Handle search - if empty, go to tat-ca-san-pham page
     const handleSearch = () => {
         if (searchValue.trim()) {
             router.push(`/search?q=${encodeURIComponent(searchValue.trim())}`);
+        } else {
+            // Redirect to all products page with pagination
+            router.push('/categories/tat-ca-san-pham');
         }
     };
 

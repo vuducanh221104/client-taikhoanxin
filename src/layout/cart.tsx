@@ -153,7 +153,8 @@ const CartLayout: React.FC = () => {
                 }
                 prevDiscountCodeRef.current = apiCart.discountCode;
             } else {
-                if (savedDiscountCode || prevDiscountCodeRef.current) {
+                // Discount code was removed or doesn't exist
+                if (savedDiscountCode || prevDiscountCodeRef.current || couponSuccess) {
                     const wasRemoved = prevDiscountCodeRef.current && !apiCart.discountCode;
                     const isManualRemoval = isManualRemovalRef.current;
 
@@ -163,9 +164,9 @@ const CartLayout: React.FC = () => {
                     setCouponSuccess('');
                     setCouponError('');
 
-                    // Only show error message if it was removed automatically (not by user)
+                    // Only show message if it was removed automatically (not by user)
                     if (wasRemoved && !isManualRemoval) {
-                        showError('Mã giảm giá không còn hợp lệ và đã được xóa');
+                        showInfo('Mã giảm giá đã được xóa do thay đổi giỏ hàng');
                     }
 
                     // Reset manual removal flag
@@ -220,12 +221,19 @@ const CartLayout: React.FC = () => {
     useEffect(() => {
         if (savedDiscountCode) {
             setCouponInput(savedDiscountCode);
-            setCouponSuccess('Mã giảm giá đã được áp dụng');
+            // Only set success message if cart actually has discount code
+            if (currentUser && cartData?.data?.discountCode) {
+                setCouponSuccess('Mã giảm giá đã được áp dụng');
+            } else if (!currentUser && reduxCart.couponCode) {
+                setCouponSuccess('Mã giảm giá đã được áp dụng');
+            } else {
+                setCouponSuccess('');
+            }
         } else {
             setCouponInput('');
             setCouponSuccess('');
         }
-    }, [savedDiscountCode]);
+    }, [savedDiscountCode, currentUser, cartData?.data?.discountCode, reduxCart.couponCode]);
 
     // Sync referral code input with Redux when it changes
     useEffect(() => {
@@ -1023,29 +1031,42 @@ const CartLayout: React.FC = () => {
 
     const handleRemove = async (id: string) => {
         if (currentUser) {
+            // Xóa mã giảm giá khi xóa sản phẩm
+            const hasDiscountCode = cartData?.data?.discountCode;
+            if (hasDiscountCode) {
+                dispatch(clearDiscountCode());
+                dispatch(removeCoupon());
+                setCouponSuccess('');
+                setCouponError('');
+                setCouponInput('');
+                showInfo('Mã giảm giá đã được xóa do thay đổi giỏ hàng');
+                try {
+                    await removeDiscountCodeAPI();
+                } catch (err) {
+                    // Ignore error if removeDiscountCode fails
+                }
+            }
+
             try {
                 await removeFromCartAPI(id);
                 const updatedCart = await mutateCart();
                 showSuccess('Đã xóa sản phẩm khỏi giỏ hàng');
-                
-                // Check if cart is empty after removal - if so, remove discount code
-                const cartItems = (updatedCart?.data as any)?.items || [];
-                if (cartItems.length === 0) {
-                    // Cart is empty, remove discount code
-                    dispatch(clearDiscountCode());
-                    try {
-                        await removeDiscountCodeAPI();
-                    } catch (err) {
-                        // Ignore error if removeDiscountCode fails
-                    }
-                }
             } catch (error: any) {
                 const errorMessage =
                     error?.response?.data?.message || error?.message || 'Có lỗi xảy ra. Vui lòng thử lại!';
                 showError(errorMessage);
             }
         } else {
+            const hadDiscountCode = reduxCart.couponCode;
             dispatch(removeFromCart(id));
+            if (hadDiscountCode) {
+                dispatch(clearDiscountCode());
+                dispatch(removeCoupon());
+                setCouponSuccess('');
+                setCouponError('');
+                setCouponInput('');
+                showInfo('Mã giảm giá đã được xóa do thay đổi giỏ hàng');
+            }
             showSuccess('Đã xóa sản phẩm khỏi giỏ hàng');
         }
     };
@@ -1069,6 +1090,20 @@ const CartLayout: React.FC = () => {
         }
 
         if (currentUser) {
+            // Xóa mã giảm giá khi tăng số lượng sản phẩm
+            const hasDiscountCode = cartData?.data?.discountCode;
+            if (hasDiscountCode) {
+                dispatch(clearDiscountCode());
+                dispatch(removeCoupon());
+                setCouponSuccess('');
+                setCouponError('');
+                setCouponInput('');
+                showInfo('Mã giảm giá đã được xóa do thay đổi giỏ hàng');
+                removeDiscountCodeAPI().catch(() => {
+                    // Ignore error if removeDiscountCode fails
+                });
+            }
+
             const currentCartData = cartData as any;
             const pendingUpdate = pendingUpdatesRef.current.get(id);
             const oldCartData = pendingUpdate?.oldCartData || cartData;
@@ -1112,6 +1147,9 @@ const CartLayout: React.FC = () => {
                         (currentCartData?.data?.totalDiscountBefore || 0) +
                         priceDiff -
                         (currentCartData?.data?.totalDiscount || 0),
+                    discountCode: undefined,
+                    totalDiscount: 0,
+                    discountAmount: 0,
                 },
             };
 
@@ -1126,7 +1164,16 @@ const CartLayout: React.FC = () => {
 
             debouncedUpdateQuantity(id, newQuantity, oldCartData);
         } else {
+            const hadDiscountCode = reduxCart.couponCode;
             dispatch(updateQuantity({ id, quantity: newQuantity }));
+            if (hadDiscountCode) {
+                dispatch(clearDiscountCode());
+                dispatch(removeCoupon());
+                setCouponSuccess('');
+                setCouponError('');
+                setCouponInput('');
+                showInfo('Mã giảm giá đã được xóa do thay đổi giỏ hàng');
+            }
         }
     };
 
@@ -1142,6 +1189,20 @@ const CartLayout: React.FC = () => {
         const newQuantity = qty - 1;
 
         if (currentUser) {
+            // Xóa mã giảm giá khi giảm số lượng sản phẩm
+            const hasDiscountCode = cartData?.data?.discountCode;
+            if (hasDiscountCode) {
+                dispatch(clearDiscountCode());
+                dispatch(removeCoupon());
+                setCouponSuccess('');
+                setCouponError('');
+                setCouponInput('');
+                showInfo('Mã giảm giá đã được xóa do thay đổi giỏ hàng');
+                removeDiscountCodeAPI().catch(() => {
+                    // Ignore error if removeDiscountCode fails
+                });
+            }
+
             const currentCartData = cartData as any;
             const pendingUpdate = pendingUpdatesRef.current.get(id);
             const oldCartData = pendingUpdate?.oldCartData || cartData;
@@ -1185,6 +1246,9 @@ const CartLayout: React.FC = () => {
                         (currentCartData?.data?.totalDiscountBefore || 0) +
                         priceDiff -
                         (currentCartData?.data?.totalDiscount || 0),
+                    discountCode: undefined,
+                    totalDiscount: 0,
+                    discountAmount: 0,
                 },
             };
 
@@ -1199,7 +1263,16 @@ const CartLayout: React.FC = () => {
 
             debouncedUpdateQuantity(id, newQuantity, oldCartData);
         } else {
+            const hadDiscountCode = reduxCart.couponCode;
             dispatch(updateQuantity({ id, quantity: newQuantity }));
+            if (hadDiscountCode) {
+                dispatch(clearDiscountCode());
+                dispatch(removeCoupon());
+                setCouponSuccess('');
+                setCouponError('');
+                setCouponInput('');
+                showInfo('Mã giảm giá đã được xóa do thay đổi giỏ hàng');
+            }
         }
     };
 

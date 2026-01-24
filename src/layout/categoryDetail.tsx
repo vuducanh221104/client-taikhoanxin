@@ -65,6 +65,7 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
 
 const getSpecialPathName = (slug: string): string => {
     const nameMap: Record<string, string> = {
+        'tat-ca-san-pham': 'Tất cả sản phẩm',
         'san-pham-noi-bat': 'Sản phẩm nổi bật',
         'san-pham-ban-chay': 'Sản phẩm bán chạy',
         'san-pham-co-huy-hieu': 'Sản phẩm có huy hiệu',
@@ -80,7 +81,7 @@ export default function CategoryDetailLayout() {
     const { mutate: globalMutate } = useSWRConfig();
     
     // Check if slug is a special path parameter (san-pham-noi-bat, san-pham-ban-chay, etc.)
-    const isSpecialPath = ['san-pham-noi-bat', 'san-pham-ban-chay', 'san-pham-co-huy-hieu', 'san-pham-con-hang', 'san-pham-dang-giam-gia'].includes(slug);
+    const isSpecialPath = ['tat-ca-san-pham', 'san-pham-noi-bat', 'san-pham-ban-chay', 'san-pham-co-huy-hieu', 'san-pham-con-hang', 'san-pham-dang-giam-gia'].includes(slug);
     const categoryFallbackName = categoryNames[slug] || (isSpecialPath ? getSpecialPathName(slug) : 'Danh mục');
 
     const [sortBy, setSortBy] = useState('default');

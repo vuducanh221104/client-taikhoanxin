@@ -10,7 +10,8 @@ import { CartIcon, XIcon, MinusIcon, PlusIcon, TrashIcon } from '@/components/Ic
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '@/redux/store';
 import { removeFromCart, updateQuantity } from '@/redux/cartSlice';
-import { useCart, removeFromCart as removeFromCartAPI, updateCartItem as updateCartItemAPI } from '@/services/cartService';
+import { clearDiscountCode } from '@/redux/authSlice';
+import { useCart, removeFromCart as removeFromCartAPI, updateCartItem as updateCartItemAPI, removeDiscountCode as removeDiscountCodeAPI } from '@/services/cartService';
 import { useSWRConfig } from 'swr';
 import { useToast } from '@/hooks/useToast';
 import { useDebounceCallback } from '@/hooks/useDebounceCallback';
@@ -434,6 +435,17 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
         e.preventDefault();
 
         if (currentUser) {
+            // Xóa mã giảm giá khi xóa sản phẩm
+            const hasDiscountCode = cartData?.data?.discountCode;
+            if (hasDiscountCode) {
+                dispatch(clearDiscountCode());
+                try {
+                    await removeDiscountCodeAPI();
+                } catch (err) {
+                    // Ignore error if removeDiscountCode fails
+                }
+            }
+
             // Optimistic update - remove item immediately from UI
             const oldCartData = cartData;
             const optimisticCart = {
@@ -447,6 +459,9 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                     quantity: (cartData?.data?.quantity || 0) - (cart.products.find(p => p.id === id)?.quantity || 0),
                     totalDiscountBefore: (cartData?.data?.totalDiscountBefore || 0) - ((cart.products.find(p => p.id === id)?.price || 0) * (cart.products.find(p => p.id === id)?.quantity || 0)),
                     totalPrice: ((cartData?.data?.totalDiscountBefore || 0) - ((cart.products.find(p => p.id === id)?.price || 0) * (cart.products.find(p => p.id === id)?.quantity || 0))) - (cartData?.data?.totalDiscount || 0),
+                    discountCode: undefined,
+                    totalDiscount: 0,
+                    discountAmount: 0,
                 }
             };
 
@@ -493,6 +508,15 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
         }
 
         if (currentUser) {
+            // Xóa mã giảm giá khi tăng số lượng sản phẩm
+            const hasDiscountCode = cartData?.data?.discountCode;
+            if (hasDiscountCode) {
+                dispatch(clearDiscountCode());
+                removeDiscountCodeAPI().catch(() => {
+                    // Ignore error if removeDiscountCode fails
+                });
+            }
+
             // Get current cart data (may be from previous optimistic update)
             const currentCartData = cartData;
             const pendingUpdate = pendingUpdatesRef.current.get(id);
@@ -531,6 +555,9 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                     quantity: (currentCartData?.data?.quantity || 0) + quantityDiff,
                     totalDiscountBefore: (currentCartData?.data?.totalDiscountBefore || 0) + priceDiff,
                     totalPrice: ((currentCartData?.data?.totalDiscountBefore || 0) + priceDiff) - (currentCartData?.data?.totalDiscount || 0),
+                    discountCode: undefined,
+                    totalDiscount: 0,
+                    discountAmount: 0,
                 }
             };
 
@@ -563,6 +590,15 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
         const newQuantity = currentQuantity - 1;
 
         if (currentUser) {
+            // Xóa mã giảm giá khi giảm số lượng sản phẩm
+            const hasDiscountCode = cartData?.data?.discountCode;
+            if (hasDiscountCode) {
+                dispatch(clearDiscountCode());
+                removeDiscountCodeAPI().catch(() => {
+                    // Ignore error if removeDiscountCode fails
+                });
+            }
+
             // Get current cart data (may be from previous optimistic update)
             const currentCartData = cartData;
             const pendingUpdate = pendingUpdatesRef.current.get(id);
@@ -601,6 +637,9 @@ const CartDropdown: React.FC<CartDropdownProps> = ({
                     quantity: (currentCartData?.data?.quantity || 0) + quantityDiff,
                     totalDiscountBefore: (currentCartData?.data?.totalDiscountBefore || 0) + priceDiff,
                     totalPrice: ((currentCartData?.data?.totalDiscountBefore || 0) + priceDiff) - (currentCartData?.data?.totalDiscount || 0),
+                    discountCode: undefined,
+                    totalDiscount: 0,
+                    discountAmount: 0,
                 }
             };
 
