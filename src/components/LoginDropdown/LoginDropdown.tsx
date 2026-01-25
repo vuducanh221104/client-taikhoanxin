@@ -59,7 +59,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
     const [turnstileResetKey, setTurnstileResetKey] = useState(() => Date.now().toString());
     const [googleAuthLink, setGoogleAuthLink] = useState<string | null>(null);
     
-    const dropdownRef = useRef<HTMLAnchorElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
     const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const buttonRef = useRef<HTMLDivElement>(null);
