@@ -7,7 +7,7 @@
     z-index: 10050;
     flex-shrink: 0;
     overflow: visible;
-    pointer-events: auto;
+    pointer-events: none; // Don't block clicks on the link
 }
 
 .login-dropdown {
@@ -27,6 +27,7 @@
     transform: translateZ(0);
     backface-visibility: hidden;
     -webkit-font-smoothing: antialiased;
+    pointer-events: auto; // Allow interactions with dropdown content
 
     &.is-mobile {
         position: fixed;

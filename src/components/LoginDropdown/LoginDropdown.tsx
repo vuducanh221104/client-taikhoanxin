@@ -196,20 +196,26 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        e.stopPropagation();
+        console.log('LoginDropdown: Form submit triggered', { username: formData.username, hasPassword: !!formData.password, hasTurnstileToken: !!turnstileToken });
+        
         setError('');
         setTurnstileError('');
 
         // Validate form
         if (!validateForm()) {
+            console.log('LoginDropdown: Form validation failed');
             return;
         }
 
         if (!turnstileToken) {
+            console.log('LoginDropdown: Turnstile token missing');
             setTurnstileError('Vui lòng xác minh bạn không phải robot.');
             return;
         }
 
         setLoading(true);
+        console.log('LoginDropdown: Calling authLogin API...');
 
         try {
             const response = await authLogin({
@@ -217,6 +223,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
                 password: formData.password,
                 turnstileToken,
             });
+            console.log('LoginDropdown: API response received', { success: response.success });
             
             // Check if login was successful
             if (response.success && response.data) {
@@ -315,8 +322,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
     }, [isOpen, onOverlayChange, mounted, setIsOpen]);
 
     return (
-        <Link 
-            href="/auth/login"
+        <div 
             className={cx('login-dropdown-wrapper')}
             ref={dropdownRef}
         >
@@ -329,8 +335,19 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
                     aria-modal="true"
                     aria-label="Đăng nhập"
                     onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
+                        // Only stop propagation, don't prevent default to allow form submission
+                        // Check if click is on form or form elements
+                        const target = e.target as HTMLElement;
+                        const isFormElement = target.closest('form') || 
+                                             target.tagName === 'INPUT' || 
+                                             target.tagName === 'BUTTON' || 
+                                             target.tagName === 'SELECT' || 
+                                             target.tagName === 'TEXTAREA' ||
+                                             target.closest('button');
+                        
+                        if (!isFormElement) {
+                            e.stopPropagation();
+                        }
                     }}
                     onMouseEnter={handleDropdownMouseEnter}
                     onMouseLeave={handleDropdownMouseLeave}
@@ -495,7 +512,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
                     </div>
                 </div>
             )}
-        </Link>
+        </div>
     );
 };
 

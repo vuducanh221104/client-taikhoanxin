@@ -170,6 +170,8 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
     const statusDropdownRef = React.useRef<HTMLDivElement>(null);
     const [amountError, setAmountError] = useState('');
     const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ordersPerPage = 5;
 
     // Close dropdown when clicking outside
     React.useEffect(() => {
@@ -307,6 +309,24 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
             return true;
         });
     }, [allOrders, appliedFilters]);
+
+    // Pagination calculations
+    const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+    const startIndex = (currentPage - 1) * ordersPerPage;
+    const endIndex = startIndex + ordersPerPage;
+    const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
+
+    // Reset to page 1 when filters change
+    React.useEffect(() => {
+        setCurrentPage(1);
+    }, [appliedFilters]);
+
+    // Adjust currentPage if it exceeds totalPages
+    React.useEffect(() => {
+        if (totalPages > 0 && currentPage > totalPages) {
+            setCurrentPage(totalPages);
+        }
+    }, [totalPages, currentPage]);
 
     const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
     const filterPanelRef = React.useRef<HTMLDivElement | null>(null);
@@ -774,17 +794,18 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
                         />
                     </div>
                 ) : (
-                    <div className={cx('orders-board')}>
-                        <div className={cx('orders-board-head')}>
-                            <span>Thời gian</span>
-                            <span>Mã đơn hàng</span>
-                            <span>Sản phẩm</span>
-                            <span>Tổng tiền</span>
-                            <span>Trạng thái</span>
-                            <span>Hành động</span>
-                        </div>
-                        <div className={cx('orders-board-body')}>
-                            {filteredOrders.map((order) => {
+                    <>
+                        <div className={cx('orders-board')}>
+                            <div className={cx('orders-board-head')}>
+                                <span>Thời gian</span>
+                                <span>Mã đơn hàng</span>
+                                <span>Sản phẩm</span>
+                                <span>Tổng tiền</span>
+                                <span>Trạng thái</span>
+                                <span>Hành động</span>
+                            </div>
+                            <div className={cx('orders-board-body')}>
+                                {paginatedOrders.map((order) => {
                                 const showCancelButton = canCancelOrder(order.status as Order['orderStatus']);
                                 const isCancelling = cancellingOrderId === order.id;
 
@@ -875,9 +896,64 @@ const OrderHistory: React.FC<OrderHistoryProps> = React.memo(({ userId }) => {
                                         </div>
                                     </div>
                                 );
-                            })}
+                                })}
+                            </div>
                         </div>
-                    </div>
+                        {/* Pagination */}
+                        {totalPages > 1 && (
+                            <div className={cx('pagination-wrapper')}>
+                                <div className={cx('pagination-info')}>
+                                    Hiển thị {startIndex + 1}-{Math.min(endIndex, filteredOrders.length)} trong tổng số {filteredOrders.length} đơn hàng
+                                </div>
+                                <div className={cx('pagination-controls')}>
+                                    <button
+                                        type="button"
+                                        className={cx('pagination-button', { disabled: currentPage === 1 })}
+                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                        disabled={currentPage === 1}
+                                    >
+                                        Trước
+                                    </button>
+                                    <div className={cx('pagination-pages')}>
+                                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                                            // Show first page, last page, current page, and pages around current
+                                            if (
+                                                page === 1 ||
+                                                page === totalPages ||
+                                                (page >= currentPage - 1 && page <= currentPage + 1)
+                                            ) {
+                                                return (
+                                                    <button
+                                                        key={page}
+                                                        type="button"
+                                                        className={cx('pagination-page', { active: currentPage === page })}
+                                                        onClick={() => setCurrentPage(page)}
+                                                    >
+                                                        {page}
+                                                    </button>
+                                                );
+                                            } else if (page === currentPage - 2 || page === currentPage + 2) {
+                                                return (
+                                                    <span key={page} className={cx('pagination-ellipsis')}>
+                                                        ...
+                                                    </span>
+                                                );
+                                            }
+                                            return null;
+                                        })}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className={cx('pagination-button', { disabled: currentPage === totalPages })}
+                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        Sau
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </div>

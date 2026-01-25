@@ -181,7 +181,14 @@ const UserActions: React.FC<UserActionsProps> = ({
                         onMouseEnter={handleLoginMouseEnter}
                         onMouseLeave={handleLoginMouseLeave}
                     >
-                        <Link href="/auth/login" className={cx('action-item')}>
+                        <Link 
+                            href="/auth/login" 
+                            className={cx('action-item')}
+                            onClick={(e) => {
+                                // Always allow navigation to login page when clicking the link
+                                // The dropdown wrapper has pointer-events: none so it won't block
+                            }}
+                        >
                             <div className={cx('action-icon-wrapper')}>
                                 <UserIcon />
                             </div>
