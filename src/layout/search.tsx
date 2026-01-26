@@ -21,7 +21,7 @@ import { useSWRConfig } from 'swr';
 const cx = classNames.bind(styles);
 const categoryCx = classNames.bind(categoryStyles);
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 12;
 
 const DEFAULT_PRICE_RANGE: [number, number] = [0, 10_000_000];
 const PRICE_SLIDER_STEP = 50_000;
@@ -129,20 +129,30 @@ const SearchLayout: React.FC = () => {
     const query = searchParams?.get('q') || '';
     const { mutate: globalMutate } = useSWRConfig();
     
+    // Read initial values from URL params
+    const pageFromUrl = parseInt(searchParams?.get('page') || '1', 10);
+    const sortFromUrl = searchParams?.get('sort') || 'default';
+    const minPriceFromUrl = searchParams?.get('minPrice') ? parseInt(searchParams.get('minPrice')!, 10) : DEFAULT_PRICE_RANGE[0];
+    const maxPriceFromUrl = searchParams?.get('maxPrice') ? parseInt(searchParams.get('maxPrice')!, 10) : DEFAULT_PRICE_RANGE[1];
+    
     const [searchValue, setSearchValue] = useState<string>(query);
-    const [priceRange, setPriceRange] = useState<[number, number]>(DEFAULT_PRICE_RANGE);
-    const [pendingPriceRange, setPendingPriceRange] = useState<[number, number]>(DEFAULT_PRICE_RANGE);
+    const [priceRange, setPriceRange] = useState<[number, number]>([minPriceFromUrl, maxPriceFromUrl]);
+    const [pendingPriceRange, setPendingPriceRange] = useState<[number, number]>([minPriceFromUrl, maxPriceFromUrl]);
     const [priceInputValues, setPriceInputValues] = useState<[string, string]>([
-        formatCurrency(DEFAULT_PRICE_RANGE[0]),
-        formatCurrency(DEFAULT_PRICE_RANGE[1])
+        formatCurrency(minPriceFromUrl),
+        formatCurrency(maxPriceFromUrl)
     ]);
     const [focusedInput, setFocusedInput] = useState<0 | 1 | null>(null);
-    const [sortBy, setSortBy] = useState('default');
+    const [sortBy, setSortBy] = useState(sortFromUrl);
     const [isSortOpen, setIsSortOpen] = useState(false);
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [accumulatedProducts, setAccumulatedProducts] = useState<SearchDisplayProduct[]>([]);
+    const [currentPage, setCurrentPage] = useState(pageFromUrl);
+    const [isLoadMoreLoading, setIsLoadMoreLoading] = useState(false);
     const sortDropdownRef = useRef<HTMLDivElement | null>(null);
+    const isInitialMountRef = useRef(true);
+    // Keep currentPage as UI page, but fetch from page=1 with increased limit to include page 1..currentPage.
+    const requestPage = 1;
+    const requestLimit = ITEMS_PER_PAGE * currentPage;
     
     // Map sortBy to backend sortBy and sortOrder
     const sortConfig = useMemo(() => {
@@ -163,19 +173,82 @@ const SearchLayout: React.FC = () => {
         }
     }, [sortBy]);
 
-    const { data: searchResponse, error: searchError, isLoading: isSearching } = useSearchProducts(query, {
-        page: currentPage,
-        limit: ITEMS_PER_PAGE,
+    const { data: searchResponse, error: searchError, isLoading, isValidating } = useSearchProducts(query, {
+        page: requestPage,
+        limit: requestLimit,
         minPrice: priceRange[0] !== DEFAULT_PRICE_RANGE[0] ? priceRange[0] : undefined,
         maxPrice: priceRange[1] !== DEFAULT_PRICE_RANGE[1] ? priceRange[1] : undefined,
         sortBy: sortConfig.sortBy,
         sortOrder: sortConfig.sortOrder,
     });
+    const isSearching = Boolean(isLoading || isValidating);
 
     const dispatch = useDispatch();
     const searchInputRef = useRef<HTMLInputElement>(null);
     const { toggleWishlist, isProductInWishlist, isLoggedIn } = useWishlist();
     const { showSuccess, showInfo, showError } = useToast();
+
+    // Mark initial mount as complete after first render
+    useEffect(() => {
+        isInitialMountRef.current = false;
+    }, []);
+
+    // Update URL params when state changes (skip on initial mount)
+    useEffect(() => {
+        // Skip on initial mount to avoid overriding URL params that come from URL
+        if (isInitialMountRef.current) {
+            return;
+        }
+
+        if (!query) return; // Don't update URL if no query
+        
+        const params = new URLSearchParams();
+        params.set('q', query);
+        
+        if (currentPage > 1) {
+            params.set('page', currentPage.toString());
+        }
+        if (sortBy !== 'default') {
+            params.set('sort', sortBy);
+        }
+        if (priceRange[0] !== DEFAULT_PRICE_RANGE[0]) {
+            params.set('minPrice', priceRange[0].toString());
+        }
+        if (priceRange[1] !== DEFAULT_PRICE_RANGE[1]) {
+            params.set('maxPrice', priceRange[1].toString());
+        }
+
+        const queryString = params.toString();
+        const newUrl = `/search?${queryString}`;
+        const currentUrl = window.location.pathname + window.location.search;
+        
+        // Only update URL if it's different to avoid infinite loops
+        if (currentUrl !== newUrl) {
+            router.replace(newUrl, { scroll: false });
+        }
+    }, [query, currentPage, sortBy, priceRange, router]);
+
+    // Read URL params when component mounts or URL changes (only when searchParams string changes)
+    useEffect(() => {
+        const page = parseInt(searchParams?.get('page') || '1', 10);
+        const sort = searchParams?.get('sort') || 'default';
+        const minPrice = searchParams?.get('minPrice') ? parseInt(searchParams.get('minPrice')!, 10) : DEFAULT_PRICE_RANGE[0];
+        const maxPrice = searchParams?.get('maxPrice') ? parseInt(searchParams.get('maxPrice')!, 10) : DEFAULT_PRICE_RANGE[1];
+
+        if (page !== currentPage && page >= 1) {
+            setCurrentPage(page);
+        }
+        if (sort !== sortBy) {
+            setSortBy(sort);
+        }
+        const newPriceRange: [number, number] = [minPrice, maxPrice];
+        if (newPriceRange[0] !== priceRange[0] || newPriceRange[1] !== priceRange[1]) {
+            setPriceRange(newPriceRange);
+            setPendingPriceRange(newPriceRange);
+            setPriceInputValues([formatCurrency(minPrice), formatCurrency(maxPrice)]);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams?.toString()]);
 
     // Update search value when query param changes
     useEffect(() => {
@@ -192,15 +265,15 @@ const SearchLayout: React.FC = () => {
         }
     }, [pendingPriceRange, focusedInput]);
 
-    // Reset page and accumulated products when filters or query change
+    // Reset page only when the search query changes (new search).
     useEffect(() => {
         setCurrentPage(1);
-        setAccumulatedProducts([]);
-    }, [query, priceRange, sortBy]);
+    }, [query]);
 
     // Handle search - if empty, go to tat-ca-san-pham page
     const handleSearch = () => {
         if (searchValue.trim()) {
+            // Reset to page 1 when starting new search
             router.push(`/search?q=${encodeURIComponent(searchValue.trim())}`);
         } else {
             // Redirect to all products page with pagination
@@ -275,7 +348,7 @@ const SearchLayout: React.FC = () => {
 
     const handleApplyFilters = () => {
         setPriceRange(pendingPriceRange);
-        setCurrentPage(1);
+        // Keep currentPage so filters apply to the currently loaded amount
         setIsMobileFilterOpen(false); // Close mobile filter on apply
     };
 
@@ -288,7 +361,8 @@ const SearchLayout: React.FC = () => {
             formatCurrency(DEFAULT_PRICE_RANGE[1])
         ]);
         setSortBy('default');
-        setCurrentPage(1);
+        // Keep currentPage so user keeps the currently loaded amount
+        // URL will be updated by useEffect when state updates
         // Force revalidate SWR cache to ensure fresh data is displayed
         setTimeout(() => {
             globalMutate(
@@ -320,28 +394,10 @@ const SearchLayout: React.FC = () => {
         });
     }, [query, searchResponse?.data]);
 
-    // Accumulate products from all loaded pages
-    useEffect(() => {
-        if (!query || query.trim().length === 0) {
-            setAccumulatedProducts([]);
-            return;
-        }
-
-        if (currentPage === 1) {
-            // First page: replace all
-            setAccumulatedProducts(currentPageProducts);
-        } else if (currentPageProducts.length > 0) {
-            // Subsequent pages: append new products (avoid duplicates)
-            setAccumulatedProducts((prev) => {
-                const existingIds = new Set(prev.map((p) => p.id));
-                const newProducts = currentPageProducts.filter((p) => !existingIds.has(p.id));
-                return [...prev, ...newProducts];
-            });
-        }
-    }, [currentPageProducts, currentPage, query]);
-
-    // Use accumulated products for display
-    const products = accumulatedProducts;
+    // Use currentPageProducts directly for display.
+    // Vì luôn fetch page=1 với limit = ITEMS_PER_PAGE * currentPage,
+    // danh sách này đã bao gồm từ page 1 đến page hiện tại.
+    const products = currentPageProducts;
 
     const handleAddToCart = (product: FeaturedProduct) => {
         dispatch(addToCart({
@@ -395,15 +451,30 @@ const SearchLayout: React.FC = () => {
     };
 
     const handleLoadMore = () => {
-        if (!isSearching && searchResponse?.pagination && currentPage < searchResponse.pagination.totalPages) {
-            setCurrentPage(prev => prev + 1);
+        const total = searchResponse?.pagination?.total;
+        const fixedTotalPages = typeof total === 'number' && total > 0 ? Math.ceil(total / ITEMS_PER_PAGE) : 0;
+        if (!isSearching && !isLoadMoreLoading && fixedTotalPages > 0 && currentPage < fixedTotalPages) {
+            // Set loading state to show skeleton immediately and prevent footer jump
+            setIsLoadMoreLoading(true);
+            
+            const nextPage = currentPage + 1;
+            setCurrentPage(nextPage);
+            // URL will be updated by useEffect above
+            // isLoadMoreLoading will be reset when isValidating becomes false (data loaded)
         }
     };
+
+    // Reset isLoadMoreLoading when data finishes loading
+    useEffect(() => {
+        if (isLoadMoreLoading && !isValidating && !isLoading) {
+            setIsLoadMoreLoading(false);
+        }
+    }, [isLoadMoreLoading, isValidating, isLoading]);
 
     const handleSelectSort = (value: string) => {
         setSortBy(value);
         setIsSortOpen(false);
-        setCurrentPage(1);
+        // Keep currentPage so sort applies to the currently loaded amount
     };
 
     const toggleSortDropdown = () => {
@@ -450,15 +521,19 @@ const SearchLayout: React.FC = () => {
 
     const trimmedQuery = query.trim();
     const shouldPromptForQuery = trimmedQuery.length === 0;
-    const isInitialLoading = isSearching && !shouldPromptForQuery && products.length === 0;
+    const _isInitialLoading = isSearching && !shouldPromptForQuery && products.length === 0;
     const searchErrorMessage = getErrorMessage(searchError);
-    const shouldShowNoResults = !isSearching && !shouldPromptForQuery && products.length === 0 && !searchError;
+    const _shouldShowNoResults = !isSearching && !shouldPromptForQuery && products.length === 0 && !searchError;
     
     // Empty state description - same format as category page
-    const emptyDescription = isSearching
+    const _emptyDescription = isSearching
         ? 'Đang tải sản phẩm...'
         : searchErrorMessage || 'Không tìm thấy sản phẩm nào.';
 
+    const totalResults =
+        searchResponse?.pagination?.total ??
+        (Array.isArray(searchResponse?.data) ? searchResponse.data.length : 0);
+    const fixedTotalPages = totalResults > 0 ? Math.ceil(totalResults / ITEMS_PER_PAGE) : 0;
 
     return (
         <div className={cx('search-page')}>
@@ -470,9 +545,9 @@ const SearchLayout: React.FC = () => {
                     </h1>
                     {query && searchResponse?.data && (
                         <p className={cx('search-results-count')}>
-                            Tìm thấy <strong>{searchResponse.pagination?.total || searchResponse.data.length}</strong> sản phẩm
-                            {searchResponse.pagination && (
-                                <> (Trang {searchResponse.pagination.page}/{searchResponse.pagination.totalPages})</>
+                            Tìm thấy <strong>{totalResults || searchResponse.data.length}</strong> sản phẩm
+                            {fixedTotalPages > 0 && (
+                                <> (Trang {currentPage}/{fixedTotalPages})</>
                             )}
                         </p>
                     )}
@@ -701,7 +776,7 @@ const SearchLayout: React.FC = () => {
                                     actionLabel="Thử lại"
                                     onAction={() => router.refresh()}
                                 />
-                            ) : isSearching ? (
+                            ) : isSearching && products.length === 0 ? (
                                 <div className={cx('products-grid')}>
                                     <ProductListSkeleton count={ITEMS_PER_PAGE} />
                                 </div>
@@ -726,6 +801,11 @@ const SearchLayout: React.FC = () => {
                                             onToggleFavorite={handleToggleFavorite}
                                         />
                                     ))}
+                                    
+                                    {/* Loading Skeleton for new products - Show skeleton cards right after current products */}
+                                    {(isLoadMoreLoading || (isValidating && currentPage > 1)) && (
+                                        <ProductListSkeleton count={ITEMS_PER_PAGE} />
+                                    )}
                                 </div>
                             ) : searchResponse ? (
                                 <EmptyState
@@ -738,16 +818,16 @@ const SearchLayout: React.FC = () => {
                             ) : null}
 
                             {/* Load More / Pagination */}
-                            {searchResponse?.pagination && searchResponse.pagination.totalPages > currentPage && (
+                            {fixedTotalPages > currentPage && (
                                 <div className={cx('load-more-section')}>
                                     <button
                                         className={cx('load-more-button')}
                                         onClick={handleLoadMore}
-                                        disabled={isSearching}
+                                        disabled={isSearching || isLoadMoreLoading}
                                         type="button"
                                     >
                                         <span>
-                                            {isSearching 
+                                            {(isSearching || isLoadMoreLoading)
                                                 ? 'Đang tải...' 
                                                 : `Xem thêm sản phẩm`}
                                         </span>

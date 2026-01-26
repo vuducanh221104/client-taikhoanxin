@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/useToast';
 import { EmptyState } from '@/components/EmptyState';
 import { PackageIcon } from '@/components/Icons';
+import { ProductListSkeleton } from '@/components/Skeleton';
 
 const cx = classNames.bind(styles);
 
@@ -70,6 +71,7 @@ export default function AllProductsPageClient() {
         sortBy: 'default',
     });
     const [displayLimit, setDisplayLimit] = useState<number>(INITIAL_DISPLAY_LIMIT);
+    const [isLoadMoreLoading, setIsLoadMoreLoading] = useState<boolean>(false);
 
     const dispatch = useDispatch();
     const router = useRouter();
@@ -185,7 +187,16 @@ export default function AllProductsPageClient() {
     };
 
     const handleLoadMore = () => {
-        setDisplayLimit(prev => prev + LOAD_MORE_INCREMENT);
+        // Set loading state to show skeleton and prevent footer jump
+        setIsLoadMoreLoading(true);
+        
+        // Use requestAnimationFrame to ensure skeleton is rendered before updating displayLimit
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                setDisplayLimit(prev => prev + LOAD_MORE_INCREMENT);
+                setIsLoadMoreLoading(false);
+            }, 100); // Small delay to ensure smooth transition
+        });
     };
 
     const handleFilterChange = useCallback((newFilters: FilterValues) => {
@@ -248,6 +259,11 @@ export default function AllProductsPageClient() {
                                     onToggleFavorite={handleToggleFavorite}
                                 />
                             ))}
+                            
+                            {/* Loading Skeleton for new products - Show skeleton cards right after current products */}
+                            {isLoadMoreLoading && (
+                                <ProductListSkeleton count={Math.min(LOAD_MORE_INCREMENT, filteredProducts.length - displayLimit)} />
+                            )}
                         </div>
 
                         {hasMoreProducts && (
@@ -255,10 +271,15 @@ export default function AllProductsPageClient() {
                                 <button
                                     className={cx('load-more-button')}
                                     onClick={handleLoadMore}
+                                    disabled={isLoadMoreLoading}
                                     type="button"
                                 >
-                                    <span>Xem thêm {Math.min(LOAD_MORE_INCREMENT, filteredProducts.length - displayLimit)} sản phẩm</span>
-                                    <PlusIcon size={20} />
+                                    <span>
+                                        {isLoadMoreLoading 
+                                            ? 'Đang tải...' 
+                                            : `Xem thêm ${Math.min(LOAD_MORE_INCREMENT, filteredProducts.length - displayLimit)} sản phẩm`}
+                                    </span>
+                                    {!isLoadMoreLoading && <PlusIcon size={20} />}
                                 </button>
                             </div>
                         )}

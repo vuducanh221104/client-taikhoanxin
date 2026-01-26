@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import classNames from 'classnames/bind';
 import styles from '@/app/(user)/categories/[slug]/page.module.scss';
 import ProductCard from '@/components/ProductCard/ProductCard';
@@ -77,6 +77,8 @@ const getSpecialPathName = (slug: string): string => {
 
 export default function CategoryDetailLayout() {
     const params = useParams();
+    const searchParams = useSearchParams();
+    const router = useRouter();
     const slug = params.slug as string;
     const { mutate: globalMutate } = useSWRConfig();
     
@@ -84,21 +86,32 @@ export default function CategoryDetailLayout() {
     const isSpecialPath = ['tat-ca-san-pham', 'san-pham-noi-bat', 'san-pham-ban-chay', 'san-pham-co-huy-hieu', 'san-pham-con-hang', 'san-pham-dang-giam-gia'].includes(slug);
     const categoryFallbackName = categoryNames[slug] || (isSpecialPath ? getSpecialPathName(slug) : 'Danh mục');
 
-    const [sortBy, setSortBy] = useState('default');
-    const [priceRange, setPriceRange] = useState<[number, number]>(DEFAULT_PRICE_RANGE);
-    const [pendingPriceRange, setPendingPriceRange] = useState<[number, number]>(DEFAULT_PRICE_RANGE);
+    // Read initial values from URL params
+    const pageFromUrl = parseInt(searchParams?.get('page') || '1', 10);
+    const sortFromUrl = searchParams?.get('sort') || 'default';
+    const minPriceFromUrl = searchParams?.get('minPrice') ? parseInt(searchParams.get('minPrice')!, 10) : DEFAULT_PRICE_RANGE[0];
+    const maxPriceFromUrl = searchParams?.get('maxPrice') ? parseInt(searchParams.get('maxPrice')!, 10) : DEFAULT_PRICE_RANGE[1];
+
+    const [sortBy, setSortBy] = useState(sortFromUrl);
+    const [priceRange, setPriceRange] = useState<[number, number]>([minPriceFromUrl, maxPriceFromUrl]);
+    const [pendingPriceRange, setPendingPriceRange] = useState<[number, number]>([minPriceFromUrl, maxPriceFromUrl]);
     const [priceInputValues, setPriceInputValues] = useState<[string, string]>([
-        formatCurrency(DEFAULT_PRICE_RANGE[0]),
-        formatCurrency(DEFAULT_PRICE_RANGE[1])
+        formatCurrency(minPriceFromUrl),
+        formatCurrency(maxPriceFromUrl)
     ]);
     const [focusedInput, setFocusedInput] = useState<0 | 1 | null>(null);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [accumulatedProducts, setAccumulatedProducts] = useState<FeaturedProduct[]>([]);
-    const itemsPerPage = 10;
+    const [currentPage, setCurrentPage] = useState(pageFromUrl);
+    const [isLoadMoreLoading, setIsLoadMoreLoading] = useState(false);
+    const itemsPerPage = 12;
+    // We keep "currentPage" as a UI concept (Load more = next page),
+    // but always fetch from page=1 with an increased limit so we get page 1..currentPage data.
+    const requestPage = 1;
+    const requestLimit = itemsPerPage * currentPage;
     const [isSortOpen, setIsSortOpen] = useState(false);
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
     const sortDropdownRef = useRef<HTMLDivElement | null>(null);
     const prevSlugRef = useRef<string | null>(null);
+    const isInitialMountRef = useRef(true);
 
     // Only fetch category if it's not a special path
     const { data: categoryData } = useCategory(isSpecialPath ? null : slug);
@@ -123,25 +136,25 @@ export default function CategoryDetailLayout() {
 
     // Use different hooks based on slug type
     const popularProductsQuery = usePopularProducts({
-        page: currentPage,
-        limit: itemsPerPage,
+        page: requestPage,
+        limit: requestLimit,
     });
     const bestSellingProductsQuery = useBestSellingProducts({
-        page: currentPage,
-        limit: itemsPerPage,
+        page: requestPage,
+        limit: requestLimit,
     });
     const badgeProductsQuery = useBadgeProducts({
-        page: currentPage,
-        limit: itemsPerPage,
+        page: requestPage,
+        limit: requestLimit,
     });
     const onSaleProductsQuery = useOnSaleProducts({
-        page: currentPage,
-        limit: itemsPerPage,
+        page: requestPage,
+        limit: requestLimit,
     });
     // Send price filter and sort to backend
     const regularProductsQuery = useProducts({
-        page: currentPage,
-        limit: itemsPerPage,
+        page: requestPage,
+        limit: requestLimit,
         categorySlug: isSpecialPath ? undefined : slug,
         minPrice: priceRange[0] !== DEFAULT_PRICE_RANGE[0] ? priceRange[0] : undefined,
         maxPrice: priceRange[1] !== DEFAULT_PRICE_RANGE[1] ? priceRange[1] : undefined,
@@ -151,28 +164,34 @@ export default function CategoryDetailLayout() {
     });
 
     // Select the appropriate query based on slug
-    let productsData, productsError, isProductsLoading;
+    let productsData, productsError, isProductsLoading, isProductsValidating;
     if (slug === 'san-pham-noi-bat') {
         productsData = popularProductsQuery.data;
         productsError = popularProductsQuery.error;
         isProductsLoading = popularProductsQuery.isLoading;
+        isProductsValidating = popularProductsQuery.isValidating;
     } else if (slug === 'san-pham-ban-chay') {
         productsData = bestSellingProductsQuery.data;
         productsError = bestSellingProductsQuery.error;
         isProductsLoading = bestSellingProductsQuery.isLoading;
+        isProductsValidating = bestSellingProductsQuery.isValidating;
     } else if (slug === 'san-pham-co-huy-hieu') {
         productsData = badgeProductsQuery.data;
         productsError = badgeProductsQuery.error;
         isProductsLoading = badgeProductsQuery.isLoading;
+        isProductsValidating = badgeProductsQuery.isValidating;
     } else if (slug === 'san-pham-dang-giam-gia') {
         productsData = onSaleProductsQuery.data;
         productsError = onSaleProductsQuery.error;
         isProductsLoading = onSaleProductsQuery.isLoading;
+        isProductsValidating = onSaleProductsQuery.isValidating;
     } else {
         productsData = regularProductsQuery.data;
         productsError = regularProductsQuery.error;
         isProductsLoading = regularProductsQuery.isLoading;
+        isProductsValidating = regularProductsQuery.isValidating;
     }
+    const isProductsFetching = Boolean(isProductsLoading || isProductsValidating);
 
     // Map products from current page (already filtered and sorted by server)
     const currentPageProducts = React.useMemo<FeaturedProduct[]>(() => {
@@ -180,32 +199,70 @@ export default function CategoryDetailLayout() {
         return productsData.data.map((product) => mapProductToFeaturedProduct(product));
     }, [productsData?.data]);
 
-    // Accumulate products from all loaded pages
-    useEffect(() => {
-        if (currentPage === 1) {
-            // First page: replace all
-            // Luôn update khi có data từ API (kể cả từ cache)
-            // Chỉ skip khi đang loading và chưa có data nào
-            if (currentPageProducts.length > 0) {
-                // Có data: update ngay
-                setAccumulatedProducts(currentPageProducts);
-            } else if (!isProductsLoading && productsData !== undefined) {
-                // Đã load xong và không có data: set empty array để hiển thị empty state
-                setAccumulatedProducts([]);
-            }
-            // Nếu đang loading và chưa có data, giữ nguyên accumulatedProducts (có thể từ cache)
-        } else if (currentPageProducts.length > 0) {
-            // Subsequent pages: append new products (avoid duplicates)
-            setAccumulatedProducts((prev) => {
-                const existingIds = new Set(prev.map((p) => p.id));
-                const newProducts = currentPageProducts.filter((p) => !existingIds.has(p.id));
-                return [...prev, ...newProducts];
-            });
-        }
-    }, [currentPageProducts, currentPage, isProductsLoading, productsData]);
+    // Use currentPageProducts directly for display.
+    // Vì ta luôn fetch page=1 với limit = itemsPerPage * currentPage,
+    // danh sách này đã bao gồm từ page 1 đến page hiện tại.
+    const products = currentPageProducts;
 
-    // Use accumulated products for display
-    const products = accumulatedProducts;
+    // Mark initial mount as complete after first render
+    useEffect(() => {
+        isInitialMountRef.current = false;
+    }, []);
+
+    // Update URL params when state changes (skip on initial mount)
+    useEffect(() => {
+        // Skip on initial mount to avoid overriding URL params that come from URL
+        if (isInitialMountRef.current) {
+            return;
+        }
+
+        const params = new URLSearchParams();
+        
+        if (currentPage > 1) {
+            params.set('page', currentPage.toString());
+        }
+        if (sortBy !== 'default') {
+            params.set('sort', sortBy);
+        }
+        if (priceRange[0] !== DEFAULT_PRICE_RANGE[0]) {
+            params.set('minPrice', priceRange[0].toString());
+        }
+        if (priceRange[1] !== DEFAULT_PRICE_RANGE[1]) {
+            params.set('maxPrice', priceRange[1].toString());
+        }
+
+        const queryString = params.toString();
+        const newUrl = queryString ? `${window.location.pathname}?${queryString}` : window.location.pathname;
+        const currentUrl = window.location.pathname + window.location.search;
+        
+        // Only update URL if it's different to avoid infinite loops
+        if (currentUrl !== newUrl) {
+            router.replace(newUrl, { scroll: false });
+        }
+    }, [currentPage, sortBy, priceRange, router]);
+
+    // Read URL params when component mounts or URL changes (only when searchParams string changes)
+    useEffect(() => {
+        const page = parseInt(searchParams?.get('page') || '1', 10);
+        const sort = searchParams?.get('sort') || 'default';
+        const minPrice = searchParams?.get('minPrice') ? parseInt(searchParams.get('minPrice')!, 10) : DEFAULT_PRICE_RANGE[0];
+        const maxPrice = searchParams?.get('maxPrice') ? parseInt(searchParams.get('maxPrice')!, 10) : DEFAULT_PRICE_RANGE[1];
+
+        // Only update state if values from URL are different
+        if (page !== currentPage && page >= 1) {
+            setCurrentPage(page);
+        }
+        if (sort !== sortBy) {
+            setSortBy(sort);
+        }
+        const newPriceRange: [number, number] = [minPrice, maxPrice];
+        if (newPriceRange[0] !== priceRange[0] || newPriceRange[1] !== priceRange[1]) {
+            setPriceRange(newPriceRange);
+            setPendingPriceRange(newPriceRange);
+            setPriceInputValues([formatCurrency(minPrice), formatCurrency(maxPrice)]);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams?.toString()]);
 
     // Reset state khi slug thay đổi (chuyển sang category khác)
     // Chỉ reset khi slug thực sự thay đổi, không reset khi quay lại cùng slug
@@ -213,25 +270,27 @@ export default function CategoryDetailLayout() {
         // Chỉ reset khi slug thực sự thay đổi (không phải khi component remount với cùng slug)
         if (prevSlugRef.current !== null && prevSlugRef.current !== slug) {
             setCurrentPage(1);
-            setAccumulatedProducts([]);
+            // Clear URL params when switching categories
+            router.replace(window.location.pathname, { scroll: false });
         }
         prevSlugRef.current = slug;
-    }, [slug]);
+    }, [slug, router]);
 
     useEffect(() => {
-        const maxPage = productsData?.pagination?.totalPages ?? 0;
+        // Clamp currentPage only when we have a stable total from server (avoid clamping on initial loading).
+        const total = productsData?.pagination?.total;
+        if (typeof total !== 'number' || isProductsLoading) return;
 
+        const maxPage = total > 0 ? Math.ceil(total / itemsPerPage) : 0;
         if (maxPage > 0 && currentPage > maxPage) {
             setCurrentPage(maxPage);
         } else if (maxPage === 0 && currentPage !== 1) {
             setCurrentPage(1);
         }
-    }, [currentPage, productsData?.pagination?.totalPages]);
+    }, [currentPage, productsData?.pagination?.total, isProductsLoading, itemsPerPage]);
 
     const handleSortChange = (value: string) => {
         setSortBy(value);
-        setCurrentPage(1);
-        setAccumulatedProducts([]);
     };
 
     // Update input display values when pendingPriceRange changes (from slider)
@@ -306,8 +365,6 @@ export default function CategoryDetailLayout() {
 
     const handleApplyFilters = () => {
         setPriceRange(pendingPriceRange);
-        setCurrentPage(1);
-        setAccumulatedProducts([]);
         setIsMobileFilterOpen(false); // Close mobile filter on apply
     };
 
@@ -320,8 +377,7 @@ export default function CategoryDetailLayout() {
             formatCurrency(DEFAULT_PRICE_RANGE[1])
         ]);
         setSortBy('default');
-        setCurrentPage(1);
-        setAccumulatedProducts([]);
+        // URL will be cleared by useEffect when state updates
         // Force revalidate SWR cache to fetch fresh data with default filters
         setTimeout(() => {
             globalMutate(
@@ -333,15 +389,28 @@ export default function CategoryDetailLayout() {
     };
 
     const categoryName = categoryData?.data?.category?.name || categoryFallbackName;
-    const totalPages = productsData?.pagination?.totalPages ?? 0;
     const productCount = productsData?.pagination?.total ?? 0;
-    const hasMoreProducts = currentPage < totalPages;
-    const isLoadMoreLoading = isProductsLoading && currentPage > 1;
+    const totalPages = productCount > 0 ? Math.ceil(productCount / itemsPerPage) : 0;
+    const hasMoreProducts = productCount > 0 ? products.length < productCount : currentPage < totalPages;
+    const isLoadMoreFetching = isProductsFetching && currentPage > 1;
 
     const handleLoadMore = () => {
-        if (!hasMoreProducts || isProductsLoading) return;
-        setCurrentPage((prev) => prev + 1);
+        if (!hasMoreProducts || isProductsLoading || isLoadMoreLoading) return;
+        // Set loading state immediately to show skeleton before data loads
+        setIsLoadMoreLoading(true);
+        
+        const nextPage = currentPage + 1;
+        setCurrentPage(nextPage);
+        // URL will be updated by useEffect above
+        // isLoadMoreLoading will be reset when data finishes loading
     };
+
+    // Reset isLoadMoreLoading when data finishes loading
+    useEffect(() => {
+        if (isLoadMoreLoading && !isProductsValidating && !isProductsLoading) {
+            setIsLoadMoreLoading(false);
+        }
+    }, [isLoadMoreLoading, isProductsValidating, isProductsLoading]);
     const hasActiveFilters =
         sortBy !== 'default' ||
         priceRange[0] !== DEFAULT_PRICE_RANGE[0] ||
@@ -655,7 +724,7 @@ export default function CategoryDetailLayout() {
                                 actionLabel="Thử lại"
                                 onAction={() => window.location.reload()}
                             />
-                        ) : isProductsLoading && products.length === 0 ? (
+                        ) : isProductsFetching && products.length === 0 ? (
                             <div className={cx('products-grid')}>
                                 <ProductListSkeleton count={itemsPerPage} />
                             </div>
@@ -681,6 +750,11 @@ export default function CategoryDetailLayout() {
                                             />
                                         );
                                     })}
+                                    
+                                    {/* Loading Skeleton for new products - Show skeleton cards right after current products */}
+                                    {(isLoadMoreLoading || isLoadMoreFetching) && (
+                                        <ProductListSkeleton count={itemsPerPage} />
+                                    )}
                                 </div>
 
                                 {/* Load More */}
@@ -690,10 +764,10 @@ export default function CategoryDetailLayout() {
                                             type="button"
                                             className={cx('load-more-button')}
                                             onClick={handleLoadMore}
-                                            disabled={isLoadMoreLoading}
+                                            disabled={isLoadMoreLoading || isProductsLoading}
                                         >
                                             <span>
-                                                {isLoadMoreLoading 
+                                                {(isLoadMoreLoading || isProductsLoading)
                                                     ? 'Đang tải...' 
                                                     : `Xem thêm sản phẩm`}
                                             </span>
@@ -701,7 +775,7 @@ export default function CategoryDetailLayout() {
                                     </div>
                                 )}
                             </>
-                        ) : !isProductsLoading && productsData ? (
+                        ) : !isProductsFetching && productsData ? (
                             <EmptyState
                                 type="products"
                                 title="Không có sản phẩm"

@@ -395,7 +395,7 @@ export default function ForgotPasswordLayout() {
                     </div>
                     <div className={cx('security-badge')}>
                         <span className={cx('badge-dot')} />
-                        Mã hóa SSL & Cloudflare Turnstile
+                        Tài Khoản Xịn 
                     </div>
                 </section>
 

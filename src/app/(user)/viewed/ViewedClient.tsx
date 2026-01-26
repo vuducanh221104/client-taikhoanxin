@@ -59,6 +59,7 @@ export default function ViewedProductsPage() {
         sortBy: 'default',
     });
     const [displayLimit, setDisplayLimit] = useState<number>(INITIAL_DISPLAY_LIMIT);
+    const [isLoadMoreLoading, setIsLoadMoreLoading] = useState<boolean>(false);
 
     const dispatch = useDispatch();
     const currentUser = useSelector((state: RootState) => state.auth.login?.currentUser);
@@ -254,7 +255,16 @@ export default function ViewedProductsPage() {
     };
 
     const handleLoadMore = () => {
-        setDisplayLimit(prev => prev + LOAD_MORE_INCREMENT);
+        // Set loading state to show skeleton and prevent footer jump
+        setIsLoadMoreLoading(true);
+        
+        // Use requestAnimationFrame to ensure skeleton is rendered before updating displayLimit
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                setDisplayLimit(prev => prev + LOAD_MORE_INCREMENT);
+                setIsLoadMoreLoading(false);
+            }, 100); // Small delay to ensure smooth transition
+        });
     };
 
     const handleFilterChange = useCallback((newFilters: FilterValues) => {
@@ -333,6 +343,11 @@ export default function ViewedProductsPage() {
                                     onAddToCart={() => handleAddToCart(product)}
                                 />
                             ))}
+                            
+                            {/* Loading Skeleton for new products - Show skeleton cards right after current products */}
+                            {isLoadMoreLoading && (
+                                <ProductListSkeleton count={Math.min(LOAD_MORE_INCREMENT, remainingProducts)} />
+                            )}
                         </div>
 
                         {/* Load More */}
@@ -342,11 +357,14 @@ export default function ViewedProductsPage() {
                                     type="button"
                                     className={cx('load-more-button')}
                                     onClick={handleLoadMore}
+                                    disabled={isLoadMoreLoading}
                                 >
                                     <span>
-                                        Xem thêm {Math.min(LOAD_MORE_INCREMENT, remainingProducts)} sản phẩm
+                                        {isLoadMoreLoading 
+                                            ? 'Đang tải...' 
+                                            : `Xem thêm ${Math.min(LOAD_MORE_INCREMENT, remainingProducts)} sản phẩm`}
                                     </span>
-                                    <PlusIcon size={20} />
+                                    {!isLoadMoreLoading && <PlusIcon size={20} />}
                                 </button>
                             </div>
                         )}
