@@ -41,11 +41,9 @@ module.exports = {
         dangerouslyAllowSVG: true,
         contentDispositionType: 'attachment',
         contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-        // Optimize image loading
-        unoptimized: false,
-        // Enable image optimization
+        // Bypass Next.js Image Optimizer - dùng trực tiếp CDN để tránh lỗi mất ảnh khi optimizer/cache lỗi
+        unoptimized: true,
         loader: 'default',
-        // Enable image optimization for CDN
         domains: ['cdn.taikhoanxin.com', 'res.cloudinary.com'],
     },
     // Performance optimizations
