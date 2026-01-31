@@ -147,7 +147,9 @@ export default function AllProductsPageClient() {
             min: product.min,
             max: product.max,
         }));
-        showSuccess(`Đã thêm "${product.productName}" vào giỏ hàng`);
+        showSuccess(`Đã thêm "${product.productName}" vào giỏ hàng`, 3000, () => {
+            router.push('/cart');
+        });
     };
 
     const handleToggleFavorite = async (productId: string) => {

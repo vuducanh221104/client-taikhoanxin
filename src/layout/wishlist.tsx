@@ -13,6 +13,7 @@ import styles from '@/app/(user)/wishlist/page.module.scss';
 import { HeartIcon } from '@/components/Icons';
 import { EmptyState } from '@/components/EmptyState';
 import { useWishlist } from '@/hooks/useWishlist';
+import { useRouter } from 'next/navigation';
 
 const cx = classNames.bind(styles);
 
@@ -24,6 +25,7 @@ const WishlistLayout: React.FC = () => {
         isLoading: isWishlistLoading,
     } = useWishlist();
     const { showSuccess, showError } = useToast();
+    const router = useRouter();
     const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
     const [hasFetchedWishlist, setHasFetchedWishlist] = useState(false);
 
@@ -67,7 +69,9 @@ const WishlistLayout: React.FC = () => {
             min: (item as any).min,
             max: (item as any).max,
         }));
-        showSuccess(`Đã thêm "${item.productName}" vào giỏ hàng`);
+        showSuccess(`Đã thêm "${item.productName}" vào giỏ hàng`, 3000, () => {
+            router.push('/cart');
+        });
     };
 
     const handleRemoveFromWishlist = async (item: WishlistItem) => {

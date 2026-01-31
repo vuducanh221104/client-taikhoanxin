@@ -8,15 +8,16 @@ export interface ToastItem {
     message: string;
     type: ToastType;
     duration?: number;
+    onClick?: () => void;
 }
 
 interface ToastContextType {
     toasts: ToastItem[];
-    showToast: (message: string, type: ToastType, duration?: number) => void;
-    showSuccess: (message: string, duration?: number) => void;
-    showError: (message: string, duration?: number) => void;
-    showWarning: (message: string, duration?: number) => void;
-    showInfo: (message: string, duration?: number) => void;
+    showToast: (message: string, type: ToastType, duration?: number, onClick?: () => void) => void;
+    showSuccess: (message: string, duration?: number, onClick?: () => void) => void;
+    showError: (message: string, duration?: number, onClick?: () => void) => void;
+    showWarning: (message: string, duration?: number, onClick?: () => void) => void;
+    showInfo: (message: string, duration?: number, onClick?: () => void) => void;
     removeToast: (id: string) => void;
     clearToasts: () => void;
 }
@@ -38,32 +39,33 @@ interface ToastProviderProps {
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-    const showToast = useCallback((message: string, type: ToastType, duration: number = 3000) => {
+    const showToast = useCallback((message: string, type: ToastType, duration: number = 3000, onClick?: () => void) => {
         const id = `toast-${Date.now()}-${Math.random()}`;
         const newToast: ToastItem = {
             id,
             message,
             type,
             duration,
+            onClick,
         };
 
         setToasts((prev) => [...prev, newToast]);
     }, []);
 
-    const showSuccess = useCallback((message: string, duration: number = 3000) => {
-        showToast(message, 'success', duration);
+    const showSuccess = useCallback((message: string, duration: number = 3000, onClick?: () => void) => {
+        showToast(message, 'success', duration, onClick);
     }, [showToast]);
 
-    const showError = useCallback((message: string, duration: number = 4000) => {
-        showToast(message, 'error', duration);
+    const showError = useCallback((message: string, duration: number = 4000, onClick?: () => void) => {
+        showToast(message, 'error', duration, onClick);
     }, [showToast]);
 
-    const showWarning = useCallback((message: string, duration: number = 3000) => {
-        showToast(message, 'warning', duration);
+    const showWarning = useCallback((message: string, duration: number = 3000, onClick?: () => void) => {
+        showToast(message, 'warning', duration, onClick);
     }, [showToast]);
 
-    const showInfo = useCallback((message: string, duration: number = 3000) => {
-        showToast(message, 'info', duration);
+    const showInfo = useCallback((message: string, duration: number = 3000, onClick?: () => void) => {
+        showToast(message, 'info', duration, onClick);
     }, [showToast]);
 
     const removeToast = useCallback((id: string) => {

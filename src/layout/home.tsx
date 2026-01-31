@@ -20,6 +20,7 @@ import { AppDispatch } from '@/redux/store';
 import { addToCart } from '@/redux/cartSlice';
 import { FeaturedProduct } from '@/components/FeaturedProducts';
 import { useToast } from '@/hooks/useToast';
+import { useRouter } from 'next/navigation';
 import { useHomePage, FeaturedProductSection as FeaturedProductSectionType } from '@/services/homePageService';
 import { useProducts, usePopularProducts, useFeaturedProducts, useBestSellingProducts, useProductsByIds, mapProductToFeaturedProduct, parseProductQuery } from '@/services/productService';
 import { ProductListSkeleton } from '@/components/Skeleton';
@@ -43,6 +44,7 @@ const cx = classNames.bind(styles);
 export default function Home() {
     const dispatch = useDispatch<AppDispatch>();
     const { showSuccess } = useToast();
+    const router = useRouter();
     const { data: homePageData, error, isLoading } = useHomePage();
     const [isMobile, setIsMobile] = useState(false);
 
@@ -225,7 +227,9 @@ export default function Home() {
             min: product.min,
             max: product.max,
         }));
-        showSuccess(`Đã thêm "${product.productName}" vào giỏ hàng`);
+        showSuccess(`Đã thêm "${product.productName}" vào giỏ hàng`, 3000, () => {
+            router.push('/cart');
+        });
     };
 
     // Loading state - show skeleton or fallback

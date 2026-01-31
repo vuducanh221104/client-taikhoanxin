@@ -18,6 +18,7 @@ export interface ToastProps {
     variant?: ToastType;
     duration?: number;
     onClose: (id: string) => void;
+    onClick?: () => void;
 }
 
 const Toast: React.FC<ToastProps> = ({
@@ -26,6 +27,7 @@ const Toast: React.FC<ToastProps> = ({
     variant = 'info',
     duration = 5000,
     onClose,
+    onClick,
 }) => {
     useEffect(() => {
         if (duration > 0) {
@@ -52,13 +54,29 @@ const Toast: React.FC<ToastProps> = ({
         }
     };
 
+    const handleClick = (e: React.MouseEvent) => {
+        // Don't trigger onClick if clicking the close button
+        if ((e.target as HTMLElement).closest('.toast-close')) {
+            return;
+        }
+        if (onClick) {
+            onClick();
+        }
+    };
+
     return (
-        <div className={cx('toast', variant)}>
+        <div 
+            className={cx('toast', variant, { 'clickable': !!onClick })}
+            onClick={handleClick}
+        >
             <div className={cx('toast-icon')}>{getIcon()}</div>
             <div className={cx('toast-message')}>{message}</div>
             <button
                 className={cx('toast-close')}
-                onClick={() => onClose(id)}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onClose(id);
+                }}
                 aria-label="Close notification"
             >
                 <X size={18} />

@@ -348,7 +348,8 @@ const SearchLayout: React.FC = () => {
 
     const handleApplyFilters = () => {
         setPriceRange(pendingPriceRange);
-        // Keep currentPage so filters apply to the currently loaded amount
+        // Reset to page 1 when applying filters to show correct results
+        setCurrentPage(1);
         setIsMobileFilterOpen(false); // Close mobile filter on apply
     };
 
@@ -412,7 +413,9 @@ const SearchLayout: React.FC = () => {
             min: product.min,
             max: product.max,
         }));
-        showSuccess(`Đã thêm "${product.productName}" vào giỏ hàng`);
+        showSuccess(`Đã thêm "${product.productName}" vào giỏ hàng`, 3000, () => {
+            router.push('/cart');
+        });
     };
 
     const handleToggleFavorite = async (productId: string) => {
@@ -507,6 +510,8 @@ const SearchLayout: React.FC = () => {
     const hasActiveFilters = priceRange[0] !== DEFAULT_PRICE_RANGE[0] || 
                              priceRange[1] !== DEFAULT_PRICE_RANGE[1] ||
                              sortBy !== 'default';
+    const hasPendingPriceChanges =
+        pendingPriceRange[0] !== priceRange[0] || pendingPriceRange[1] !== priceRange[1];
 
     // Calculate slider style
     const sliderStyle = useMemo(() => {
@@ -697,10 +702,16 @@ const SearchLayout: React.FC = () => {
                                 <button
                                     className={categoryCx('apply-filters-button')}
                                     onClick={handleApplyFilters}
+                                    disabled={!hasPendingPriceChanges}
                                     type="button"
                                 >
                                     Áp dụng bộ lọc
                                 </button>
+                                <p className={categoryCx('filters-hint')}>
+                                    {hasPendingPriceChanges
+                                        ? 'Bạn có thay đổi chưa được áp dụng.'
+                                        : 'Tất cả bộ lọc đã được áp dụng.'}
+                                </p>
                             </div>
                         </aside>
 

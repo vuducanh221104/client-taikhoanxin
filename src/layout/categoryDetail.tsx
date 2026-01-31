@@ -365,6 +365,8 @@ export default function CategoryDetailLayout() {
 
     const handleApplyFilters = () => {
         setPriceRange(pendingPriceRange);
+        // Reset to page 1 when applying filters to show correct results
+        setCurrentPage(1);
         setIsMobileFilterOpen(false); // Close mobile filter on apply
     };
 

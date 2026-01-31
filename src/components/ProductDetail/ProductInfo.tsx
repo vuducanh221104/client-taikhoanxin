@@ -335,7 +335,9 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
             // Xóa mã giảm giá khi thêm sản phẩm mới vào cart (guest)
             dispatch(removeCoupon());
             dispatch(clearDiscountCode());
-            showSuccess(`Đã thêm "${product.productName}" vào giỏ hàng`);
+            showSuccess(`Đã thêm "${product.productName}" vào giỏ hàng`, 3000, () => {
+                router.push('/cart');
+            });
             return true;
         }
 
@@ -363,7 +365,9 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                 }
                 
                 await globalMutate('/api/v1/cart', undefined, { revalidate: true });
-                showSuccess(`Đã thêm "${product.productName}" vào giỏ hàng`);
+                showSuccess(`Đã thêm "${product.productName}" vào giỏ hàng`, 3000, () => {
+                    router.push('/cart');
+                });
                 isSuccess = true;
             } else {
                 throw new Error('Không thể thêm sản phẩm vào giỏ hàng');
