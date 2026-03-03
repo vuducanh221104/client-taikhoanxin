@@ -166,7 +166,6 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
                         />
                     ) : 
                 <div className={cx('products-grid')}>
-                    
                     {displayProducts.length > 0 ? (
                         displayProducts.map((product, index) => {
                             const { stock: numericStock, ...restProduct } = product;
