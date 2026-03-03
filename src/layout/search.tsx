@@ -788,9 +788,7 @@ const SearchLayout: React.FC = () => {
                                     onAction={() => router.refresh()}
                                 />
                             ) : isSearching && products.length === 0 ? (
-                                <div className={cx('products-grid')}>
                                     <ProductListSkeleton count={ITEMS_PER_PAGE} />
-                                </div>
                             ) : products.length > 0 ? (
                                 <div className={cx('products-grid')}>
                                     {products.map((product) => (

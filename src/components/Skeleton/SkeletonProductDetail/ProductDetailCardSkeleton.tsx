@@ -2,15 +2,15 @@
 
 import React, { useMemo } from 'react';
 import classNames from 'classnames/bind';
-import styles from './Skeleton.module.scss';
+import styles from './ProductDetailSkeleton.module.scss';
 
 const cx = classNames.bind(styles);
 
-interface ProductCardSkeletonProps {
+interface ProductDetailCardSkeletonProps {
     variant?: 'light' | 'dark';
 }
 
-const ProductCardSkeleton: React.FC<ProductCardSkeletonProps> = ({ variant = 'light' }) => {
+const ProductDetailCardSkeleton: React.FC<ProductDetailCardSkeletonProps> = ({ variant = 'light' }) => {
     const stars = useMemo(() => {
         return Array.from({ length: 5 }, (_, i) => (
             <div key={`star-${i}`} className={cx('skeleton-star')} />
@@ -45,5 +45,5 @@ const ProductCardSkeleton: React.FC<ProductCardSkeletonProps> = ({ variant = 'li
     );
 };
 
-export default React.memo(ProductCardSkeleton);
+export default React.memo(ProductDetailCardSkeleton);
 

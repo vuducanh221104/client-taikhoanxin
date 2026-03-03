@@ -51,6 +51,22 @@ export type ViewedProductsResponse = ProductListResponse & {
     data: Product[];
 };
 
+// Topup Status types
+export interface TopupStatusResponse {
+    success: boolean;
+    data: {
+        topupDismissed: boolean;
+    };
+}
+
+export interface TopupDismissResponse {
+    success: boolean;
+    data: {
+        topupDismissed: boolean;
+        topupDismissedAt: string;
+    };
+}
+
 // ============================================
 // GET HOOKS (SWR)
 // ============================================
@@ -78,6 +94,15 @@ export const useViewedProducts = (
     const enabled = options?.enabled ?? true;
     const key = enabled ? `/api/v1/users/viewed-products${queryString}` : null;
     return useSWRUser<ViewedProductsResponse>(key);
+};
+
+/**
+ * Get Topup dismissal status
+ */
+export const useTopupStatus = (options?: { enabled?: boolean }) => {
+    const enabled = options?.enabled ?? true;
+    const key = enabled ? '/api/v1/users/topup/status' : null;
+    return useSWRUser<TopupStatusResponse>(key);
 };
 
 // ============================================
@@ -130,5 +155,13 @@ export const removeViewedProduct = async (productId: string): Promise<{ success:
  */
 export const clearViewedProducts = async (): Promise<{ success: boolean; message: string }> => {
     const response = await del<{ success: boolean; message: string }>('/api/v1/users/viewed-products');
+    return response.data;
+};
+
+/**
+ * Dismiss Topup (Terms of Service) popup
+ */
+export const dismissTopup = async (): Promise<TopupDismissResponse> => {
+    const response = await post<TopupDismissResponse>('/api/v1/users/topup/dismiss', {});
     return response.data;
 };

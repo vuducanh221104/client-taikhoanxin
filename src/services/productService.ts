@@ -349,7 +349,10 @@ export const useRelatedProducts = (slug?: string, params?: { limit?: number }) =
         key = `/api/v1/products/${slug}/related${queryString}`;
     }
 
-    return useSWRUser<ProductListResponse>(key);
+    // Disable deduplication to ensure fresh data when navigating between products
+    return useSWRUser<ProductListResponse>(key, {
+        dedupingInterval: 0,
+    });
 };
 
 /**

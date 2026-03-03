@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import classNames from 'classnames/bind';
 import styles from '@/app/(user)/checkout/page.module.scss';
 import { useSelector, useDispatch } from 'react-redux';
@@ -65,6 +65,8 @@ const CheckoutLayout: React.FC = () => {
     const [touched, setTouched] = useState<Record<string, boolean>>({});
     const [submitting, setSubmitting] = useState(false);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('qr-bank-transfer');
+    // State for login prompt modal - show by default for guest users
+    const [showLoginPrompt, setShowLoginPrompt] = useState(true);
     // Lưu giá cart trước khi submit để giữ nguyên khi đang xử lý
     const savedCartRef = useRef<any>(null);
 
@@ -101,6 +103,22 @@ const CheckoutLayout: React.FC = () => {
             }));
         }
     }, [currentUser, mounted]);
+
+    // Handler for login prompt - redirect to login page with cart redirect
+    const handleLoginPrompt = useCallback(() => {
+        // Lưu cart vào sessionStorage để restore sau khi đăng nhập
+        if (typeof window !== 'undefined' && reduxCart.products.length > 0) {
+            sessionStorage.setItem('redirectAfterLogin', '/cart');
+            // Lưu cart items để restore sau khi đăng nhập
+            sessionStorage.setItem('guestCart', JSON.stringify(reduxCart.products));
+        }
+        router.push('/auth/login?redirect=/cart');
+    }, [router, reduxCart.products]);
+
+    // Handler để tiếp tục thanh toán với tư cách guest
+    const handleContinueAsGuest = useCallback(() => {
+        setShowLoginPrompt(false);
+    }, []);
 
     // Calculate cartEmpty early based on cart data
     const cartEmpty = useMemo(() => {
@@ -993,6 +1011,42 @@ const CheckoutLayout: React.FC = () => {
     return (
         <div className={cx('checkout-page')}>
             <div className="container">
+                {/* Login Prompt Modal for Guest Users */}
+                {showLoginPrompt && !isLoggedIn && !cartEmpty && (
+                    <div className={cx('login-prompt-modal-backdrop')} onClick={handleContinueAsGuest}>
+                        <div className={cx('login-prompt-modal')} onClick={(e) => e.stopPropagation()}>
+                            <div className={cx('login-prompt-modal-icon')}>
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                            </div>
+                            <h2 className={cx('login-prompt-modal-title')}>
+                                Đăng nhập để nhận nhiều ưu đãi
+                            </h2>
+                            <p className={cx('login-prompt-modal-desc')}>
+                                Đăng nhập ngay để tích điểm, sử dụng mã giảm giá dành riêng cho thành viên và thanh toán nhanh hơn!
+                            </p>
+                            <div className={cx('login-prompt-modal-actions')}>
+                                <button 
+                                    className={cx('login-prompt-modal-btn', 'login-btn')} 
+                                    onClick={handleLoginPrompt}
+                                    type="button"
+                                >
+                                    Đăng nhập ngay
+                                </button>
+                                <button 
+                                    className={cx('login-prompt-modal-btn', 'guest-btn')} 
+                                    onClick={handleContinueAsGuest}
+                                    type="button"
+                                >
+                                    Tiếp tục mua hàng
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <ProgressIndicator steps={checkoutSteps} currentStep={currentStepIndex} />
 
                 <div className={cx('grid')}>

@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { ToastProvider } from '@/components/Toast';
+import PopupHome from '@/components/PopupHome/PopupHome';
 
 // Lazy load Header, Footer, and BottomNavigation for better performance
 const Header = dynamic(() => import('@/components/Header'), {
@@ -23,10 +24,15 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     const pathname = usePathname();
     const isToolsPage = pathname?.startsWith('/tools') ?? false;
     const isHelpPage = pathname?.startsWith('/help') ?? false;
+    const isHomePage = pathname === '/' || pathname === '/home';
 
     // Hide Header and Footer for tools and help pages
     if (isToolsPage || isHelpPage) {
-        return <ToastProvider>{children}</ToastProvider>;
+        return (
+            <ToastProvider>
+                {children}
+            </ToastProvider>
+        );
     }
 
     return (
@@ -37,6 +43,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
             </main>
             <Footer />
             <BottomNavigation />
+            {isHomePage && <PopupHome />}
         </ToastProvider>
     );
 }

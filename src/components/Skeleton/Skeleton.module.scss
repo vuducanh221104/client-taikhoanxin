@@ -54,6 +54,7 @@
     gap: 12px;
     min-height: 0;
     box-sizing: border-box;
+    max-height: 303px;
 
     &.dark-variant {
         background: rgba(255, 255, 255, 0.05);
@@ -74,6 +75,7 @@
     margin-bottom: 0;
     min-height: 0;
     flex-shrink: 0;
+    max-height: 170px !important;
 }
 
 .skeleton-content {

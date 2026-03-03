@@ -727,7 +727,7 @@ export default function CategoryDetailLayout() {
                                 onAction={() => window.location.reload()}
                             />
                         ) : isProductsFetching && products.length === 0 ? (
-                            <div className={cx('products-grid')}>
+                            <div className={cx('')}>
                                 <ProductListSkeleton count={itemsPerPage} />
                             </div>
                         ) : products.length > 0 ? (

@@ -28,6 +28,12 @@ export interface PopupSection {
     image: string;
 }
 
+export interface TopupSection {
+    title: string;
+    content: string;
+    isEnabled: boolean;
+}
+
 export interface MenuItem {
     _id?: string;
     href: string;
@@ -72,6 +78,7 @@ export interface HomePage {
     category: CategorySection;
     news: NewsSection;
     popup: PopupSection;
+    topup: TopupSection; // Thông báo từ admin
     menu: MenuItem[];
     trendingSearch: TrendingSearchSection;
     featuredProduct: FeaturedProductSection[];

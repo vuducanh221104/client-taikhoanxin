@@ -158,13 +158,16 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
                 </div>
 
                 {/* Products Grid */}
-                <div className={cx('products-grid')}>
+                <div className={cx('')}>
                     {isLoading ? (
                         <ProductListSkeleton
                             count={skeletonCount}
                             variant={isDarkBackground ? 'dark' : 'light'}
                         />
-                    ) : displayProducts.length > 0 ? (
+                    ) : 
+                <div className={cx('products-grid')}>
+                    
+                    {displayProducts.length > 0 ? (
                         displayProducts.map((product, index) => {
                             const { stock: numericStock, ...restProduct } = product;
                             return (
@@ -188,7 +191,7 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
                             actionLabel={discoverButtonText || 'Khám phá sản phẩm'}
                             actionHref={discoverButtonHref || '/products'}
                         />
-                    )}
+                    )}</div>}
                 </div>
             </div>
         </section>

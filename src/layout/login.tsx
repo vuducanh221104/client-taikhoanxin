@@ -44,7 +44,25 @@ export default function LoginLayout() {
     const dispatch = useDispatch();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const guestCart = useSelector((state: RootState) => state.cart);
+    const reduxGuestCart = useSelector((state: RootState) => state.cart);
+    // Check both Redux cart and sessionStorage for guest cart
+    const guestCart = React.useMemo(() => {
+        if (reduxGuestCart.products.length > 0) {
+            return reduxGuestCart;
+        }
+        // Try to get cart from sessionStorage if Redux is empty
+        if (typeof window !== 'undefined') {
+            const sessionCart = sessionStorage.getItem('guestCart');
+            if (sessionCart) {
+                try {
+                    return JSON.parse(sessionCart);
+                } catch (e) {
+                    console.error('Error parsing guestCart from sessionStorage:', e);
+                }
+            }
+        }
+        return reduxGuestCart;
+    }, [reduxGuestCart]) as typeof reduxGuestCart;
     const { mutate: globalMutate } = useSWRConfig();
     const { showSuccess, showError } = useToast();
     const [loading, setLoading] = useState(false);
@@ -148,6 +166,10 @@ export default function LoginLayout() {
                         response.data.accessToken
                     );
                     dispatch(clearGuestCart());
+                    // Clear sessionStorage cart after successful import
+                    if (typeof window !== 'undefined') {
+                        sessionStorage.removeItem('guestCart');
+                    }
                     await globalMutate('/api/v1/cart');
                 } catch (cartError) {
                     console.error('Failed to import guest cart:', cartError);

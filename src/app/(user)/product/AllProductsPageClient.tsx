@@ -72,11 +72,20 @@ export default function AllProductsPageClient() {
     });
     const [displayLimit, setDisplayLimit] = useState<number>(INITIAL_DISPLAY_LIMIT);
     const [isLoadMoreLoading, setIsLoadMoreLoading] = useState<boolean>(false);
+    const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
 
     const dispatch = useDispatch();
     const router = useRouter();
     const { toggleWishlist, isProductInWishlist, isLoggedIn } = useWishlist();
     const { showSuccess, showInfo, showError } = useToast();
+
+    // Simulate initial loading for dev - show skeleton
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsInitialLoading(false);
+        }, 500); // Show skeleton for 500ms
+        return () => clearTimeout(timer);
+    }, []);
 
     useEffect(() => {
         setDisplayLimit(INITIAL_DISPLAY_LIMIT);
@@ -239,7 +248,10 @@ export default function AllProductsPageClient() {
                     onFilterChange={handleFilterChange}
                 />
 
-                {displayedProducts.length > 0 ? (
+                {/* Initial Loading State - Show Skeleton */}
+                {isInitialLoading ? (
+                    <ProductListSkeleton count={INITIAL_DISPLAY_LIMIT} />
+                ) : displayedProducts.length > 0 ? (
                     <>
                         <div className={cx('products-grid')}>
                             {displayedProducts.map((product) => (

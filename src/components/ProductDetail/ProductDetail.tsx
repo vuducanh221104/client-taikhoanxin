@@ -27,6 +27,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { RootState, AppDispatch } from '@/redux/store';
 import { addGuestViewedProduct } from '@/redux/viewedProductsSlice';
 import { useToast } from '@/hooks/useToast';
+import ProductDetailListSkeleton from '../Skeleton/SkeletonProductDetail/ProductDetailListSkeleton';
 
 const cx = classNames.bind(styles);
 
@@ -412,11 +413,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
     };
 
     // Loading state
-    if (isLoading) {
+    if (!isLoading) {
         return (
             <div className={cx('product-detail')}>
                 <div className={cx('container-wide')}>
-                    <ProductListSkeleton count={1} />
+                    <ProductDetailListSkeleton count={1} />
                 </div>
             </div>
         );

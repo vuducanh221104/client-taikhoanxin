@@ -1,0 +1,337 @@
+.topup-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease;
+    
+    &.closing {
+        animation: fadeOut 0.3s ease forwards;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+.topup-modal {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 700px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+    animation: slideUp 0.3s ease;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    
+    &.closing {
+        animation: slideDown 0.3s ease forwards;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+}
+
+.topup-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+    color: #666;
+    transition: color 0.2s;
+    
+    &:hover {
+        color: #333;
+    }
+}
+
+.topup-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #333;
+    padding-right: 32px;
+}
+
+.topup-content {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #555;
+    margin-bottom: 20px;
+    
+    // Allow HTML content styling
+    p {
+        margin-bottom: 12px;
+    }
+    
+    b, strong {
+        color: #333;
+    }
+    
+    a {
+        color: #0066cc;
+        text-decoration: underline;
+    }
+    
+    ul, ol {
+        padding-left: 20px;
+        margin-bottom: 12px;
+    }
+    
+    li {
+        margin-bottom: 4px;
+    }
+}
+
+.topup-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.topup-confirm {
+    background: linear-gradient(135deg, #2f78ff 0%, #0066ff 100%);
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(47, 120, 255, 0.3);
+    width: 100%;
+    max-width: 300px;
+    display: block;
+    margin: 0 auto;
+    
+    &:hover {
+        background: linear-gradient(135deg, #2567e6 0%, #0052cc 100%);
+        box-shadow: 0 6px 16px rgba(47, 120, 255, 0.4);
+        transform: translateY(-1px);
+    }
+    
+    &:active {
+        transform: translateY(0);
+    }
+}
+
+// ============================================
+// Notification Modal Styles
+// ============================================
+
+.notification-modal {
+    padding: 28px 24px 24px;
+}
+
+.notification-header {
+    margin-bottom: 24px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.notification-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    background: #e6f0ff;
+    border-radius: 50%;
+    margin-bottom: 16px;
+}
+
+.notification-bell-gif {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+}
+
+.notification-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #333;
+    margin: 0;
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+
+.notification-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.notification-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: 1px solid #e9ecef;
+    
+    &:hover {
+        background: #e6f0ff;
+        border-color: #0066cc;
+        transform: translateX(4px);
+    }
+}
+
+.notification-item-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    margin-right: 14px;
+    flex-shrink: 0;
+    overflow: hidden;
+    
+    &.zalo {
+        background: #4785ff;
+        box-shadow: 0 10px 18px rgba(42, 125, 255, 0.30);
+
+    }
+    
+    &.zalo-group {
+        background: #4785ff;
+        box-shadow: 0 10px 18px rgba(42, 125, 255, 0.30);
+    }
+
+    &.telegram {
+        background: #bbe2f6;
+        box-shadow: 0 10px 18px rgba(42, 125, 255, 0.30);
+
+    }
+}
+
+.zalo-icon {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+}
+
+.notification-item-text {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.notification-item-arrow {
+    color: #999;
+    display: flex;
+    align-items: center;
+}
+
+.notification-footer {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 0 8px;
+}
+
+.notification-note {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.5;
+    margin: 0;
+}
+
+// ============================================
+// Mobile responsive
+// ============================================
+
+@media (max-width: 480px) {
+    .topup-modal {
+        padding: 20px;
+        border-radius: 8px;
+    }
+    
+    .topup-title {
+        font-size: 18px;
+    }
+    
+    .topup-content {
+        font-size: 13px;
+    }
+
+    .notification-modal {
+        padding: 24px 16px 20px;
+    }
+
+    .notification-icon {
+        width: 56px;
+        height: 56px;
+    }
+
+    .notification-title {
+        font-size: 16px;
+    }
+
+    .notification-item {
+        padding: 12px 14px;
+    }
+
+    .notification-item-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .notification-item-text {
+        font-size: 14px;
+    }
+
+    .notification-note {
+        font-size: 12px;
+    }
+}

@@ -73,6 +73,13 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({ product }) => {
         { limit: 16 } // over-fetch to have enough after dedupe
     );
 
+    // Force revalidate when product slug changes to get fresh related products
+    useEffect(() => {
+        if (product?.slug && fallbackRelatedQuery.mutate) {
+            fallbackRelatedQuery.mutate();
+        }
+    }, [product?.slug]);
+
     // Select main query (for loading/error states): primary when manual exists, else fallback
     const productsQuery = hasRelatedProductIds ? productsByIdsQuery : fallbackRelatedQuery;
 
@@ -308,8 +315,11 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({ product }) => {
     const [touchStart, setTouchStart] = useState<number | null>(null);
     const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
-    // Min swipe distance (in px)
-    const minSwipeDistance = 50;
+    // Min swipe distance - larger on mobile for more deliberate swipes
+    const minSwipeDistance = isMobile ? 80 : 50;
+
+    // On mobile, skip 1 slide at a time (2 products), on desktop skip 1
+    const mobileSlideJump = isMobile ? 1 : 1;
 
     const onTouchStart = (e: React.TouchEvent) => {
         setTouchEnd(null);
@@ -328,10 +338,14 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({ product }) => {
         const isRightSwipe = distance < -minSwipeDistance;
 
         if (isLeftSwipe && canGoNext) {
-            handleNext();
+            // On mobile, jump 2 slides for faster scrolling
+            const jump = isMobile ? Math.min(mobileSlideJump, maxIndex - currentIndex) : 1;
+            setCurrentIndex((prev) => Math.min(maxIndex, prev + jump));
         }
         if (isRightSwipe && canGoPrev) {
-            handlePrev();
+            // On mobile, jump 2 slides for faster scrolling
+            const jump = isMobile ? Math.min(mobileSlideJump, currentIndex) : 1;
+            setCurrentIndex((prev) => Math.max(0, prev - jump));
         }
     };
 
