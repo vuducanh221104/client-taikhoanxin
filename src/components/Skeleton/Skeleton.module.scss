@@ -18,16 +18,6 @@
     animation: skeleton-loading 1.5s ease-in-out infinite;
     border-radius: 8px;
     will-change: background-position;
-    
-    // Dark mode support
-    @media (prefers-color-scheme: dark) {
-        background: linear-gradient(
-            90deg,
-            rgba(255, 255, 255, 0.05) 0px,
-            rgba(255, 255, 255, 0.1) 40px,
-            rgba(255, 255, 255, 0.05) 80px
-        );
-    }
 }
 
 .skeleton-line {
@@ -55,16 +45,6 @@
     min-height: 0;
     box-sizing: border-box;
     max-height: 303px;
-
-    &.dark-variant {
-        background: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        background: rgba(255, 255, 255, 0.03);
-        border-color: rgba(255, 255, 255, 0.1);
-    }
 }
 
 .skeleton-image {
@@ -173,11 +153,6 @@
     flex-direction: column;
     gap: 16px;
     box-sizing: border-box;
-    
-    @media (prefers-color-scheme: dark) {
-        background: rgba(255, 255, 255, 0.03);
-        border-color: rgba(255, 255, 255, 0.1);
-    }
 }
 
 .skeleton-filter-row {

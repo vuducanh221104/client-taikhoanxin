@@ -413,7 +413,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ slug }) => {
     };
 
     // Loading state
-    if (!isLoading) {
+    if (isLoading) {
         return (
             <div className={cx('product-detail')}>
                 <div className={cx('container-wide')}>

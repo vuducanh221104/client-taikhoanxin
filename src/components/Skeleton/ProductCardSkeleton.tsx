@@ -6,11 +6,7 @@ import styles from './Skeleton.module.scss';
 
 const cx = classNames.bind(styles);
 
-interface ProductCardSkeletonProps {
-    variant?: 'light' | 'dark';
-}
-
-const ProductCardSkeleton: React.FC<ProductCardSkeletonProps> = ({ variant = 'light' }) => {
+const ProductCardSkeleton: React.FC = () => {
     const stars = useMemo(() => {
         return Array.from({ length: 5 }, (_, i) => (
             <div key={`star-${i}`} className={cx('skeleton-star')} />
@@ -18,7 +14,7 @@ const ProductCardSkeleton: React.FC<ProductCardSkeletonProps> = ({ variant = 'li
     }, []);
 
     return (
-        <div className={cx('skeleton-product-card', { 'dark-variant': variant === 'dark' })}>
+        <div className={cx('skeleton-product-card')}>
             {/* Image skeleton */}
             <div className={cx('skeleton-image')} aria-hidden="true" />
             

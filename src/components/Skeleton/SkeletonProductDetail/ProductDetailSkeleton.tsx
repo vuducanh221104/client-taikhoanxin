@@ -6,15 +6,11 @@ import styles from './ProductDetailSkeleton.module.scss';
 
 const cx = classNames.bind(styles);
 
-interface ProductDetailSkeletonProps {
-    variant?: 'light' | 'dark';
-}
-
-const ProductDetailSkeleton: React.FC<ProductDetailSkeletonProps> = ({ variant = 'light' }) => {
+const ProductDetailSkeleton: React.FC = () => {
     const smallImages = Array.from({ length: 4 }, (_, i) => i);
 
     return (
-        <div className={cx('skeleton-product-detail', { 'dark-variant': variant === 'dark' })}>
+        <div className={cx('skeleton-product-detail')}>
             {/* Left Column - Images */}
             <div className={cx('skeleton-detail-left')}>
                 <div className={cx('skeleton-detail-main-image')} aria-hidden="true" />

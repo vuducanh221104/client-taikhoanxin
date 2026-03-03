@@ -9,20 +9,18 @@ const cx = classNames.bind(styles);
 
 interface ProductDetailListSkeletonProps {
     count?: number;
-    variant?: 'light' | 'dark';
     columns?: number;
 }
 
 const ProductDetailListSkeleton: React.FC<ProductDetailListSkeletonProps> = ({ 
     count = 8, 
-    variant = 'light',
     columns 
 }) => {
     const skeletonItems = useMemo(() => {
         return Array.from({ length: count }, (_, index) => (
-            <ProductDetailSkeleton key={`skeleton-${index}`} variant={variant} />
+            <ProductDetailSkeleton key={`skeleton-${index}`} />
         ));
-    }, [count, variant]);
+    }, [count]);
 
     const style = useMemo(() => {
         return columns ? { '--columns': columns } as React.CSSProperties : undefined;
