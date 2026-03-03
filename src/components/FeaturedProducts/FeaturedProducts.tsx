@@ -162,7 +162,6 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
                     {isLoading ? (
                         <ProductListSkeleton
                             count={skeletonCount}
-                            variant={isDarkBackground ? 'dark' : 'light'}
                         />
                     ) : 
                 <div className={cx('products-grid')}>
