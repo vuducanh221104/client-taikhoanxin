@@ -133,7 +133,7 @@ export default function TopupPopup() {
                 
                 <div className={cx('notification-options')}>
                     <a 
-                        href="https://zalo.me/g/yourzaloID" 
+                        href="https://zalo.me/g/jwinpg729" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className={cx('notification-item')}
@@ -154,7 +154,7 @@ export default function TopupPopup() {
                     </a>
                     
                     <a 
-                        href="https://zalo.me/g/yourzaloID" 
+                        href="https://zalo.me/g/wnxwdw394" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className={cx('notification-item')}
@@ -175,7 +175,7 @@ export default function TopupPopup() {
                     </a>
 
                     <a 
-                        href="https://t.me/yourTelegramID" 
+                        href="http://t.me/iShareTechOfficial" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className={cx('notification-item')}
