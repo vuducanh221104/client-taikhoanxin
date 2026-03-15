@@ -58,6 +58,14 @@ const httpRequest = axios.create({
 // ============================================
 httpRequest.interceptors.request.use(
     async (config: InternalAxiosRequestConfig) => {
+        // Skip token logic for refresh-token endpoint to avoid deadlock:
+        // refreshAccessToken() uses post() -> same interceptor -> would be queued while isRefreshing,
+        // so the refresh request would never be sent and all API calls hang / page stays blank.
+        const requestUrl = (config.url || '').toString();
+        if (requestUrl.includes('refresh-token')) {
+            return config;
+        }
+
         const state = store.getState();
         const currentUser = state.auth.login.currentUser as UserState | null;
         const accessToken = currentUser?.accessToken;
