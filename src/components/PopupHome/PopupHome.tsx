@@ -120,6 +120,8 @@ export default function TopupPopup() {
                     </svg>
                 </button>
                 
+                
+                
                 <div className={cx('notification-header')}>
                     <div className={cx('notification-icon')}>
                         <img 
@@ -130,8 +132,25 @@ export default function TopupPopup() {
                     </div>
                     <h3 className={cx('notification-title')}>KÊNH THÔNG BÁO VÀ CHECK UY TÍN</h3>
                 </div>
+
+                
                 
                 <div className={cx('notification-options')}>
+                                        <a 
+                        href="https://zalo.me/0377775528" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className={cx('notification-item')}
+                    >
+                        <div className={cx('notification-item-icon', 'zalo')}>
+                            <img 
+                                src="/payment/admin-support.png" 
+                                alt="Zalo" 
+                                className={cx('zalo-icon')}
+                            />
+                        </div>
+                        <span className={cx('notification-item-text')}>Zalo Admin </span>
+                    </a>
                     <a 
                         href="https://zalo.me/g/jwinpg729" 
                         target="_blank" 
@@ -188,6 +207,27 @@ export default function TopupPopup() {
                             />
                         </div>
                         <span className={cx('notification-item-text')}>Nhóm Telegram (6000 Member)</span>
+                        <span className={cx('notification-item-arrow')}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </span>
+                    </a>
+
+                     <a 
+                        href="http://t.me/taikhoanxin_bot" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className={cx('notification-item')}
+                    >
+                        <div className={cx('notification-item-icon', 'telegram')}>
+                            <img 
+                                src="/payment/bot-tele.png" 
+                                alt="Telegram" 
+                                className={cx('zalo-icon')}
+                            />
+                        </div>
+                        <span className={cx('notification-item-text')}>( New ) Bot Mua Hàng Telegram @Taikhoanxin_bot</span>
                         <span className={cx('notification-item-arrow')}>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <polyline points="9 18 15 12 9 6"></polyline>
