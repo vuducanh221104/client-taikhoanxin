@@ -1,7 +1,7 @@
 import '@/styles/globals.scss';
 import '@/styles/accessibility.scss';
 
-import dynamic from 'next/dynamic';
+import nextDynamic from 'next/dynamic';
 import ProviderRedux from '@/redux/ProviderRedux';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { harmonyOS } from '@/assets/FontNext';
@@ -12,10 +12,14 @@ import LayoutWrapper from './LayoutWrapper';
 import { ConfirmDialogProvider } from '@/components/ConfirmDialog';
 import MaintenanceMode from '@/components/MaintenanceMode';
 
+export const dynamic = 'force-dynamic';
+
 // Lazy load non-critical components for better performance
-const ScrollToTop = dynamic(() => import('@/components/ScrollToTop'), { ssr: false });
-const ToastContainerWrapper = dynamic(() => import('@/components/Toast/ToastContainerWrapper'), { ssr: false });
-const PurchaseToastListener = dynamic(() => import('@/components/PublicFeed/PurchaseToastListener'), { ssr: false });
+const ScrollToTop = nextDynamic(() => import('@/components/ScrollToTop'), { ssr: false });
+const ToastContainerWrapper = nextDynamic(() => import('@/components/Toast/ToastContainerWrapper'), { ssr: false });
+const PurchaseToastListener = nextDynamic(() => import('@/components/PublicFeed/PurchaseToastListener'), {
+    ssr: false,
+});
 
 export const viewport: Viewport = {
     width: 'device-width',
@@ -27,7 +31,8 @@ export const viewport: Viewport = {
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taikhoanxin.com';
 const defaultOgImage = 'https://cdn.taikhoanxin.com/seo/banner-seo.jpeg';
-const isMaintenanceMode = process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true';
+
+const getEnvFlag = (value?: string) => ['true', '1', 'yes', 'on'].includes((value || '').toLowerCase());
 
 export const metadata: Metadata = {
     title: 'Tài Khoản Xịn - Nền Tảng Tài Khoản Số 1 Việt Nam',
@@ -87,6 +92,16 @@ const websiteJsonLd = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+    const isMaintenanceMode = getEnvFlag(process.env.MAINTENANCE_MODE || process.env.NEXT_PUBLIC_MAINTENANCE_MODE);
+    const maintenanceTelegramUrl =
+        process.env.MAINTENANCE_TELEGRAM_URL ||
+        process.env.NEXT_PUBLIC_MAINTENANCE_TELEGRAM_URL ||
+        'http://t.me/taikhoanxincom';
+    const maintenanceZaloUrl =
+        process.env.MAINTENANCE_ZALO_URL ||
+        process.env.NEXT_PUBLIC_MAINTENANCE_ZALO_URL ||
+        'https://zalo.me/0377775528';
+
     return (
         <html lang="vi" suppressHydrationWarning={true}>
             <head>
@@ -117,7 +132,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </head>
             <body className={harmonyOS.variable}>
                 {isMaintenanceMode ? (
-                    <MaintenanceMode />
+                    <MaintenanceMode telegramUrl={maintenanceTelegramUrl} zaloUrl={maintenanceZaloUrl} />
                 ) : (
                     <>
                         {/* Skip to main content link for accessibility */}

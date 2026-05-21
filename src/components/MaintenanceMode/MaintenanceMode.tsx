@@ -2,10 +2,12 @@ import Image from 'next/image';
 import { CheckIcon, ClockIcon, SettingsIcon, TelegramIcon, ToolIcon, ZaloIcon } from '@/components/Icons';
 import styles from './MaintenanceMode.module.scss';
 
-const telegramUrl = process.env.NEXT_PUBLIC_MAINTENANCE_TELEGRAM_URL || 'http://t.me/taikhoanxincom';
-const zaloUrl = process.env.NEXT_PUBLIC_MAINTENANCE_ZALO_URL || 'https://zalo.me/0377775528';
+type MaintenanceModeProps = {
+    telegramUrl: string;
+    zaloUrl: string;
+};
 
-export default function MaintenanceMode() {
+export default function MaintenanceMode({ telegramUrl, zaloUrl }: MaintenanceModeProps) {
     return (
         <main className={styles.maintenance} aria-labelledby="maintenance-title">
             <div className={styles.backgroundGrid} aria-hidden="true" />
