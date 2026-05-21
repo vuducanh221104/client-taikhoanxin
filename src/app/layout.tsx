@@ -10,6 +10,7 @@ import Script from 'next/script';
 import ErrorBoundary from '@/components/ErrorBoundary/ErrorBoundary';
 import LayoutWrapper from './LayoutWrapper';
 import { ConfirmDialogProvider } from '@/components/ConfirmDialog';
+import MaintenanceMode from '@/components/MaintenanceMode';
 
 // Lazy load non-critical components for better performance
 const ScrollToTop = dynamic(() => import('@/components/ScrollToTop'), { ssr: false });
@@ -26,6 +27,7 @@ export const viewport: Viewport = {
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taikhoanxin.com';
 const defaultOgImage = 'https://cdn.taikhoanxin.com/seo/banner-seo.jpeg';
+const isMaintenanceMode = process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true';
 
 export const metadata: Metadata = {
     title: 'Tài Khoản Xịn - Nền Tảng Tài Khoản Số 1 Việt Nam',
@@ -36,9 +38,7 @@ export const metadata: Metadata = {
             { url: '/logo/logo.png', type: 'image/png', sizes: '192x192' },
             { url: '/logo/logo.png', type: 'image/png', sizes: '512x512' },
         ],
-        apple: [
-            { url: '/logo/logo.png', sizes: '180x180', type: 'image/png' },
-        ],
+        apple: [{ url: '/logo/logo.png', sizes: '180x180', type: 'image/png' }],
         shortcut: '/favicon.ico',
     },
     metadataBase: new URL(siteUrl),
@@ -97,10 +97,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <link rel="dns-prefetch" href="https://cdn.taikhoanxin.com" />
                 <link rel="preconnect" href="https://api.vietqr.io" crossOrigin="anonymous" />
                 <link rel="dns-prefetch" href="https://api.vietqr.io" />
-                
+
                 {/* Preload critical resources */}
                 <link rel="preload" href="/favicon.ico" as="image" />
-                
+
                 {/* Structured Data for SEO */}
                 <Script
                     id="ld-organization"
@@ -116,28 +116,31 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 />
             </head>
             <body className={harmonyOS.variable}>
-                {/* Skip to main content link for accessibility */}
-                <a href="#main-content" className="skip-to-content">
-                    Bỏ qua đến nội dung chính
-                </a>
-                <ProviderRedux>
-                    <ErrorBoundary>
-                        <ToastProvider>
-                            <ConfirmDialogProvider>
-                                <LayoutWrapper>
-                                    {children}
-                                </LayoutWrapper>
-                                <ScrollToTop />
-                                {/* Global toast container */}
-                                <ToastContainerWrapper />
-                                {/* SSE-based purchase notifications */}
-                                <PurchaseToastListener />
-                            </ConfirmDialogProvider>
-                        </ToastProvider>
-                    </ErrorBoundary>
-                </ProviderRedux>
+                {isMaintenanceMode ? (
+                    <MaintenanceMode />
+                ) : (
+                    <>
+                        {/* Skip to main content link for accessibility */}
+                        <a href="#main-content" className="skip-to-content">
+                            Bỏ qua đến nội dung chính
+                        </a>
+                        <ProviderRedux>
+                            <ErrorBoundary>
+                                <ToastProvider>
+                                    <ConfirmDialogProvider>
+                                        <LayoutWrapper>{children}</LayoutWrapper>
+                                        <ScrollToTop />
+                                        {/* Global toast container */}
+                                        <ToastContainerWrapper />
+                                        {/* SSE-based purchase notifications */}
+                                        <PurchaseToastListener />
+                                    </ConfirmDialogProvider>
+                                </ToastProvider>
+                            </ErrorBoundary>
+                        </ProviderRedux>
+                    </>
+                )}
             </body>
         </html>
     );
 }
-

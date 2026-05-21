@@ -1,0 +1,420 @@
+.maintenance {
+    position: relative;
+    overflow: hidden;
+    min-height: 100vh;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px calc(28px + var(--safe-area-bottom));
+    background:
+        radial-gradient(circle at 20% 20%, rgba(0, 136, 204, 0.2), transparent 30%),
+        radial-gradient(circle at 82% 18%, rgba(52, 211, 153, 0.18), transparent 28%),
+        linear-gradient(135deg, #eef6ff 0%, #f7fbff 46%, #edfdf7 100%);
+    color: #101828;
+}
+
+.backgroundGrid {
+    position: absolute;
+    inset: 0;
+    opacity: 0.36;
+    background-image:
+        linear-gradient(rgba(47, 120, 255, 0.11) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(47, 120, 255, 0.11) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+    pointer-events: none;
+}
+
+.floatingGearOne,
+.floatingGearTwo {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(47, 120, 255, 0.16);
+    pointer-events: none;
+
+    svg {
+        width: 100%;
+        height: 100%;
+        stroke-width: 1.5;
+    }
+}
+
+.floatingGearOne {
+    top: 9%;
+    left: 9%;
+    width: 104px;
+    height: 104px;
+    animation: spinSlow 18s linear infinite;
+}
+
+.floatingGearTwo {
+    right: 8%;
+    bottom: 14%;
+    width: 132px;
+    height: 132px;
+    color: rgba(52, 211, 153, 0.18);
+    animation: spinSlowReverse 22s linear infinite;
+}
+
+.panel {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 1080px);
+    min-height: 720px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 44px;
+    padding: 86px 88px 68px;
+    border: 1px solid rgba(47, 120, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 28px 90px rgba(16, 24, 40, 0.16);
+    text-align: center;
+    backdrop-filter: blur(18px);
+}
+
+.iconStage {
+    position: relative;
+    width: 184px;
+    height: 184px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.orbit {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    border-radius: 50%;
+    background:
+        linear-gradient(#ffffff, #ffffff) padding-box,
+        linear-gradient(135deg, #2f78ff, #34d399) border-box;
+    border: 2px solid transparent;
+    box-shadow:
+        0 18px 44px rgba(47, 120, 255, 0.24),
+        inset 0 0 0 10px rgba(47, 120, 255, 0.06);
+}
+
+.gearPrimary,
+.gearSecondary {
+    position: absolute;
+    color: #2f78ff;
+}
+
+.gearPrimary {
+    width: 92px;
+    height: 92px;
+    left: 16px;
+    top: 18px;
+    animation: spinSlow 9s linear infinite;
+}
+
+.gearSecondary {
+    width: 58px;
+    height: 58px;
+    right: 18px;
+    bottom: 20px;
+    color: #34d399;
+    animation: spinSlowReverse 7s linear infinite;
+}
+
+.logoWrap {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 104px;
+    height: 104px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 6px solid #ffffff;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 12px 28px rgba(16, 24, 40, 0.14);
+}
+
+.logoImage {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.toolBadge {
+    position: absolute;
+    right: 0;
+    bottom: 6px;
+    width: 62px;
+    height: 62px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 4px solid #ffffff;
+    border-radius: 50%;
+    background: #111827;
+    color: #ffffff;
+    box-shadow: 0 10px 22px rgba(17, 24, 39, 0.2);
+
+    svg {
+        width: 26px;
+        height: 26px;
+    }
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.eyebrow {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(47, 120, 255, 0.09);
+    color: #2f78ff;
+    font-size: 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+
+    svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+.title {
+    margin: 0;
+    color: #111827;
+    font-size: clamp(38px, 5vw, 64px);
+    line-height: 1.08;
+    font-weight: 900;
+    letter-spacing: 0;
+}
+
+.message {
+    max-width: 760px;
+    margin: 0;
+    color: #475467;
+    font-size: 19px;
+    line-height: 1.7;
+}
+
+.statusList {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+
+    span {
+        min-height: 58px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 14px 12px;
+        border: 1px solid rgba(47, 120, 255, 0.14);
+        border-radius: 8px;
+        background: rgba(47, 120, 255, 0.06);
+        color: #344054;
+        font-size: 16px;
+        font-weight: 800;
+        line-height: 1.3;
+
+        svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            padding: 2px;
+            border-radius: 50%;
+            background: rgba(52, 211, 153, 0.16);
+            color: #12b76a;
+        }
+    }
+}
+
+.actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.contactButton {
+    min-height: 74px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 16px 22px;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.25;
+    text-decoration: none;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        filter 0.2s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.03);
+        text-decoration: none;
+    }
+
+    &:focus-visible {
+        outline: 3px solid rgba(47, 120, 255, 0.28);
+        outline-offset: 3px;
+    }
+
+    svg {
+        width: 30px;
+        height: 30px;
+        flex-shrink: 0;
+    }
+}
+
+.telegram {
+    background: #0088cc;
+    box-shadow: 0 12px 28px rgba(0, 136, 204, 0.24);
+}
+
+.zalo {
+    background: #0068ff;
+    box-shadow: 0 12px 28px rgba(0, 104, 255, 0.24);
+
+    svg {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+}
+
+.copyright {
+    margin: 28px 0 0;
+    color: #667085;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+}
+
+@media (max-width: 560px) {
+    .maintenance {
+        justify-content: flex-start;
+        padding: 44px 14px calc(20px + var(--safe-area-bottom));
+    }
+
+    .panel {
+        width: 100%;
+        min-height: min(720px, calc(100svh - 88px));
+        gap: 26px;
+        padding: 86px 45px 68px;
+    }
+
+    .floatingGearOne,
+    .floatingGearTwo {
+        display: none;
+    }
+
+    .statusList {
+        grid-template-columns: 1fr;
+        gap: 8px;
+
+        span {
+            min-height: 52px;
+            font-size: 15px;
+        }
+    }
+
+    .actions {
+        grid-template-columns: 1fr;
+    }
+
+    .contactButton {
+        min-height: 64px;
+        font-size: 17px;
+
+        svg {
+            width: 26px;
+            height: 26px;
+        }
+    }
+
+    .zalo {
+        svg {
+            width: 36px;
+            height: 36px;
+        }
+    }
+
+    .iconStage {
+        width: 112px;
+        height: 112px;
+    }
+
+    .gearPrimary {
+        width: 56px;
+        height: 56px;
+        left: 9px;
+        top: 10px;
+    }
+
+    .gearSecondary {
+        width: 34px;
+        height: 34px;
+        right: 10px;
+        bottom: 12px;
+    }
+
+    .logoWrap {
+        width: 62px;
+        height: 62px;
+        border-width: 5px;
+        border-radius: 16px;
+    }
+
+    .toolBadge {
+        width: 40px;
+        height: 40px;
+        border-width: 3px;
+    }
+
+    .message {
+        font-size: 16px;
+    }
+}
+
+@keyframes spinSlow {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes spinSlowReverse {
+    from {
+        transform: rotate(360deg);
+    }
+
+    to {
+        transform: rotate(0deg);
+    }
+}
